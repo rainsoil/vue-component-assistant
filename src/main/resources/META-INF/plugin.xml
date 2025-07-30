@@ -1,0 +1,20 @@
+<idea-plugin>
+    <id>com.chu7.webx-plugin</id>
+    <name>webx-plugin</name>
+    <version>1.0</version>
+    <vendor email="your@email.com" url="https://your-url.com">Your Name</vendor>
+
+    <description>
+        这是一个示例 IDEA 插件。
+    </description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- 在这里注册扩展点 -->
+    </extensions>
+
+    <actions>
+        <!-- 在这里注册菜单/工具栏动作 -->
+    </actions>
+</idea-plugin>

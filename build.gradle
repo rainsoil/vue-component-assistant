@@ -1,0 +1,26 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.intellij' version '1.17.3'
+}
+
+group 'com.chu7'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+intellij {
+    version = '2023.1'
+    type = 'IC' // 社区版
+}
+
+patchPluginXml {
+    changeNotes = """
+      初始版本
+    """
+}
+
+dependencies {
+    // 你的依赖
+}
