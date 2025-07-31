@@ -20,7 +20,12 @@ patchPluginXml {
       初始版本
     """
 }
-
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+tasks.withType(JavaExec) {
+    jvmArgs '-Dfile.encoding=UTF-8'
+}
 dependencies {
     // 你的依赖
 }

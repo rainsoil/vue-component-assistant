@@ -12,6 +12,9 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <completion.contributor language="XML" implementationClass="com.chu7.ElementPlusCompletionContributor"/>
+        <projectConfigurable instance="com.chu7.ElementLibraryConfigurable"/>
+        <projectService serviceImplementation="com.chu7.ElementLibrarySettings"/>
+        <projectService serviceImplementation="com.chu7.CustomComponentManager"/>
         <!-- 在这里注册扩展点 -->
     </extensions>
 
