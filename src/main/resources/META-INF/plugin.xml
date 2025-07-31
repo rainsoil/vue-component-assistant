@@ -11,6 +11,7 @@
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
+        <completion.contributor language="XML" implementationClass="com.chu7.ElementPlusCompletionContributor"/>
         <!-- 在这里注册扩展点 -->
     </extensions>
 

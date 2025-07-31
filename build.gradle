@@ -12,7 +12,7 @@ repositories {
 
 intellij {
     version = '2023.1'
-    type = 'IC' // 社区版
+    type = 'IU' //旗舰版
 }
 
 patchPluginXml {
