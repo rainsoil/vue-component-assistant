@@ -1,0 +1,194 @@
+[
+  {
+    "name": "a-button",
+    "description": "按钮组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-button type=\"primary\">主要按钮</a-button>"
+  },
+  {
+    "name": "a-input",
+    "description": "输入框组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-input v-model:value=\"inputValue\" />"
+  },
+  {
+    "name": "a-table",
+    "description": "表格组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-table :columns=\"columns\" :data-source=\"data\" />"
+  },
+  {
+    "name": "a-form",
+    "description": "表单组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-form :model=\"form\"></a-form>"
+  },
+  {
+    "name": "a-select",
+    "description": "下拉选择器组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-select v-model:value=\"selectValue\"></a-select>"
+  },
+  {
+    "name": "a-date-picker",
+    "description": "日期选择器组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-date-picker v-model:value=\"dateValue\" />"
+  },
+  {
+    "name": "a-modal",
+    "description": "对话框组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-modal v-model:visible=\"visible\" title=\"标题\"></a-modal>"
+  },
+  {
+    "name": "a-checkbox",
+    "description": "复选框组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-checkbox v-model:checked=\"checked\">选项</a-checkbox>"
+  },
+  {
+    "name": "a-radio",
+    "description": "单选框组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-radio v-model:value=\"radioValue\">选项</a-radio>"
+  },
+  {
+    "name": "a-switch",
+    "description": "开关组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-switch v-model:checked=\"switchValue\" />"
+  },
+  {
+    "name": "a-slider",
+    "description": "滑块组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-slider v-model:value=\"sliderValue\" />"
+  },
+  {
+    "name": "a-upload",
+    "description": "上传组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-upload action=\"#\"></a-upload>"
+  },
+  {
+    "name": "a-rate",
+    "description": "评分组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-rate v-model:value=\"rateValue\" />"
+  },
+  {
+    "name": "a-tree",
+    "description": "树形控件组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-tree :tree-data=\"treeData\" />"
+  },
+  {
+    "name": "a-pagination",
+    "description": "分页组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-pagination :total=\"100\" />"
+  },
+  {
+    "name": "a-badge",
+    "description": "徽章组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-badge count=\"5\"><a-button>消息</a-button></a-badge>"
+  },
+  {
+    "name": "a-alert",
+    "description": "警告提示组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-alert message=\"成功\" type=\"success\" />"
+  },
+  {
+    "name": "a-breadcrumb",
+    "description": "面包屑导航组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-breadcrumb><a-breadcrumb-item>首页</a-breadcrumb-item></a-breadcrumb>"
+  },
+  {
+    "name": "a-card",
+    "description": "卡片组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-card>卡片内容</a-card>"
+  },
+  {
+    "name": "a-carousel",
+    "description": "走马灯组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-carousel><div>内容1</div></a-carousel>"
+  },
+  {
+    "name": "a-collapse",
+    "description": "折叠面板组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-collapse><a-collapse-panel header=\"标题\">内容</a-collapse-panel></a-collapse>"
+  },
+  {
+    "name": "a-dropdown",
+    "description": "下拉菜单组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-dropdown><a-button>下拉菜单</a-button></a-dropdown>"
+  },
+  {
+    "name": "a-menu",
+    "description": "导航菜单组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-menu><a-menu-item>菜单项</a-menu-item></a-menu>"
+  },
+  {
+    "name": "a-progress",
+    "description": "进度条组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-progress :percent=\"50\" />"
+  },
+  {
+    "name": "a-steps",
+    "description": "步骤条组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-steps><a-step title=\"步骤1\" /></a-steps>"
+  },
+  {
+    "name": "a-tabs",
+    "description": "标签页组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-tabs><a-tab-pane key=\"1\" tab=\"标签1\">内容</a-tab-pane></a-tabs>"
+  },
+  {
+    "name": "a-tag",
+    "description": "标签组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-tag>标签</a-tag>"
+  },
+  {
+    "name": "a-tooltip",
+    "description": "文字提示组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-tooltip title=\"提示文字\"><a-button>按钮</a-button></a-tooltip>"
+  },
+  {
+    "name": "a-popover",
+    "description": "弹出框组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-popover><a-button>触发按钮</a-button></a-popover>"
+  },
+  {
+    "name": "a-drawer",
+    "description": "抽屉组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "<a-drawer v-model:visible=\"drawerVisible\" title=\"抽屉\"></a-drawer>"
+  },
+  {
+    "name": "a-message",
+    "description": "消息提示组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "this.$message.success('成功消息')"
+  },
+  {
+    "name": "a-notification",
+    "description": "通知组件。",
+    "version": "Ant Design Vue >=2.0.0",
+    "example": "this.$notification.success('通知消息')"
+  }
+] 

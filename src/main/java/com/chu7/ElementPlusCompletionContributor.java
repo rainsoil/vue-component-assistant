@@ -18,9 +18,17 @@ import com.google.gson.JsonObject;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-
+/**
+ * Element Plus 组件补全贡献者
+ * 负责为 XML 文件中的 Vue 组件提供智能补全功能
+ */
 public class ElementPlusCompletionContributor extends CompletionContributor {
+    
+    /**
+     * 构造函数，注册补全提供者
+     */
     public ElementPlusCompletionContributor() {
+        // 为 XML 语言注册补全提供者
         extend(CompletionType.BASIC,
                 PlatformPatterns.psiElement().withLanguage(com.intellij.lang.xml.XMLLanguage.INSTANCE),
                 new CompletionProvider<CompletionParameters>() {
@@ -28,95 +36,236 @@ public class ElementPlusCompletionContributor extends CompletionContributor {
                     protected void addCompletions(@NotNull CompletionParameters parameters,
                                                   @NotNull ProcessingContext context,
                                                   @NotNull CompletionResultSet result) {
+                        // 获取当前项目
                         Project project = parameters.getPosition().getProject();
                         if (project == null) return;
+                        
+                        // 获取组件库设置
                         ElementLibrarySettings settings = ElementLibrarySettings.getInstance(project);
                         if (settings == null) return;
-                        String lib = settings.getLibrary();
-                        List<ComponentMeta> components;
-                        if ("element-plus".equals(lib)) {
-                            components = loadComponents("data/element-plus-components.json");
-                        } else if ("element-ui".equals(lib)) {
-                            components = loadComponents("data/element-ui-components.json");
-                        } else if ("ant-design-vue".equals(lib)) {
-                            components = loadComponents("data/ant-design-vue-components.json");
-                        } else {
-                            // auto: 检查 package.json
+                        
+                        List<ComponentMeta> components = new ArrayList<>();
+                        
+                        // 获取选中的组件库
+                        List<String> selectedLibraries = settings.getSelectedLibraries();
+                        boolean autoDetect = settings.isAutoDetect();
+                        
+                        if (autoDetect && selectedLibraries.isEmpty()) {
+                            // 自动检测模式：根据项目的 package.json 自动检测使用的组件库
                             String detected = detectLibrary(project);
                             if ("element-plus".equals(detected)) {
-                                components = loadComponents("data/element-plus-components.json");
+                                components.addAll(loadComponents("data/element-plus-components.json"));
                             } else if ("element-ui".equals(detected)) {
-                                components = loadComponents("data/element-ui-components.json");
+                                components.addAll(loadComponents("data/element-ui-components.json"));
                             } else if ("ant-design-vue".equals(detected)) {
-                                components = loadComponents("data/ant-design-vue-components.json");
+                                components.addAll(loadComponents("data/ant-design-vue-components.json"));
                             } else {
-                                // 未检测到，全部补全
-                                components = new ArrayList<>();
+                                // 未检测到，提供所有组件库的补全
                                 Set<String> seen = new HashSet<>();
                                 components.addAll(loadComponents("data/element-plus-components.json", seen));
                                 components.addAll(loadComponents("data/element-ui-components.json", seen));
                                 components.addAll(loadComponents("data/ant-design-vue-components.json", seen));
                             }
-                        }
-                        for (ComponentMeta comp : components) {
-                            String tailText = comp.description != null ? comp.description : "";
-                            if (comp.docUrl != null) {
-                                tailText += " 📖";
+                        } else {
+                            // 手动选择模式：根据用户选择的组件库提供补全
+                            for (String lib : selectedLibraries) {
+                                if ("element-plus".equals(lib)) {
+                                    components.addAll(loadComponents("data/element-plus-components.json"));
+                                } else if ("element-ui".equals(lib)) {
+                                    components.addAll(loadComponents("data/element-ui-components.json"));
+                                } else if ("ant-design-vue".equals(lib)) {
+                                    components.addAll(loadComponents("data/ant-design-vue-components.json"));
+                                }
                             }
-                            
-                            result.addElement(
-                                LookupElementBuilder.create(comp.name)
-                                    .withTypeText(comp.version, true)
-                                    .withTailText("  " + tailText, true)
-                                    .withPresentableText(comp.name)
-                                    .withInsertHandler((insertionContext, item) -> {
-                                        if (comp.example != null && !comp.example.isEmpty()) {
-                                            insertionContext.getDocument().replaceString(
-                                                insertionContext.getStartOffset(),
-                                                insertionContext.getTailOffset(),
-                                                comp.example
-                                            );
-                                        }
-                                    })
-                                    .withLookupString(comp.name)
-                                    .withBoldness(true) // 加粗显示
-//                                    .withTypeIcon(com.intellij.icons.AllIcons.Nodes.Class) // 添加图标
-                            );
                         }
                         
-                        // 添加自定义组件
-                        CustomComponentManager customManager = CustomComponentManager.getInstance(project);
-                        if (customManager != null) {
-                            List<ComponentMeta> customComponents = customManager.getCustomComponents();
+                        // 添加组件补全项
+                        for (ComponentMeta comp : components) {
+                            addComponentCompletion(result, comp, false);
+                        }
+                        
+                        // 添加自定义组件库中的组件
+                        ComponentLibraryManager libraryManager = ComponentLibraryManager.getInstance(project);
+                        if (libraryManager != null) {
+                            List<ComponentMeta> customComponents = libraryManager.getAllComponents();
                             for (ComponentMeta comp : customComponents) {
-                                String tailText = comp.description != null ? comp.description : "";
-                                if (comp.docUrl != null) {
-                                    tailText += " 📖";
-                                }
-                                
-                                result.addElement(
-                                    LookupElementBuilder.create(comp.name)
-                                        .withTypeText(comp.version != null ? comp.version : "自定义", true)
-                                        .withTailText("  " + tailText, true)
-                                        .withPresentableText(comp.name)
-                                        .withInsertHandler((insertionContext, item) -> {
-                                            if (comp.example != null && !comp.example.isEmpty()) {
-                                                insertionContext.getDocument().replaceString(
-                                                    insertionContext.getStartOffset(),
-                                                    insertionContext.getTailOffset(),
-                                                    comp.example
-                                                );
-                                            }
-                                        })
-                                        .withLookupString(comp.name)
-                                        .withBoldness(true)
-//                                        .withTypeIcon(com.intellij.icons.AllIcons.Nodes.Custom) // 自定义组件图标
-                                );
+                                addComponentCompletion(result, comp, true);
                             }
                         }
+                        
+                        // 添加属性补全
+                        addPropsCompletion(result, components, libraryManager);
+                        
+                        // 添加事件补全
+                        addEventsCompletion(result, components, libraryManager);
+                        
+                        // 添加卡槽补全
+                        addSlotsCompletion(result, components, libraryManager);
                     }
                 }
         );
+    }
+    
+    /**
+     * 添加组件补全项
+     * @param result 补全结果集
+     * @param comp 组件元数据
+     * @param isCustom 是否为自定义组件
+     */
+    private void addComponentCompletion(CompletionResultSet result, ComponentMeta comp, boolean isCustom) {
+        String tailText = comp.description != null ? comp.description : "";
+        if (comp.docUrl != null) {
+            tailText += " 📖";
+        }
+        
+        result.addElement(
+            LookupElementBuilder.create(comp.name)
+                .withTypeText(comp.version != null ? comp.version : (isCustom ? "自定义" : ""), true)
+                .withTailText("  " + tailText, true)
+                .withPresentableText(comp.name)
+                .withInsertHandler((insertionContext, item) -> {
+                    if (comp.example != null && !comp.example.isEmpty()) {
+                        insertionContext.getDocument().replaceString(
+                            insertionContext.getStartOffset(),
+                            insertionContext.getTailOffset(),
+                            comp.example
+                        );
+                    }
+                })
+                .withLookupString(comp.name)
+                .withBoldness(true)
+        );
+    }
+    
+    /**
+     * 添加属性补全
+     * @param result 补全结果集
+     * @param components 组件列表
+     * @param libraryManager 组件库管理器
+     */
+    private void addPropsCompletion(CompletionResultSet result, List<ComponentMeta> components, ComponentLibraryManager libraryManager) {
+        for (ComponentMeta comp : components) {
+            for (ComponentMeta.ComponentProp prop : comp.props) {
+                String propName = prop.name;
+                String description = prop.description != null ? prop.description : "";
+                String type = prop.type != null ? prop.type : "";
+                String defaultValue = prop.defaultValue != null ? "默认值: " + prop.defaultValue : "";
+                
+                result.addElement(
+                    LookupElementBuilder.create(propName)
+                        .withTypeText(type, true)
+                        .withTailText("  " + description + (defaultValue.isEmpty() ? "" : " (" + defaultValue + ")"), true)
+                        .withPresentableText(propName)
+                        .withLookupString(propName)
+                );
+            }
+        }
+        
+        // 添加自定义组件的属性
+        if (libraryManager != null) {
+            List<ComponentMeta> customComponents = libraryManager.getAllComponents();
+            for (ComponentMeta comp : customComponents) {
+                for (ComponentMeta.ComponentProp prop : comp.props) {
+                    String propName = prop.name;
+                    String description = prop.description != null ? prop.description : "";
+                    String type = prop.type != null ? prop.type : "";
+                    
+                    result.addElement(
+                        LookupElementBuilder.create(propName)
+                            .withTypeText(type, true)
+                            .withTailText("  " + description, true)
+                            .withPresentableText(propName)
+                            .withLookupString(propName)
+                    );
+                }
+            }
+        }
+    }
+    
+    /**
+     * 添加事件补全
+     * @param result 补全结果集
+     * @param components 组件列表
+     * @param libraryManager 组件库管理器
+     */
+    private void addEventsCompletion(CompletionResultSet result, List<ComponentMeta> components, ComponentLibraryManager libraryManager) {
+        for (ComponentMeta comp : components) {
+            for (ComponentMeta.ComponentEvent event : comp.events) {
+                String eventName = event.name;
+                String description = event.description != null ? event.description : "";
+                String parameters = event.parameters != null ? "参数: " + event.parameters : "";
+                
+                result.addElement(
+                    LookupElementBuilder.create(eventName)
+                        .withTypeText("事件", true)
+                        .withTailText("  " + description + (parameters.isEmpty() ? "" : " (" + parameters + ")"), true)
+                        .withPresentableText(eventName)
+                        .withLookupString(eventName)
+                );
+            }
+        }
+        
+        // 添加自定义组件的事件
+        if (libraryManager != null) {
+            List<ComponentMeta> customComponents = libraryManager.getAllComponents();
+            for (ComponentMeta comp : customComponents) {
+                for (ComponentMeta.ComponentEvent event : comp.events) {
+                    String eventName = event.name;
+                    String description = event.description != null ? event.description : "";
+                    
+                    result.addElement(
+                        LookupElementBuilder.create(eventName)
+                            .withTypeText("事件", true)
+                            .withTailText("  " + description, true)
+                            .withPresentableText(eventName)
+                            .withLookupString(eventName)
+                    );
+                }
+            }
+        }
+    }
+    
+    /**
+     * 添加卡槽补全
+     * @param result 补全结果集
+     * @param components 组件列表
+     * @param libraryManager 组件库管理器
+     */
+    private void addSlotsCompletion(CompletionResultSet result, List<ComponentMeta> components, ComponentLibraryManager libraryManager) {
+        for (ComponentMeta comp : components) {
+            for (ComponentMeta.ComponentSlot slot : comp.slots) {
+                String slotName = slot.name;
+                String description = slot.description != null ? slot.description : "";
+                String scope = slot.scope != null ? "作用域: " + slot.scope : "";
+                
+                result.addElement(
+                    LookupElementBuilder.create(slotName)
+                        .withTypeText("卡槽", true)
+                        .withTailText("  " + description + (scope.isEmpty() ? "" : " (" + scope + ")"), true)
+                        .withPresentableText(slotName)
+                        .withLookupString(slotName)
+                );
+            }
+        }
+        
+        // 添加自定义组件的卡槽
+        if (libraryManager != null) {
+            List<ComponentMeta> customComponents = libraryManager.getAllComponents();
+            for (ComponentMeta comp : customComponents) {
+                for (ComponentMeta.ComponentSlot slot : comp.slots) {
+                    String slotName = slot.name;
+                    String description = slot.description != null ? slot.description : "";
+                    
+                    result.addElement(
+                        LookupElementBuilder.create(slotName)
+                            .withTypeText("卡槽", true)
+                            .withTailText("  " + description, true)
+                            .withPresentableText(slotName)
+                            .withLookupString(slotName)
+                    );
+                }
+            }
+        }
     }
 
     private static List<ComponentMeta> loadComponents(String resourcePath) {

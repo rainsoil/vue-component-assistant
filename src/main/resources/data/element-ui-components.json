@@ -1,0 +1,26 @@
+[
+  {
+    "name": "el-button",
+    "description": "常用的按钮组件，支持多种样式和事件。",
+    "version": "Element UI >=2.0.0",
+    "example": "<el-button type=\"primary\">主要按钮</el-button>"
+  },
+  {
+    "name": "el-input",
+    "description": "输入框组件，支持多种类型和校验。",
+    "version": "Element UI >=2.0.0",
+    "example": "<el-input v-model=\"input\"></el-input>"
+  },
+  {
+    "name": "el-table",
+    "description": "表格组件，支持排序、筛选、分页等功能。",
+    "version": "Element UI >=2.0.0",
+    "example": "<el-table :data=\"tableData\"></el-table>"
+  },
+  {
+    "name": "el-form",
+    "description": "表单容器组件，配合 el-form-item 使用。",
+    "version": "Element UI >=2.0.0",
+    "example": "<el-form :model=\"form\"></el-form>"
+  }
+]

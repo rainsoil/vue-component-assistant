@@ -1,0 +1,233 @@
+[
+  {
+    "name": "el-button",
+    "description": "常用的按钮组件，支持多种样式和事件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-button type=\"primary\">主要按钮</el-button>",
+    "docUrl": "https://element-plus.org/zh-CN/component/button.html"
+  },
+  {
+    "name": "el-input",
+    "description": "输入框组件，支持多种类型和校验。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-input v-model=\"input\"></el-input>",
+    "docUrl": "https://element-plus.org/zh-CN/component/input.html"
+  },
+  {
+    "name": "el-table",
+    "description": "表格组件，支持排序、筛选、分页等功能。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-table :data=\"tableData\"></el-table>",
+    "docUrl": "https://element-plus.org/zh-CN/component/table.html"
+  },
+  {
+    "name": "el-form",
+    "description": "表单容器组件，配合 el-form-item 使用。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-form :model=\"form\"></el-form>",
+    "docUrl": "https://element-plus.org/zh-CN/component/form.html"
+  },
+  {
+    "name": "el-select",
+    "description": "下拉选择器组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-select v-model=\"value\"></el-select>",
+    "docUrl": "https://element-plus.org/zh-CN/component/select.html"
+  },
+  {
+    "name": "el-option",
+    "description": "下拉选择器的选项组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-option label=\"选项1\" value=\"1\"></el-option>",
+    "docUrl": "https://element-plus.org/zh-CN/component/select.html"
+  },
+  {
+    "name": "el-date-picker",
+    "description": "日期选择器组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-date-picker v-model=\"date\"></el-date-picker>",
+    "docUrl": "https://element-plus.org/zh-CN/component/date-picker.html"
+  },
+  {
+    "name": "el-dialog",
+    "description": "对话框组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-dialog title=\"标题\" v-model=\"visible\"></el-dialog>",
+    "docUrl": "https://element-plus.org/zh-CN/component/dialog.html"
+  },
+  {
+    "name": "el-checkbox",
+    "description": "复选框组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-checkbox v-model=\"checked\">选项</el-checkbox>",
+    "docUrl": "https://element-plus.org/zh-CN/component/checkbox.html"
+  },
+  {
+    "name": "el-radio",
+    "description": "单选框组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-radio v-model=\"radio\">选项</el-radio>",
+    "docUrl": "https://element-plus.org/zh-CN/component/radio.html"
+  },
+  {
+    "name": "el-switch",
+    "description": "开关组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-switch v-model=\"switchValue\"></el-switch>",
+    "docUrl": "https://element-plus.org/zh-CN/component/switch.html"
+  },
+  {
+    "name": "el-slider",
+    "description": "滑块组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-slider v-model=\"sliderValue\"></el-slider>",
+    "docUrl": "https://element-plus.org/zh-CN/component/slider.html"
+  },
+  {
+    "name": "el-upload",
+    "description": "上传组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-upload action=\"#\"></el-upload>",
+    "docUrl": "https://element-plus.org/zh-CN/component/upload.html"
+  },
+  {
+    "name": "el-rate",
+    "description": "评分组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-rate v-model=\"rateValue\"></el-rate>",
+    "docUrl": "https://element-plus.org/zh-CN/component/rate.html"
+  },
+  {
+    "name": "el-tree",
+    "description": "树形控件组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-tree :data=\"treeData\"></el-tree>",
+    "docUrl": "https://element-plus.org/zh-CN/component/tree.html"
+  },
+  {
+    "name": "el-pagination",
+    "description": "分页组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-pagination :total=\"100\"></el-pagination>",
+    "docUrl": "https://element-plus.org/zh-CN/component/pagination.html"
+  },
+  {
+    "name": "el-badge",
+    "description": "徽章组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-badge value=\"5\"><el-button>消息</el-button></el-badge>",
+    "docUrl": "https://element-plus.org/zh-CN/component/badge.html"
+  },
+  {
+    "name": "el-alert",
+    "description": "警告提示组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-alert title=\"成功\" type=\"success\"></el-alert>",
+    "docUrl": "https://element-plus.org/zh-CN/component/alert.html"
+  },
+  {
+    "name": "el-breadcrumb",
+    "description": "面包屑导航组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-breadcrumb><el-breadcrumb-item>首页</el-breadcrumb-item></el-breadcrumb>",
+    "docUrl": "https://element-plus.org/zh-CN/component/breadcrumb.html"
+  },
+  {
+    "name": "el-card",
+    "description": "卡片组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-card>卡片内容</el-card>",
+    "docUrl": "https://element-plus.org/zh-CN/component/card.html"
+  },
+  {
+    "name": "el-carousel",
+    "description": "走马灯组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-carousel><el-carousel-item>内容1</el-carousel-item></el-carousel>",
+    "docUrl": "https://element-plus.org/zh-CN/component/carousel.html"
+  },
+  {
+    "name": "el-collapse",
+    "description": "折叠面板组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-collapse><el-collapse-item title=\"标题\">内容</el-collapse-item></el-collapse>",
+    "docUrl": "https://element-plus.org/zh-CN/component/collapse.html"
+  },
+  {
+    "name": "el-dropdown",
+    "description": "下拉菜单组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-dropdown><el-button>下拉菜单</el-button></el-dropdown>",
+    "docUrl": "https://element-plus.org/zh-CN/component/dropdown.html"
+  },
+  {
+    "name": "el-menu",
+    "description": "导航菜单组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-menu><el-menu-item>菜单项</el-menu-item></el-menu>",
+    "docUrl": "https://element-plus.org/zh-CN/component/menu.html"
+  },
+  {
+    "name": "el-progress",
+    "description": "进度条组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-progress :percentage=\"50\"></el-progress>",
+    "docUrl": "https://element-plus.org/zh-CN/component/progress.html"
+  },
+  {
+    "name": "el-steps",
+    "description": "步骤条组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-steps><el-step title=\"步骤1\"></el-step></el-steps>",
+    "docUrl": "https://element-plus.org/zh-CN/component/steps.html"
+  },
+  {
+    "name": "el-tabs",
+    "description": "标签页组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-tabs><el-tab-pane label=\"标签1\">内容</el-tab-pane></el-tabs>",
+    "docUrl": "https://element-plus.org/zh-CN/component/tabs.html"
+  },
+  {
+    "name": "el-tag",
+    "description": "标签组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-tag>标签</el-tag>",
+    "docUrl": "https://element-plus.org/zh-CN/component/tag.html"
+  },
+  {
+    "name": "el-tooltip",
+    "description": "文字提示组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-tooltip content=\"提示文字\"><el-button>按钮</el-button></el-tooltip>",
+    "docUrl": "https://element-plus.org/zh-CN/component/tooltip.html"
+  },
+  {
+    "name": "el-popover",
+    "description": "弹出框组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-popover><el-button>触发按钮</el-button></el-popover>",
+    "docUrl": "https://element-plus.org/zh-CN/component/popover.html"
+  },
+  {
+    "name": "el-drawer",
+    "description": "抽屉组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "<el-drawer v-model=\"drawerVisible\" title=\"抽屉\"></el-drawer>",
+    "docUrl": "https://element-plus.org/zh-CN/component/drawer.html"
+  },
+  {
+    "name": "el-message",
+    "description": "消息提示组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "this.$message.success('成功消息')",
+    "docUrl": "https://element-plus.org/zh-CN/component/message.html"
+  },
+  {
+    "name": "el-notification",
+    "description": "通知组件。",
+    "version": "Element Plus >=1.0.0",
+    "example": "this.$notify.success('通知消息')",
+    "docUrl": "https://element-plus.org/zh-CN/component/notification.html"
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "name": "My Custom Library",
+    "description": "自定义组件库示例",
+    "version": "1.0.0",
+    "author": "Your Name",
+    "website": "https://your-website.com",
+    "docUrl": "https://your-docs.com",
+    "components": [
+      {
+        "name": "my-button",
+        "description": "自定义按钮组件",
+        "version": "1.0.0",
+        "example": "<my-button type=\"primary\">按钮</my-button>",
+        "docUrl": "https://your-docs.com/my-button"
+      },
+      {
+        "name": "my-input",
+        "description": "自定义输入框组件",
+        "version": "1.0.0",
+        "example": "<my-input v-model=\"value\" />",
+        "docUrl": "https://your-docs.com/my-input"
+      },
+      {
+        "name": "my-card",
+        "description": "自定义卡片组件",
+        "version": "1.0.0",
+        "example": "<my-card title=\"标题\">内容</my-card>",
+        "docUrl": "https://your-docs.com/my-card"
+      }
+    ]
+  },
+  {
+    "name": "Business Components",
+    "description": "业务组件库",
+    "version": "2.0.0",
+    "author": "Business Team",
+    "website": "https://business-components.com",
+    "docUrl": "https://business-components.com/docs",
+    "components": [
+      {
+        "name": "business-table",
+        "description": "业务表格组件",
+        "version": "2.0.0",
+        "example": "<business-table :data=\"tableData\" />",
+        "docUrl": "https://business-components.com/docs/table"
+      },
+      {
+        "name": "business-form",
+        "description": "业务表单组件",
+        "version": "2.0.0",
+        "example": "<business-form :model=\"formData\" />",
+        "docUrl": "https://business-components.com/docs/form"
+      }
+    ]
+  }
+] 
