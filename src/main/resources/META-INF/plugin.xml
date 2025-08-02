@@ -13,9 +13,9 @@
     <extensions defaultExtensionNs="com.intellij">
         <completion.contributor language="XML" implementationClass="com.chu7.ElementPlusCompletionContributor"/>
         <projectConfigurable instance="com.chu7.ElementLibraryConfigurable"/>
-                       <projectService serviceImplementation="com.chu7.ElementLibrarySettings"/>
-               <projectService serviceImplementation="com.chu7.ComponentLibraryManager"/>
-        <!-- 在这里注册扩展点 -->
+        <projectService serviceImplementation="com.chu7.ElementLibrarySettings"/>
+        <projectService serviceImplementation="com.chu7.ComponentLibraryManager"/>
+        <lang.documentationProvider language="XML" implementationClass="com.chu7.ElementPlusDocumentationProvider"/>
     </extensions>
 
     <actions>
