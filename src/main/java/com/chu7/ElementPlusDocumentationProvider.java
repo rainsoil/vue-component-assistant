@@ -3,6 +3,7 @@ package com.chu7;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +42,7 @@ public class ElementPlusDocumentationProvider extends AbstractDocumentationProvi
 
         // 加载组件数据
         List<ComponentMeta> components = loadComponents();
+        
         // 处理组件标签
         if (element instanceof XmlTag) {
             XmlTag tag = (XmlTag) element;
@@ -60,25 +62,119 @@ public class ElementPlusDocumentationProvider extends AbstractDocumentationProvi
 
             if (parentTag != null) {
                 String tagName = parentTag.getName();
-
                 ComponentMeta component = findComponentByName(tagName, components);
 
                 if (component != null) {
+                    // 处理事件属性（以 @ 开头）
                     if (attributeName.startsWith("@")) {
-                        ComponentMeta.ComponentEvent event = findEventByName(attributeName.substring(1), component);
-                        return generateEventDoc(event);
-                    } else {
+                        String eventName = attributeName.substring(1);
+                        ComponentMeta.ComponentEvent event = findEventByName(eventName, component);
+                        if (event != null) {
+                            return generateEventDoc(event);
+                        }
+                    }
+                    // 处理动态绑定属性（以 : 开头）
+                    else if (attributeName.startsWith(":")) {
+                        String propName = attributeName.substring(1);
+                        ComponentMeta.ComponentProp prop = findPropertyByName(propName, component);
+                        if (prop != null) {
+                            return generatePropertyDoc(prop);
+                        }
+                    }
+                    // 处理普通属性
+                    else {
                         ComponentMeta.ComponentProp prop = findPropertyByName(attributeName, component);
                         if (prop != null) {
                             return generatePropertyDoc(prop);
                         }
                     }
-
                 }
             }
         }
 
         return null;
+    }
+
+    /**
+     * 重写 getDocumentationElementForLink 方法，用于选中时显示文档
+     */
+    @Override
+    public @Nullable PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
+        System.out.println("ElementPlusDocumentationProvider.getDocumentationElementForLink called with link: " + link);
+        
+        // 如果上下文是属性，尝试显示文档
+        if (context instanceof XmlAttribute) {
+            XmlAttribute attribute = (XmlAttribute) context;
+            String attributeName = attribute.getName();
+            XmlTag parentTag = attribute.getParent();
+            
+            if (parentTag != null) {
+                String tagName = parentTag.getName();
+                List<ComponentMeta> components = loadComponents();
+                ComponentMeta component = findComponentByName(tagName, components);
+                
+                if (component != null) {
+                    // 处理事件属性
+                    if (attributeName.startsWith("@")) {
+                        String eventName = attributeName.substring(1);
+                        ComponentMeta.ComponentEvent event = findEventByName(eventName, component);
+                        if (event != null) {
+                            // 返回属性本身作为文档元素
+                            return attribute;
+                        }
+                    }
+                    // 处理属性
+                    else {
+                        ComponentMeta.ComponentProp prop = findPropertyByName(attributeName, component);
+                        if (prop != null) {
+                            return attribute;
+                        }
+                    }
+                }
+            }
+        }
+        
+        return super.getDocumentationElementForLink(psiManager, link, context);
+    }
+
+    /**
+     * 重写 getQuickNavigateInfo 方法，用于选中时显示快速导航信息
+     */
+    @Override
+    public @Nullable String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+        System.out.println("ElementPlusDocumentationProvider.getQuickNavigateInfo called");
+        
+        if (element instanceof XmlAttribute) {
+            XmlAttribute attribute = (XmlAttribute) element;
+            String attributeName = attribute.getName();
+            XmlTag parentTag = attribute.getParent();
+            
+            if (parentTag != null) {
+                String tagName = parentTag.getName();
+                List<ComponentMeta> components = loadComponents();
+                ComponentMeta component = findComponentByName(tagName, components);
+                
+                if (component != null) {
+                    // 处理事件属性
+                    if (attributeName.startsWith("@")) {
+                        String eventName = attributeName.substring(1);
+                        ComponentMeta.ComponentEvent event = findEventByName(eventName, component);
+                        if (event != null) {
+                            return generateEventDoc(event);
+                        }
+                    }
+                    // 处理属性
+                    else {
+                        ComponentMeta.ComponentProp prop = findPropertyByName(attributeName, component);
+                        if (prop != null) {
+                            return generatePropertyDoc(prop);
+                        }
+                    }
+                }
+            }
+        }
+        
+        return super.getQuickNavigateInfo(element, originalElement);
     }
 
     /**
@@ -186,6 +282,9 @@ public class ElementPlusDocumentationProvider extends AbstractDocumentationProvi
                 if (prop.description != null) {
                     doc.append(": ").append(prop.description);
                 }
+                if (prop.defaultValue != null) {
+                    doc.append(" <em style='color: #666;'>[默认: ").append(prop.defaultValue).append("]</em>");
+                }
                 doc.append("</li>");
             }
             doc.append("</ul>");
@@ -199,6 +298,26 @@ public class ElementPlusDocumentationProvider extends AbstractDocumentationProvi
                 doc.append("<li><strong>@").append(event.name).append("</strong>");
                 if (event.description != null) {
                     doc.append(": ").append(event.description);
+                }
+                if (event.parameters != null && !event.parameters.isEmpty()) {
+                    doc.append(" <em style='color: #666;'>[参数: ").append(event.parameters).append("]</em>");
+                }
+                doc.append("</li>");
+            }
+            doc.append("</ul>");
+        }
+
+        // 卡槽列表
+        if (component.slots != null && !component.slots.isEmpty()) {
+            doc.append("<h4 style='color: #333; margin-bottom: 10px;'>卡槽列表:</h4>");
+            doc.append("<ul style='margin-bottom: 15px;'>");
+            for (ComponentMeta.ComponentSlot slot : component.slots) {
+                doc.append("<li><strong>slot: ").append(slot.name).append("</strong>");
+                if (slot.description != null) {
+                    doc.append(": ").append(slot.description);
+                }
+                if (slot.scope != null && !slot.scope.isEmpty()) {
+                    doc.append(" <em style='color: #666;'>[作用域: ").append(slot.scope).append("]</em>");
                 }
                 doc.append("</li>");
             }
@@ -342,6 +461,29 @@ public class ElementPlusDocumentationProvider extends AbstractDocumentationProvi
     }
 
     /**
+     * 静态方法：加载组件数据（供外部调用）
+     */
+    public static List<ComponentMeta> loadComponentsStatic() {
+        if (cachedComponents != null) {
+            return cachedComponents;
+        }
+
+        List<ComponentMeta> components = new ArrayList<>();
+
+        // 加载 Element Plus 组件
+        components.addAll(loadComponentsFromResourceStatic("data/element-plus-components.json"));
+
+        // 加载 Element UI 组件
+        components.addAll(loadComponentsFromResourceStatic("data/element-ui-components.json"));
+
+        // 加载 Ant Design Vue 组件
+        components.addAll(loadComponentsFromResourceStatic("data/ant-design-vue-components.json"));
+
+        cachedComponents = components;
+        return components;
+    }
+
+    /**
      * 从资源文件加载组件数据
      */
     private List<ComponentMeta> loadComponentsFromResource(String resourcePath) {
@@ -354,4 +496,19 @@ public class ElementPlusDocumentationProvider extends AbstractDocumentationProvi
             return new ArrayList<>();
         }
     }
+
+    /**
+     * 静态方法：从资源文件加载组件数据
+     */
+    private static List<ComponentMeta> loadComponentsFromResourceStatic(String resourcePath) {
+        try (InputStream is = ElementPlusDocumentationProvider.class.getClassLoader().getResourceAsStream(resourcePath)) {
+            if (is == null) return new ArrayList<>();
+            String json = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            return gson.fromJson(json, new TypeToken<List<ComponentMeta>>() {
+            }.getType());
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
+
 } 

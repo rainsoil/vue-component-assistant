@@ -94,13 +94,13 @@ public class ElementPlusCompletionContributor extends CompletionContributor {
 
                         // 根据输入内容决定显示什么补全
                         if (currentText != null && currentText.startsWith(":")) {
-                            // 输入 : 时显示属性
+                            // 输入 : 时显示属性 - 只显示当前组件的属性
                             addPropsCompletion(result, components, libraryManager, currentComponent);
                         } else if (currentText != null && currentText.startsWith("@")) {
-                            // 输入 @ 时显示事件
+                            // 输入 @ 时显示事件 - 只显示当前组件的事件
                             addEventsCompletion(result, components, libraryManager, currentComponent);
                         } else if (currentText != null && currentText.startsWith("slot:")) {
-                            // 输入 slot: 时显示卡槽
+                            // 输入 slot: 时显示卡槽 - 只显示当前组件的卡槽
                             addSlotsCompletion(result, components, libraryManager, currentComponent);
                         } else {
                             // 默认显示所有类型的补全
@@ -118,13 +118,13 @@ public class ElementPlusCompletionContributor extends CompletionContributor {
                             }
 
                             // 添加属性补全（不限制当前组件）
-                            addPropsCompletion(result, components, libraryManager, null);
+                            addPropsCompletion(result, components, libraryManager, currentComponent);
 
                             // 添加事件补全（不限制当前组件）
-                            addEventsCompletion(result, components, libraryManager, null);
+                            addEventsCompletion(result, components, libraryManager, currentComponent);
 
                             // 添加卡槽补全（不限制当前组件）
-                            addSlotsCompletion(result, components, libraryManager, null);
+                            addSlotsCompletion(result, components, libraryManager, currentComponent);
                         }
                     }
                 }
@@ -250,18 +250,29 @@ public class ElementPlusCompletionContributor extends CompletionContributor {
         // 如果找到了当前组件，只显示该组件的属性
         if (currentComponent != null) {
             addComponentProps(result, currentComponent);
+
+            // 如果当前组件是自定义组件，也显示其属性
+            if (libraryManager != null) {
+                List<ComponentMeta> customComponents = libraryManager.getAllComponents();
+                for (ComponentMeta comp : customComponents) {
+                    if (comp.name.equals(currentComponent.name)) {
+                        addComponentProps(result, comp);
+                        break;
+                    }
+                }
+            }
         } else {
             // 否则显示所有组件的属性
             for (ComponentMeta comp : components) {
                 addComponentProps(result, comp);
             }
-        }
 
-        // 添加自定义组件的属性
-        if (libraryManager != null) {
-            List<ComponentMeta> customComponents = libraryManager.getAllComponents();
-            for (ComponentMeta comp : customComponents) {
-                addComponentProps(result, comp);
+            // 添加自定义组件的属性
+            if (libraryManager != null) {
+                List<ComponentMeta> customComponents = libraryManager.getAllComponents();
+                for (ComponentMeta comp : customComponents) {
+                    addComponentProps(result, comp);
+                }
             }
         }
     }
@@ -332,7 +343,7 @@ public class ElementPlusCompletionContributor extends CompletionContributor {
                             );
                         })
                         .withLookupString(propName);
-                
+
                 // 添加普通属性
                 result.addElement(lookupElementBuilder);
             } catch (Exception e) {
@@ -348,21 +359,21 @@ public class ElementPlusCompletionContributor extends CompletionContributor {
                 }
             }
 
-            // 添加带 : 前缀的属性（动态绑定）
-            result.addElement(
-                    LookupElementBuilder.create(":" + propName)
-                            .withTypeText(type + " (动态绑定)", true)
-                            .withTailText("  " + tailText.toString(), true)
-                            .withPresentableText(":" + propName)
-                            .withInsertHandler((insertionContext, item) -> {
-                                insertionContext.getDocument().replaceString(
-                                        insertionContext.getStartOffset(),
-                                        insertionContext.getTailOffset(),
-                                        ":" + insertText
-                                );
-                            })
-                            .withLookupString(":" + propName)
-            );
+//            // 添加带 : 前缀的属性（动态绑定）
+//            result.addElement(
+//                    LookupElementBuilder.create(":" + propName)
+//                            .withTypeText(type + " (动态绑定)", true)
+//                            .withTailText("  " + tailText.toString(), true)
+//                            .withPresentableText(":" + propName)
+//                            .withInsertHandler((insertionContext, item) -> {
+//                                insertionContext.getDocument().replaceString(
+//                                        insertionContext.getStartOffset(),
+//                                        insertionContext.getTailOffset(),
+//                                        ":" + insertText
+//                                );
+//                            })
+//                            .withLookupString(":" + propName)
+//            );
         }
     }
 
@@ -377,18 +388,29 @@ public class ElementPlusCompletionContributor extends CompletionContributor {
         // 如果找到了当前组件，只显示该组件的事件
         if (currentComponent != null) {
             addComponentEvents(result, currentComponent);
+
+            // 如果当前组件是自定义组件，也显示其事件
+            if (libraryManager != null) {
+                List<ComponentMeta> customComponents = libraryManager.getAllComponents();
+                for (ComponentMeta comp : customComponents) {
+                    if (comp.name.equals(currentComponent.name)) {
+                        addComponentEvents(result, comp);
+                        break;
+                    }
+                }
+            }
         } else {
             // 否则显示所有组件的事件
             for (ComponentMeta comp : components) {
                 addComponentEvents(result, comp);
             }
-        }
 
-        // 添加自定义组件的事件
-        if (libraryManager != null) {
-            List<ComponentMeta> customComponents = libraryManager.getAllComponents();
-            for (ComponentMeta comp : customComponents) {
-                addComponentEvents(result, comp);
+            // 添加自定义组件的事件
+            if (libraryManager != null) {
+                List<ComponentMeta> customComponents = libraryManager.getAllComponents();
+                for (ComponentMeta comp : customComponents) {
+                    addComponentEvents(result, comp);
+                }
             }
         }
     }
@@ -462,18 +484,29 @@ public class ElementPlusCompletionContributor extends CompletionContributor {
         // 如果找到了当前组件，只显示该组件的卡槽
         if (currentComponent != null) {
             addComponentSlots(result, currentComponent);
+
+            // 如果当前组件是自定义组件，也显示其卡槽
+            if (libraryManager != null) {
+                List<ComponentMeta> customComponents = libraryManager.getAllComponents();
+                for (ComponentMeta comp : customComponents) {
+                    if (comp.name.equals(currentComponent.name)) {
+                        addComponentSlots(result, comp);
+                        break;
+                    }
+                }
+            }
         } else {
             // 否则显示所有组件的卡槽
             for (ComponentMeta comp : components) {
                 addComponentSlots(result, comp);
             }
-        }
 
-        // 添加自定义组件的卡槽
-        if (libraryManager != null) {
-            List<ComponentMeta> customComponents = libraryManager.getAllComponents();
-            for (ComponentMeta comp : customComponents) {
-                addComponentSlots(result, comp);
+            // 添加自定义组件的卡槽
+            if (libraryManager != null) {
+                List<ComponentMeta> customComponents = libraryManager.getAllComponents();
+                for (ComponentMeta comp : customComponents) {
+                    addComponentSlots(result, comp);
+                }
             }
         }
     }
@@ -499,9 +532,7 @@ public class ElementPlusCompletionContributor extends CompletionContributor {
 
             // 构建示例代码
             final String insertText;
-            if ("default".equals(slot.name)) {
-                insertText = "内容";
-            } else if (!scope.isEmpty()) {
+            if (!scope.isEmpty()) {
                 insertText = "<template #" + slot.name + "=\"" + scope + "\">\n  <!-- " + description + " -->\n</template>";
             } else {
                 insertText = "<template #" + slot.name + ">\n  <!-- " + description + " -->\n</template>";
@@ -582,8 +613,16 @@ public class ElementPlusCompletionContributor extends CompletionContributor {
         PsiElement element = parameters.getPosition();
         if (element == null) return "";
 
+
         // 向上查找最近的 XmlTag
-        PsiElement parent = element.getParent();
+        PsiElement parent = null;
+        try {
+            parent = element.getParent();
+        } catch (Exception e) {
+            e.printStackTrace();
+//            throw new RuntimeException(e);
+            return "";
+        }
         while (parent != null && !(parent instanceof XmlTag)) {
             parent = parent.getParent();
         }

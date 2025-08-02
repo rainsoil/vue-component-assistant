@@ -19,6 +19,12 @@
     </extensions>
 
     <actions>
-        <!-- 在这里注册菜单/工具栏动作 -->
+        <!-- 右键菜单动作 -->
+        <action id="ShowDocumentationAction" 
+                class="com.chu7.ShowDocumentationAction" 
+                text="显示文档" 
+                description="显示组件、属性或事件的详细文档">
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+        </action>
     </actions>
 </idea-plugin>
