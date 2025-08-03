@@ -12,21 +12,157 @@
         "description": "自定义按钮组件",
         "version": "1.0.0",
         "example": "<my-button type=\"primary\">按钮</my-button>",
-        "docUrl": "https://your-docs.com/my-button"
+        "docUrl": "https://your-docs.com/my-button",
+        "props": [
+          {
+            "name": "type",
+            "type": "string",
+            "description": "按钮类型",
+            "defaultValue": "default",
+            "required": false,
+            "options": ["primary", "success", "warning", "danger", "default"]
+          },
+          {
+            "name": "size",
+            "type": "string",
+            "description": "按钮尺寸",
+            "defaultValue": "medium",
+            "required": false,
+            "options": ["large", "medium", "small"]
+          },
+          {
+            "name": "disabled",
+            "type": "boolean",
+            "description": "是否禁用",
+            "defaultValue": "false",
+            "required": false
+          }
+        ],
+        "events": [
+          {
+            "name": "click",
+            "description": "点击按钮时触发",
+            "parameters": "event"
+          }
+        ],
+        "slots": [
+          {
+            "name": "default",
+            "description": "按钮内容"
+          },
+          {
+            "name": "icon",
+            "description": "按钮图标"
+          }
+        ]
       },
       {
         "name": "my-input",
         "description": "自定义输入框组件",
         "version": "1.0.0",
         "example": "<my-input v-model=\"value\" />",
-        "docUrl": "https://your-docs.com/my-input"
+        "docUrl": "https://your-docs.com/my-input",
+        "props": [
+          {
+            "name": "value",
+            "type": "string",
+            "description": "绑定值",
+            "defaultValue": "",
+            "required": false
+          },
+          {
+            "name": "placeholder",
+            "type": "string",
+            "description": "占位符",
+            "defaultValue": "",
+            "required": false
+          },
+          {
+            "name": "disabled",
+            "type": "boolean",
+            "description": "是否禁用",
+            "defaultValue": "false",
+            "required": false
+          }
+        ],
+        "events": [
+          {
+            "name": "input",
+            "description": "输入值改变时触发",
+            "parameters": "value"
+          },
+          {
+            "name": "change",
+            "description": "值改变时触发",
+            "parameters": "value"
+          }
+        ],
+        "slots": [
+          {
+            "name": "default",
+            "description": "输入框内容"
+          },
+          {
+            "name": "prefix",
+            "description": "输入框前缀"
+          },
+          {
+            "name": "suffix",
+            "description": "输入框后缀"
+          }
+        ]
       },
       {
         "name": "my-card",
         "description": "自定义卡片组件",
         "version": "1.0.0",
         "example": "<my-card title=\"标题\">内容</my-card>",
-        "docUrl": "https://your-docs.com/my-card"
+        "docUrl": "https://your-docs.com/my-card",
+        "props": [
+          {
+            "name": "title",
+            "type": "string",
+            "description": "卡片标题",
+            "defaultValue": "",
+            "required": false
+          },
+          {
+            "name": "shadow",
+            "type": "string",
+            "description": "阴影类型",
+            "defaultValue": "always",
+            "required": false,
+            "options": ["always", "hover", "never"]
+          },
+          {
+            "name": "border",
+            "type": "boolean",
+            "description": "是否显示边框",
+            "defaultValue": "true",
+            "required": false
+          }
+        ],
+        "events": [
+          {
+            "name": "header-click",
+            "description": "点击头部时触发",
+            "parameters": "event"
+          }
+        ],
+        "slots": [
+          {
+            "name": "default",
+            "description": "卡片内容"
+          },
+          {
+            "name": "header",
+            "description": "卡片头部"
+          },
+          {
+            "name": "footer",
+            "description": "卡片底部"
+          }
+        ]
       }
     ]
   },
@@ -43,14 +179,105 @@
         "description": "业务表格组件",
         "version": "2.0.0",
         "example": "<business-table :data=\"tableData\" />",
-        "docUrl": "https://business-components.com/docs/table"
+        "docUrl": "https://business-components.com/docs/table",
+        "props": [
+          {
+            "name": "data",
+            "type": "array",
+            "description": "表格数据",
+            "defaultValue": "[]",
+            "required": false
+          },
+          {
+            "name": "columns",
+            "type": "array",
+            "description": "表格列配置",
+            "defaultValue": "[]",
+            "required": false
+          },
+          {
+            "name": "loading",
+            "type": "boolean",
+            "description": "是否显示加载状态",
+            "defaultValue": "false",
+            "required": false
+          }
+        ],
+        "events": [
+          {
+            "name": "row-click",
+            "description": "行点击事件",
+            "parameters": "row, index"
+          },
+          {
+            "name": "selection-change",
+            "description": "选择变化事件",
+            "parameters": "selection"
+          }
+        ],
+        "slots": [
+          {
+            "name": "default",
+            "description": "表格内容"
+          },
+          {
+            "name": "empty",
+            "description": "空数据时显示的内容"
+          }
+        ]
       },
       {
         "name": "business-form",
         "description": "业务表单组件",
         "version": "2.0.0",
         "example": "<business-form :model=\"formData\" />",
-        "docUrl": "https://business-components.com/docs/form"
+        "docUrl": "https://business-components.com/docs/form",
+        "props": [
+          {
+            "name": "model",
+            "type": "object",
+            "description": "表单数据对象",
+            "defaultValue": "",
+            "required": false
+          },
+          {
+            "name": "rules",
+            "type": "object",
+            "description": "表单验证规则",
+            "defaultValue": "",
+            "required": false
+          },
+          {
+            "name": "layout",
+            "type": "string",
+            "description": "表单布局",
+            "defaultValue": "horizontal",
+            "required": false,
+            "options": ["horizontal", "vertical", "inline"]
+          }
+        ],
+        "events": [
+          {
+            "name": "submit",
+            "description": "表单提交事件",
+            "parameters": "formData"
+          },
+          {
+            "name": "validate",
+            "description": "表单验证事件",
+            "parameters": "isValid, errors"
+          }
+        ],
+        "slots": [
+          {
+            "name": "default",
+            "description": "表单内容"
+          },
+          {
+            "name": "actions",
+            "description": "表单操作按钮"
+          }
+        ]
       }
     ]
   }

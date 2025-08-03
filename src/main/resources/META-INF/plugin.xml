@@ -1,11 +1,40 @@
 <idea-plugin>
-    <id>com.chu7.webx-plugin</id>
-    <name>webx-plugin</name>
-    <version>1.0</version>
-    <vendor email="your@email.com" url="https://your-url.com">Your Name</vendor>
+    <id>com.chu7.vue-component-assistant</id>
+    <name>Vue Component Assistant (Vue组件助手)</name>
+    <version>1.0.0</version>
+    <vendor email="support@chu7.com" url="https://github.com/chu7/vue-component-assistant">chu7</vendor>
 
     <description>
-        这是一个示例 IDEA 插件。
+        <![CDATA[
+        <h3>Vue Component Assistant (Vue组件助手)</h3>
+        <p>一个专为Vue.js开发者设计的IntelliJ IDEA插件，提供智能的组件补全、文档提示和开发辅助功能。</p>
+        
+        <h4>主要功能：</h4>
+        <ul>
+            <li><b>智能组件补全</b> - 支持Element Plus、Element UI、Ant Design Vue等主流UI组件库</li>
+            <li><b>属性智能提示</b> - 根据组件类型提供相关属性、事件、卡槽的智能提示</li>
+            <li><b>实时文档显示</b> - 悬停或选中时显示详细的组件文档和使用示例</li>
+            <li><b>多组件库支持</b> - 自动检测项目使用的组件库，支持手动配置</li>
+            <li><b>自定义组件库</b> - 支持导入和管理自定义组件库</li>
+            <li><b>右键文档查看</b> - 右键菜单快速查看组件、属性、事件的详细文档</li>
+        </ul>
+        
+        <h4>支持的组件库：</h4>
+        <ul>
+            <li>Element Plus (最新版本)</li>
+            <li>Element UI (经典版本)</li>
+            <li>Ant Design Vue</li>
+            <li>自定义组件库</li>
+        </ul>
+        
+        <h4>使用场景：</h4>
+        <ul>
+            <li>Vue.js项目开发</li>
+            <li>组件库文档查询</li>
+            <li>代码补全和提示</li>
+            <li>开发效率提升</li>
+        </ul>
+        ]]>
     </description>
 
     <depends>com.intellij.modules.platform</depends>
