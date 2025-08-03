@@ -22,6 +22,7 @@ public class ComponentLibraryDialog extends DialogWrapper {
     private DefaultListModel<ComponentLibrary> listModel;
     private ComponentLibraryManager manager;
     private JTextArea infoTextArea;
+    private JCheckBox enableCheckBox;
 
     public ComponentLibraryDialog(Project project) {
         super(project);
@@ -63,6 +64,11 @@ public class ComponentLibraryDialog extends DialogWrapper {
         infoScrollPane.setPreferredSize(new Dimension(400, 300));
         panel.add(infoScrollPane, BorderLayout.CENTER);
         
+        // 启用/禁用复选框
+        enableCheckBox = new JCheckBox("启用此组件库");
+        enableCheckBox.addActionListener(e -> toggleLibraryEnabled());
+        panel.add(enableCheckBox, BorderLayout.NORTH);
+        
         // 按钮面板
         JPanel buttonPanel = new JPanel();
         JButton deleteButton = new JButton("删除组件库");
@@ -88,8 +94,10 @@ public class ComponentLibraryDialog extends DialogWrapper {
                 ComponentLibrary selected = libraryList.getSelectedValue();
                 if (selected != null) {
                     showLibraryInfo(selected);
+                    updateEnableCheckBox(selected);
                 } else {
                     infoTextArea.setText("");
+                    enableCheckBox.setEnabled(false);
                 }
             }
         });
@@ -99,51 +107,111 @@ public class ComponentLibraryDialog extends DialogWrapper {
 
     private void refreshLibraryList() {
         listModel.clear();
-        Map<String, ComponentLibrary> libraries = manager.getLibraries();
-        for (ComponentLibrary library : libraries.values()) {
-            listModel.addElement(library);
+        
+        // 添加内置组件库
+        addBuiltinLibraries();
+        
+        // 添加自定义组件库
+        addCustomLibraries();
+    }
+
+    private void addBuiltinLibraries() {
+        // Element Plus
+        ComponentLibrary elementPlus = manager.getLibrary(ComponentLibraryManager.ELEMENT_PLUS);
+        if (elementPlus != null) {
+            listModel.addElement(elementPlus);
+        }
+        
+        // Element UI
+        ComponentLibrary elementUI = manager.getLibrary(ComponentLibraryManager.ELEMENT_UI);
+        if (elementUI != null) {
+            listModel.addElement(elementUI);
+        }
+        
+        // Ant Design Vue
+        ComponentLibrary antDesignVue = manager.getLibrary(ComponentLibraryManager.ANT_DESIGN_VUE);
+        if (antDesignVue != null) {
+            listModel.addElement(antDesignVue);
+        }
+    }
+
+    private void addCustomLibraries() {
+        List<String> customLibraries = manager.getCustomLibraries();
+        for (String libraryName : customLibraries) {
+            ComponentLibrary library = manager.getLibrary(libraryName);
+            if (library != null) {
+                listModel.addElement(library);
+            }
         }
     }
 
     private void showLibraryInfo(ComponentLibrary library) {
         StringBuilder info = new StringBuilder();
-        info.append("组件库信息:\n\n");
-        info.append("名称: ").append(library.name).append("\n");
-        info.append("描述: ").append(library.description != null ? library.description : "").append("\n");
-        info.append("版本: ").append(library.version != null ? library.version : "").append("\n");
-        info.append("作者: ").append(library.author != null ? library.author : "").append("\n");
-        info.append("官网: ").append(library.website != null ? library.website : "").append("\n");
-        info.append("文档: ").append(library.docUrl != null ? library.docUrl : "").append("\n\n");
+        info.append("组件库信息：\n\n");
+        info.append("名称：").append(library.name).append("\n");
+        info.append("描述：").append(library.description).append("\n");
+        info.append("版本：").append(library.version).append("\n");
+        info.append("作者：").append(library.author).append("\n");
+        info.append("官网：").append(library.website).append("\n");
+        info.append("文档：").append(library.docUrl).append("\n");
+        info.append("组件数量：").append(library.components.size()).append("\n");
         
-        List<ComponentMeta> components = library.getComponents();
-        info.append("包含组件 (").append(components.size()).append(" 个):\n");
-        for (ComponentMeta component : components) {
-            info.append("• ").append(component.name);
-            if (component.description != null && !component.description.isEmpty()) {
-                info.append(" - ").append(component.description);
-            }
-            info.append("\n");
+        if (manager.isBuiltinLibrary(library.name)) {
+            info.append("\n类型：内置组件库");
+        } else {
+            info.append("\n类型：自定义组件库");
         }
         
         infoTextArea.setText(info.toString());
     }
 
-    private void deleteLibrary() {
+    private void updateEnableCheckBox(ComponentLibrary library) {
+        boolean isEnabled = manager.isLibraryEnabled(library.name);
+        enableCheckBox.setSelected(isEnabled);
+        enableCheckBox.setEnabled(true);
+        
+        // 内置组件库显示不同的文本
+        if (manager.isBuiltinLibrary(library.name)) {
+            enableCheckBox.setText("启用此组件库");
+        } else {
+            enableCheckBox.setText("启用此组件库");
+        }
+    }
+
+    private void toggleLibraryEnabled() {
         ComponentLibrary selected = libraryList.getSelectedValue();
         if (selected != null) {
-            int result = JOptionPane.showConfirmDialog(
-                getContentPane(),
-                "确定要删除组件库 '" + selected.name + "' 吗？\n这将删除该组件库中的所有组件。",
-                "确认删除",
-                JOptionPane.YES_NO_OPTION
-            );
-            if (result == JOptionPane.YES_OPTION) {
-                manager.removeLibrary(selected.name);
-                refreshLibraryList();
-                infoTextArea.setText("");
+            boolean enabled = enableCheckBox.isSelected();
+            if (enabled) {
+                manager.enableLibrary(selected.name);
+            } else {
+                manager.disableLibrary(selected.name);
             }
-        } else {
-            Messages.showWarningDialog(getContentPane(), "请先选择一个组件库", "提示");
+        }
+    }
+
+    private void deleteLibrary() {
+        ComponentLibrary selected = libraryList.getSelectedValue();
+        if (selected == null) {
+            Messages.showWarningDialog("请先选择一个组件库", "删除组件库");
+            return;
+        }
+        
+        if (manager.isBuiltinLibrary(selected.name)) {
+            Messages.showInfoMessage("内置组件库不能删除，只能禁用", "删除组件库");
+            return;
+        }
+        
+        int result = Messages.showYesNoDialog(
+            "确定要删除组件库 '" + selected.name + "' 吗？", 
+            "确认删除", 
+            Messages.getQuestionIcon()
+        );
+        
+        if (result == Messages.YES) {
+            manager.removeLibrary(selected.name);
+            refreshLibraryList();
+            infoTextArea.setText("");
         }
     }
 
@@ -155,22 +223,38 @@ public class ComponentLibraryDialog extends DialogWrapper {
     private void uploadComponentLibrary() {
         FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false)
                 .withFileFilter(file -> file.getExtension() != null && file.getExtension().equals("json"))
-                .withTitle("选择组件库 JSON 文件")
-                .withDescription("请选择包含组件库定义的 JSON 文件");
-
+                .withTitle("选择组件库文件")
+                .withDescription("选择 JSON 格式的组件库文件");
+//        FileChooser.chooseFiles(descriptor, manager.getProject(), null, new FileChooser.FileChooserConsumer() {
+//            @Override
+//            public void cancelled() {
+//            }
+//
+//            @Override
+//            public void consume(List<VirtualFile> virtualFiles) {
+//                for (VirtualFile file : virtualFiles) {
+//                    if (file != null) {
+//                        boolean success = ComponentLibraryUploader.uploadComponentLibrary(manager.getProject(), file);
+//                        if (success) {
+//                            refreshLibraryList();
+//                        }
+//                    }
+//                }
+//            }
+//        });
         FileChooser.chooseFiles(descriptor, manager.getProject(), null, new FileChooser.FileChooserConsumer() {
             @Override
             public void cancelled() {
+                // 用户取消选择
             }
 
             @Override
             public void consume(List<VirtualFile> virtualFiles) {
-                for (VirtualFile file : virtualFiles) {
-                    if (file != null) {
-                        boolean success = ComponentLibraryUploader.uploadComponentLibrary(manager.getProject(), file);
-                        if (success) {
-                            refreshLibraryList();
-                        }
+                if (!virtualFiles.isEmpty()) {
+                    VirtualFile file = virtualFiles.get(0);
+                    boolean success = ComponentLibraryUploader.uploadComponentLibrary(manager.getProject(), file);
+                    if (success) {
+                        refreshLibraryList();
                     }
                 }
             }
@@ -178,26 +262,20 @@ public class ComponentLibraryDialog extends DialogWrapper {
     }
 
     private void downloadTemplate() {
-        String template = ComponentLibraryUploader.generateComponentLibraryTemplate();
+        String template = ComponentLibraryUploader.getComponentLibraryTemplate();
         CopyPasteManager.getInstance().setContents(new StringSelection(template));
-        Messages.showInfoMessage(getContentPane(),
-                "模板已复制到剪贴板，请粘贴到文本编辑器中保存为 .json 文件",
-                "模板下载成功");
+        Messages.showInfoMessage("组件库模板已复制到剪贴板", "下载模板");
     }
 
     private void exportComponentLibrary() {
-        Map<String, ComponentLibrary> libraries = manager.getLibraries();
-        if (libraries.isEmpty()) {
-            Messages.showWarningDialog(manager.getProject(),
-                    "当前没有组件库可导出",
-                    "导出失败");
+        ComponentLibrary selected = libraryList.getSelectedValue();
+        if (selected == null) {
+            Messages.showWarningDialog("请先选择一个组件库", "导出组件库");
             return;
         }
-
-        String json = manager.exportLibrariesToJson();
+        
+        String json = new com.google.gson.Gson().toJson(selected);
         CopyPasteManager.getInstance().setContents(new StringSelection(json));
-        Messages.showInfoMessage(getContentPane(),
-                String.format("已导出 %d 个组件库到剪贴板，请粘贴到文本编辑器中保存", libraries.size()),
-                "导出成功");
+        Messages.showInfoMessage("组件库数据已复制到剪贴板", "导出组件库");
     }
 } 

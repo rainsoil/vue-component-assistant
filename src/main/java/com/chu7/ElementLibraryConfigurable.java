@@ -17,11 +17,12 @@ public class ElementLibraryConfigurable implements Configurable {
     private JList<String> availableLibrariesList;
     private JList<String> selectedLibrariesList;
     private DefaultListModel<String> selectedLibrariesModel;
+    private ComponentLibraryManager libraryManager;
 
     @Nls
     @Override
     public String getDisplayName() {
-        return "Element 组件库选择";
+        return "Vue 组件库管理";
     }
 
     @Nullable
@@ -38,7 +39,7 @@ public class ElementLibraryConfigurable implements Configurable {
         selectionPanel.add(new JLabel("选择要使用的组件库："), BorderLayout.NORTH);
         
         // 可用组件库列表
-        availableLibrariesList = new JList<>(new String[]{"Element Plus", "Element UI", "Ant Design Vue"});
+        updateAvailableLibrariesList();
         JScrollPane availableScrollPane = new JScrollPane(availableLibrariesList);
         availableScrollPane.setPreferredSize(new Dimension(200, 150));
         selectionPanel.add(availableScrollPane, BorderLayout.WEST);
@@ -70,11 +71,42 @@ public class ElementLibraryConfigurable implements Configurable {
             if (project != null) {
                 ComponentLibraryDialog dialog = new ComponentLibraryDialog(project);
                 dialog.show();
+                // 刷新可用组件库列表
+                updateAvailableLibrariesList();
             }
         });
         panel.add(customButton, BorderLayout.SOUTH);
         
         return panel;
+    }
+
+    /**
+     * 更新可用组件库列表
+     */
+    private void updateAvailableLibrariesList() {
+        Project project = getCurrentProject();
+        if (project != null) {
+            libraryManager = ComponentLibraryManager.getInstance(project);
+            List<String> allLibraries = new ArrayList<>();
+            
+            // 添加内置组件库
+            allLibraries.add("Element Plus");
+            allLibraries.add("Element UI");
+            allLibraries.add("Ant Design Vue");
+            
+            // 添加自定义组件库
+            List<String> customLibraries = libraryManager.getCustomLibraries();
+            for (String customLib : customLibraries) {
+                ComponentLibrary library = libraryManager.getLibrary(customLib);
+                if (library != null) {
+                    allLibraries.add(library.name);
+                }
+            }
+            
+            availableLibrariesList = new JList<>(allLibraries.toArray(new String[0]));
+        } else {
+            availableLibrariesList = new JList<>(new String[]{"Element Plus", "Element UI", "Ant Design Vue"});
+        }
     }
 
     @Override
@@ -100,6 +132,11 @@ public class ElementLibraryConfigurable implements Configurable {
         ElementLibrarySettings settings = ElementLibrarySettings.getInstance(project);
         settings.setAutoDetect(autoDetectCheckBox.isSelected());
         settings.setSelectedLibraries(getSelectedLibraries());
+        
+        // 更新组件库管理器的启用状态
+        if (libraryManager != null) {
+            libraryManager.setEnabledLibraries(getSelectedLibraries());
+        }
     }
 
     @Override
@@ -146,18 +183,18 @@ public class ElementLibraryConfigurable implements Configurable {
 
     private String displayToLibrary(String display) {
         switch (display) {
-            case "Element Plus": return "element-plus";
-            case "Element UI": return "element-ui";
-            case "Ant Design Vue": return "ant-design-vue";
+            case "Element Plus": return ComponentLibraryManager.ELEMENT_PLUS;
+            case "Element UI": return ComponentLibraryManager.ELEMENT_UI;
+            case "Ant Design Vue": return ComponentLibraryManager.ANT_DESIGN_VUE;
             default: return display;
         }
     }
 
     private String libraryToDisplay(String lib) {
         switch (lib) {
-            case "element-plus": return "Element Plus";
-            case "element-ui": return "Element UI";
-            case "ant-design-vue": return "Ant Design Vue";
+            case ComponentLibraryManager.ELEMENT_PLUS: return "Element Plus";
+            case ComponentLibraryManager.ELEMENT_UI: return "Element UI";
+            case ComponentLibraryManager.ANT_DESIGN_VUE: return "Ant Design Vue";
             default: return lib;
         }
     }

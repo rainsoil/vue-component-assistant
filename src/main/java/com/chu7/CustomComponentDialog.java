@@ -260,7 +260,7 @@ public class CustomComponentDialog extends DialogWrapper {
     }
 
     private void downloadTemplate() {
-        String template = ComponentLibraryUploader.generateComponentLibraryTemplate();
+        String template = ComponentLibraryUploader.getComponentLibraryTemplate();
         CopyPasteManager.getInstance().setContents(new StringSelection(template));
         Messages.showInfoMessage(getContentPane(),
                 "模板已复制到剪贴板，请粘贴到文本编辑器中保存为 .json 文件",

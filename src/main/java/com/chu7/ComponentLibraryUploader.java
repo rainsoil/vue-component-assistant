@@ -78,11 +78,11 @@ public class ComponentLibraryUploader {
     }
     
     /**
-     * 生成组件库模板
+     * 获取组件库模板
      * 提供一个完整的组件库 JSON 模板，包含属性、事件和卡槽的示例
      * @return JSON 格式的组件库模板
      */
-    public static String generateComponentLibraryTemplate() {
+    public static String getComponentLibraryTemplate() {
         return """
             [
               {
