@@ -197,9 +197,9 @@ cd vue-component-assistant
 
 ## 📞 联系方式
 
-- 项目主页: [https://github.com/chu7/vue-component-assistant](https://github.com/chu7/vue-component-assistant)
-- 问题反馈: [Issues](https://github.com/chu7/vue-component-assistant/issues)
-- 邮箱: support@chu7.com
+- 项目主页: [https://github.com/rainsoil/vue-component-assistant](https://github.com/chu7/vue-component-assistant)
+- 问题反馈: [Issues](https://github.com/rainsoil/vue-component-assistant/issues)
+
 
 ---
 
