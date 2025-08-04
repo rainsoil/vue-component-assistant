@@ -26,6 +26,25 @@ tasks.withType(JavaCompile) {
 tasks.withType(JavaExec) {
     jvmArgs '-Dfile.encoding=UTF-8'
 }
+
+tasks {
+    patchPluginXml {
+        sinceBuild.set("231")
+        untilBuild.set("241.*")
+
+    }
+
+    signPlugin {
+        // 可选：如果你已有证书可在这里配置，否则用 JetBrains Console 上传时签名
+//        certificateChain.set(file("certs/chain.crt").readText())
+//        privateKey.set(file("certs/private.pem").readText())
+//        password.set("your-password")
+    }
+
+    publishPlugin {
+        token.set(System.getenv("PUBLISH_TOKEN")) // 建议使用环境变量
+    }
+}
 dependencies {
     // 你的依赖
 }

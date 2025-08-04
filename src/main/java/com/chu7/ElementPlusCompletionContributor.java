@@ -118,13 +118,13 @@ public class ElementPlusCompletionContributor extends CompletionContributor {
                             }
 
                             // 添加属性补全（不限制当前组件）
-                            addPropsCompletion(result, components, libraryManager, currentComponent);
+                            addPropsCompletion(result, components, libraryManager, null);
 
                             // 添加事件补全（不限制当前组件）
-                            addEventsCompletion(result, components, libraryManager, currentComponent);
+                            addEventsCompletion(result, components, libraryManager, null);
 
                             // 添加卡槽补全（不限制当前组件）
-                            addSlotsCompletion(result, components, libraryManager, currentComponent);
+                            addSlotsCompletion(result, components, libraryManager, null);
                         }
                     }
                 }

@@ -26,14 +26,7 @@ public class ElementPlusDocumentationProvider extends AbstractDocumentationProvi
 
     @Override
     public @Nullable String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
-        // 添加调试信息
-        System.out.println("ElementPlusDocumentationProvider.generateDoc called");
-        System.out.println("Element type: " + (element != null ? element.getClass().getSimpleName() : "null"));
-        if (element instanceof XmlAttribute) {
-            XmlAttribute attr = (XmlAttribute) element;
-            System.out.println("Attribute name: " + attr.getName());
-            System.out.println("Attribute value: " + attr.getValue());
-        }
+
         
         if (element == null) return null;
 

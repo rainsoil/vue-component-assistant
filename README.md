@@ -201,6 +201,9 @@ cd vue-component-assistant
 - 问题反馈: [Issues](https://github.com/rainsoil/vue-component-assistant/issues)
 
 
+## 接下来的计划
+1. 组件配置可以从远程url中下载
+2. 优化属性、事件、插槽的提示
 ---
 
 ⭐ 如果这个项目对您有帮助，请给我们一个星标！
