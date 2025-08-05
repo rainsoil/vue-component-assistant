@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.chu7.vue-component-assistant</id>
-    <name>Vue Component Assistant (Vue组件助手)</name>
-    <version>1.0.0</version>
+    <name>Vue-Component-Assistant(Vue组件助手)</name>
+    <version>1.0.1</version>
     <vendor email="luyanan0718@163.com" url="https://github.com/rainsoil/vue-component-assistant">luyanan</vendor>
 
     <description>
