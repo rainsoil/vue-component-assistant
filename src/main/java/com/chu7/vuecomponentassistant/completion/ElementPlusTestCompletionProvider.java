@@ -13,33 +13,67 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Element Plus 测试补全提供者
- * 用于调试和测试基本功能
+ * Element Plus 智能补全提供者
+ * 
+ * 功能说明：
+ * 1. 组件补全：输入 < 时提供 Element Plus 组件列表
+ * 2. 属性补全：在组件标签内输入空格时提供该组件的属性列表
+ * 3. 事件补全：输入 @ 时提供该组件的事件列表
+ * 4. 插槽补全：输入 sl 或 slot 时提供该组件的插槽列表
+ * 
+ * 智能特性：
+ * - 根据前缀过滤，只显示匹配的选项
+ * - 自动插入完整的标签结构
+ * - 提供详细的中文描述和文档链接
+ * - 支持作用域插槽的完整模板生成
+ * 
+ * @author Vue Component Assistant Team
+ * @version 1.0.0
  */
 public class ElementPlusTestCompletionProvider extends CompletionProvider<CompletionParameters> {
 
+    /** 组件数据提供者，负责加载和管理 Element Plus 组件数据 */
     private final ElementPlusComponentProvider componentProvider;
 
+    /**
+     * 构造函数
+     * 初始化组件数据提供者，用于获取 Element Plus 组件的详细信息
+     */
     public ElementPlusTestCompletionProvider() {
         this.componentProvider = new ElementPlusComponentProvider();
     }
 
+    /**
+     * 主要的补全方法，由 IntelliJ IDEA 调用
+     * 
+     * 工作流程：
+     * 1. 获取当前光标位置的上下文信息
+     * 2. 分析用户输入的内容和位置
+     * 3. 根据上下文类型提供相应的补全选项
+     * 4. 将补全结果添加到结果集中
+     * 
+     * @param parameters 补全参数，包含光标位置等信息
+     * @param context 处理上下文
+     * @param result 补全结果集，用于添加补全选项
+     */
     @Override
     protected void addCompletions(@NotNull CompletionParameters parameters,
                                   @NotNull ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
 
+        // 获取当前光标位置的 PSI 元素
         PsiElement element = parameters.getPosition();
         PsiFile file = element.getContainingFile();
 
+        // 安全检查：确保文件存在
         if (file == null) {
             return;
         }
 
-        // 分析当前位置的上下文
+        // 分析当前位置的上下文，确定用户想要什么类型的补全
         CompletionContext completionContext = analyzeContext(file, element);
 
-        // 添加调试信息
+        // 添加详细的调试信息，帮助开发者了解补全过程
         System.out.println("=== 补全调试信息 ===");
         System.out.println("文件: " + file.getName());
         System.out.println("位置: " + element.getTextOffset());
@@ -49,51 +83,68 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
         System.out.println("前缀: " + completionContext.getPrefix());
         System.out.println("==================");
 
+        // 根据上下文类型提供相应的补全选项
         switch (completionContext.getType()) {
             case COMPONENT:
+                // 组件补全：用户输入 < 时显示组件列表
                 addComponentCompletions(result, completionContext.getPrefix());
                 break;
             case ATTRIBUTE:
+                // 属性补全：在组件标签内输入空格时显示属性列表
                 addAttributeCompletions(result, completionContext.getCurrentComponent(), completionContext.getPrefix());
                 break;
             case EVENT:
+                // 事件补全：输入 @ 时显示事件列表
                 addEventCompletions(result, completionContext.getCurrentComponent(), completionContext.getPrefix());
                 break;
             case SLOT:
+                // 插槽补全：输入 sl 或 slot 时显示插槽列表
                 addSlotCompletions(result, completionContext.getCurrentComponent(), completionContext.getPrefix());
                 break;
         }
     }
 
     /**
-     * 添加组件补全
+     * 添加组件补全选项
+     * 
+     * 功能说明：
+     * - 当用户输入 < 时，提供 Element Plus 组件列表
+     * - 支持前缀过滤，只显示匹配的组件
+     * - 自动插入完整的组件标签结构
+     * - 限制显示数量，避免选项过多影响用户体验
+     * 
+     * @param result 补全结果集
+     * @param prefix 用户输入的前缀，用于过滤组件
      */
     private void addComponentCompletions(CompletionResultSet result, String prefix) {
         List<ElementPlusComponent> components;
 
+        // 根据用户输入的前缀过滤组件
         if (prefix != null && !prefix.isEmpty()) {
-            // 根据前缀过滤组件
+            // 有前缀时，只显示匹配的组件
             components = componentProvider.searchComponents(prefix);
         } else {
-            // 显示所有组件
+            // 无前缀时，显示所有可用组件
             components = componentProvider.getAllComponents();
         }
 
-        // 限制显示数量，避免过多选项
+        // 限制显示数量，避免过多选项影响用户体验
         int count = 0;
-        int maxCount = 30;
+        int maxCount = 30; // 最多显示30个组件
 
         for (ElementPlusComponent component : components) {
             if (count >= maxCount) break;
 
+            // 创建组件补全元素
             LookupElementBuilder element = LookupElementBuilder.create(component.getName())
-                    .withTypeText("Element Plus Component")
-                    .withTailText(" " + component.getDescription())
-                    .withIcon(ElementPlusIcons.COMPONENT_ICON)
+                    .withTypeText("Element Plus Component") // 显示类型标识
+                    .withTailText(" " + component.getDescription()) // 显示组件描述
+                    .withIcon(ElementPlusIcons.COMPONENT_ICON) // 设置组件图标
                     .withInsertHandler((insertContext, item) -> {
-                        // 插入组件标签
+                        // 插入处理器：自动补全组件标签
                         Editor editor = insertContext.getEditor();
                         int offset = insertContext.getTailOffset();
+                        // 插入完整的结束标签，光标定位到标签内容位置
                         editor.getDocument().insertString(offset, "></" + component.getName() + ">");
                         editor.getCaretModel().moveToOffset(offset);
                     });
@@ -204,14 +255,30 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
     }
 
     /**
-     * 添加插槽补全
+     * 添加插槽补全选项
+     * 
+     * 功能说明：
+     * - 当用户输入 sl 或 slot 时，提供当前组件的插槽列表
+     * - 只显示当前组件支持的插槽，避免混淆
+     * - 自动生成完整的插槽模板，包括作用域支持
+     * - 提供详细的中文描述和说明
+     * 
+     * 插槽模板格式：
+     * - 有作用域：<template #slotName="scope"> <!-- 描述 --> </template>
+     * - 无作用域：<template #slotName> <!-- 描述 --> </template>
+     * 
+     * @param result 补全结果集
+     * @param componentName 当前组件名称
+     * @param prefix 用户输入的前缀，用于过滤插槽
      */
     private void addSlotCompletions(CompletionResultSet result, String componentName, String prefix) {
+        // 安全检查：确保组件名称不为空
         if (componentName == null) {
             System.out.println("插槽补全: 组件名为空");
             return;
         }
 
+        // 获取组件详细信息
         ElementPlusComponent component = componentProvider.getComponent(componentName);
         if (component == null) {
             System.out.println("插槽补全: 找不到组件 " + componentName);
@@ -230,34 +297,43 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
 
         int count = 0;
         for (ElementPlusSlot slot : component.getSlots()) {
+            // 跳过无效的插槽数据
             if (slot == null || slot.getName() == null) {
                 continue;
             }
+            
+            // 构建插槽显示名称和描述
             String slotName = "slot:" + slot.getName();
             String description = slot.getDescription() != null ? slot.getDescription() : "";
             String scope = slot.getScope() != null ? slot.getScope() : "";
-            // 构建示例代码
+            
+            // 根据是否有作用域构建不同的模板
             final String insertText;
             if (!scope.isEmpty()) {
+                // 有作用域的插槽模板
                 insertText = "<template #" + slot.getName() + "=\"" + scope + "\">\n  <!-- " + description + " -->\n</template>";
             } else {
+                // 无作用域的插槽模板
                 insertText = "<template #" + slot.getName() + ">\n  <!-- " + description + " -->\n</template>";
             }
             try {
+                // 创建插槽补全元素
                 result.addElement(
                         LookupElementBuilder.create(slotName)
-                                .withTypeText("卡槽", true)
-                                .withTailText("  " + description + (scope.isEmpty() ? "" : " (作用域: " + scope + ")"), true)
-                                .withPresentableText(slotName)
+                                .withTypeText("卡槽", true) // 显示类型为"卡槽"
+                                .withTailText("  " + description + (scope.isEmpty() ? "" : " (作用域: " + scope + ")"), true) // 显示描述和作用域
+                                .withPresentableText(slotName) // 设置显示文本
                                 .withInsertHandler((insertionContext, item) -> {
+                                    // 插入处理器：替换当前文本为完整的插槽模板
                                     insertionContext.getDocument().replaceString(
                                             insertionContext.getStartOffset(),
                                             insertionContext.getTailOffset(),
                                             insertText
                                     );
                                 })
-                                .withLookupString(slot.getName())
+                                .withLookupString(slot.getName()) // 设置查找字符串
                 );
+                count++;
             } catch (Exception e) {
                 // 如果创建失败，尝试创建一个简单的卡槽补全项
                 try {
@@ -266,6 +342,7 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
                                     .withTypeText("卡槽", true)
                                     .withTailText("  " + description, true)
                     );
+                    count++;
                 } catch (Exception ignored) {
                     // 如果连简单补全都失败，则跳过
                 }
@@ -344,7 +421,7 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
 
         System.out.println("添加了 " + count + " 个插槽补全");
 
-        // 强制刷新补全结果集
+        // 强制刷新补全结果集，确保插槽选项能够正确显示
         if (count > 0) {
             result.stopHere();
             System.out.println("强制停止补全，确保插槽选项显示");
@@ -352,7 +429,24 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
     }
 
     /**
-     * 分析补全上下文
+     * 分析补全上下文，确定用户想要什么类型的补全
+     * 
+     * 分析逻辑：
+     * 1. 检查当前文本是否以特殊字符开头（@、slot、sl）
+     * 2. 检查 beforeText 是否包含特殊符号
+     * 3. 检查是否在组件标签位置
+     * 4. 检查是否在属性位置
+     * 5. 检查是否在组件名称位置
+     * 
+     * 返回的上下文类型：
+     * - COMPONENT: 组件补全（输入 < 时）
+     * - ATTRIBUTE: 属性补全（在组件标签内输入空格时）
+     * - EVENT: 事件补全（输入 @ 时）
+     * - SLOT: 插槽补全（输入 sl 或 slot 时）
+     * 
+     * @param file 当前文件
+     * @param element 当前光标位置的 PSI 元素
+     * @return 补全上下文，包含类型、当前组件和前缀信息
      */
     private CompletionContext analyzeContext(PsiFile file, PsiElement element) {
         String fileText = file.getText();
@@ -705,34 +799,69 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
     }
 
     /**
-     * 补全上下文类型
+     * 补全上下文类型枚举
+     * 
+     * 定义了四种补全类型：
+     * - COMPONENT: 组件补全，用户输入 < 时触发
+     * - ATTRIBUTE: 属性补全，在组件标签内输入空格时触发
+     * - EVENT: 事件补全，用户输入 @ 时触发
+     * - SLOT: 插槽补全，用户输入 sl 或 slot 时触发
      */
     private enum CompletionType {
         COMPONENT, ATTRIBUTE, EVENT, SLOT
     }
 
     /**
-     * 补全上下文
+     * 补全上下文类
+     * 
+     * 用于封装补全相关的上下文信息，包括：
+     * - 补全类型（组件、属性、事件、插槽）
+     * - 当前组件名称
+     * - 用户输入的前缀
+     * 
+     * 这个类帮助补全系统理解用户的意图并提供相应的补全选项
      */
     private static class CompletionContext {
+        /** 补全类型 */
         private final CompletionType type;
+        /** 当前组件名称 */
         private final String currentComponent;
+        /** 用户输入的前缀，用于过滤补全选项 */
         private final String prefix;
 
+        /**
+         * 构造函数
+         * 
+         * @param type 补全类型
+         * @param currentComponent 当前组件名称
+         * @param prefix 用户输入的前缀
+         */
         public CompletionContext(CompletionType type, String currentComponent, String prefix) {
             this.type = type;
             this.currentComponent = currentComponent;
             this.prefix = prefix;
         }
 
+        /**
+         * 获取补全类型
+         * @return 补全类型枚举值
+         */
         public CompletionType getType() {
             return type;
         }
 
+        /**
+         * 获取当前组件名称
+         * @return 当前组件名称，可能为 null
+         */
         public String getCurrentComponent() {
             return currentComponent;
         }
 
+        /**
+         * 获取用户输入的前缀
+         * @return 用户输入的前缀，用于过滤补全选项
+         */
         public String getPrefix() {
             return prefix;
         }

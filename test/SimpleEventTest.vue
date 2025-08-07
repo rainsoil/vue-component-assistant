@@ -2,13 +2,10 @@
     <div>
 
 
-        <el-input>
-            <template #prepend>
-                <!-- 输入框头部内容 -->
-            </template>
-            <template #append>
-                <!-- 输入框尾部内容 -->
-            </template>
+        <el-input placeholder="" @clear="handleClear">
+
+
+
 
         </el-input>
         <el-table>

@@ -39,6 +39,8 @@
     </description>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.xml</depends>
+    <depends>com.intellij.modules.vcs</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- 注册Element Plus补全贡献者 -->
@@ -51,15 +53,29 @@
             language="HTML" 
             implementationClass="com.chu7.vuecomponentassistant.completion.ElementPlusCompletionContributor"/>
         
-        <!-- 注册Element Plus文档提供者 -->
-        <lang.documentation.provider 
-            language="Vue" 
-            implementationClass="com.chu7.vuecomponentassistant.documentation.ElementPlusDocumentationProvider"/>
+<!--        &lt;!&ndash; 注册Element Plus文档提供者 &ndash;&gt;-->
+<!--        <lang.documentation.provider -->
+<!--            language="Vue" -->
+<!--            implementationClass="com.chu7.vuecomponentassistant.documentation.ElementPlusDocumentationProvider"/>-->
+<!--        -->
+<!--        &lt;!&ndash; 注册HTML文档提供者 &ndash;&gt;-->
+<!--        <lang.documentation.provider -->
+<!--            language="HTML" -->
+<!--            implementationClass="com.chu7.vuecomponentassistant.documentation.ElementPlusDocumentationProvider"/>-->
         
-        <!-- 注册HTML文档提供者 -->
-        <lang.documentation.provider 
-            language="HTML" 
+        <!-- 注册XML文档提供者 -->
+        <lang.documentationProvider language="XML"
             implementationClass="com.chu7.vuecomponentassistant.documentation.ElementPlusDocumentationProvider"/>
+
+<!--        &lt;!&ndash; 注册JavaScript文档提供者 &ndash;&gt;-->
+<!--        <lang.documentation.provider-->
+<!--            language="JavaScript"-->
+<!--            implementationClass="com.chu7.vuecomponentassistant.documentation.ElementPlusDocumentationProvider"/>-->
+
+<!--        &lt;!&ndash; 注册TypeScript文档提供者 &ndash;&gt;-->
+<!--        <lang.documentation.provider-->
+<!--            language="XML"-->
+<!--            implementationClass="com.chu7.vuecomponentassistant.documentation.ElementPlusDocumentationProvider"/>-->
         
         <!-- 注册设置页面 -->
         <applicationConfigurable 
@@ -77,8 +93,8 @@
         <!-- 注册Element Plus文档动作 -->
         <action id="ElementPlus.Documentation" 
                 class="com.chu7.vuecomponentassistant.action.ElementPlusDocumentationAction" 
-                text="查看 Element Plus 文档" 
-                description="打开当前组件的官方文档">
+                text="📚 查看组件文档" 
+                description="查看当前组件的详细文档信息">
             <add-to-group group-id="EditorPopupMenu" anchor="first"/>
         </action>
     </actions>
