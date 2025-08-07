@@ -6,7 +6,19 @@ package com.chu7.vuecomponentassistant.completion;
 public class ElementPlusSlot {
     private String name;
     private String description;
-    
+
+    /** 卡槽作用域参数 */
+    public String scope;
+
+
+    public String getScope() {
+        return scope;
+    }
+
+    public void setScope(String scope) {
+        this.scope = scope;
+    }
+
     // 构造函数
     public ElementPlusSlot() {}
     

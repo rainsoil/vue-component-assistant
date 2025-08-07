@@ -17,28 +17,28 @@ import java.util.regex.Pattern;
  * 用于调试和测试基本功能
  */
 public class ElementPlusTestCompletionProvider extends CompletionProvider<CompletionParameters> {
-    
+
     private final ElementPlusComponentProvider componentProvider;
-    
+
     public ElementPlusTestCompletionProvider() {
         this.componentProvider = new ElementPlusComponentProvider();
     }
-    
+
     @Override
     protected void addCompletions(@NotNull CompletionParameters parameters,
-                                 @NotNull ProcessingContext context,
-                                 @NotNull CompletionResultSet result) {
-        
+                                  @NotNull ProcessingContext context,
+                                  @NotNull CompletionResultSet result) {
+
         PsiElement element = parameters.getPosition();
         PsiFile file = element.getContainingFile();
-        
+
         if (file == null) {
             return;
         }
-        
+
         // 分析当前位置的上下文
         CompletionContext completionContext = analyzeContext(file, element);
-        
+
         // 添加调试信息
         System.out.println("=== 补全调试信息 ===");
         System.out.println("文件: " + file.getName());
@@ -48,7 +48,7 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
         System.out.println("当前组件: " + completionContext.getCurrentComponent());
         System.out.println("前缀: " + completionContext.getPrefix());
         System.out.println("==================");
-        
+
         switch (completionContext.getType()) {
             case COMPONENT:
                 addComponentCompletions(result, completionContext.getPrefix());
@@ -59,15 +59,18 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
             case EVENT:
                 addEventCompletions(result, completionContext.getCurrentComponent(), completionContext.getPrefix());
                 break;
+            case SLOT:
+                addSlotCompletions(result, completionContext.getCurrentComponent(), completionContext.getPrefix());
+                break;
         }
     }
-    
+
     /**
      * 添加组件补全
      */
     private void addComponentCompletions(CompletionResultSet result, String prefix) {
         List<ElementPlusComponent> components;
-        
+
         if (prefix != null && !prefix.isEmpty()) {
             // 根据前缀过滤组件
             components = componentProvider.searchComponents(prefix);
@@ -75,14 +78,14 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
             // 显示所有组件
             components = componentProvider.getAllComponents();
         }
-        
+
         // 限制显示数量，避免过多选项
         int count = 0;
         int maxCount = 30;
-        
+
         for (ElementPlusComponent component : components) {
             if (count >= maxCount) break;
-            
+
             LookupElementBuilder element = LookupElementBuilder.create(component.getName())
                     .withTypeText("Element Plus Component")
                     .withTailText(" " + component.getDescription())
@@ -94,12 +97,12 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
                         editor.getDocument().insertString(offset, "></" + component.getName() + ">");
                         editor.getCaretModel().moveToOffset(offset);
                     });
-            
+
             result.addElement(element);
             count++;
         }
     }
-    
+
     /**
      * 添加属性补全
      */
@@ -107,18 +110,26 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
         if (componentName == null) {
             return;
         }
-        
+
         ElementPlusComponent component = componentProvider.getComponent(componentName);
         if (component == null) {
             return;
         }
-        
+
+        System.out.println("属性补全: 为组件 " + componentName + " 添加属性");
+        System.out.println("组件属性数量: " + component.getProps().size());
+        System.out.println("前缀: '" + prefix + "'");
+
+        int count = 0;
         for (ElementPlusProp prop : component.getProps()) {
             // 根据前缀过滤属性
             if (prefix != null && !prefix.isEmpty() && !prop.getName().toLowerCase().contains(prefix.toLowerCase())) {
+                System.out.println("属性过滤: " + prop.getName() + " 不包含前缀 '" + prefix + "'");
                 continue;
+            } else {
+                System.out.println("属性匹配: " + prop.getName() + " 包含前缀 '" + prefix + "'");
             }
-            
+
             LookupElementBuilder propElement = LookupElementBuilder.create(prop.getName())
                     .withTypeText("Property")
                     .withTailText(" " + prop.getDescription())
@@ -131,11 +142,14 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
                         editor.getDocument().insertString(offset, "=\"" + defaultValue + "\"");
                         editor.getCaretModel().moveToOffset(offset - 1);
                     });
-            
+
             result.addElement(propElement);
+            count++;
         }
+
+        System.out.println("添加了 " + count + " 个属性补全");
     }
-    
+
     /**
      * 添加事件补全
      */
@@ -144,17 +158,17 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
             System.out.println("事件补全: 组件名为空");
             return;
         }
-        
+
         ElementPlusComponent component = componentProvider.getComponent(componentName);
         if (component == null) {
             System.out.println("事件补全: 找不到组件 " + componentName);
             return;
         }
-        
+
         System.out.println("事件补全: 为组件 " + componentName + " 添加事件");
         System.out.println("组件事件数量: " + component.getEvents().size());
         System.out.println("前缀: '" + prefix + "'");
-        
+
         int count = 0;
         for (ElementPlusEvent event : component.getEvents()) {
             // 根据前缀过滤事件
@@ -168,7 +182,7 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
                     System.out.println("事件匹配: " + event.getName() + " 包含前缀 '" + prefix + "'");
                 }
             }
-            
+
             LookupElementBuilder eventElement = LookupElementBuilder.create("@" + event.getName())
                     .withTypeText("Event")
                     .withTailText(" " + event.getDescription())
@@ -181,14 +195,162 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
                         editor.getDocument().insertString(offset, "=\"" + handlerName + "\"");
                         editor.getCaretModel().moveToOffset(offset - 1);
                     });
-            
+
             result.addElement(eventElement);
             count++;
         }
-        
+
         System.out.println("添加了 " + count + " 个事件补全");
     }
-    
+
+    /**
+     * 添加插槽补全
+     */
+    private void addSlotCompletions(CompletionResultSet result, String componentName, String prefix) {
+        if (componentName == null) {
+            System.out.println("插槽补全: 组件名为空");
+            return;
+        }
+
+        ElementPlusComponent component = componentProvider.getComponent(componentName);
+        if (component == null) {
+            System.out.println("插槽补全: 找不到组件 " + componentName);
+            return;
+        }
+
+        System.out.println("插槽补全: 为组件 " + componentName + " 添加插槽");
+        System.out.println("组件插槽数量: " + component.getSlots().size());
+        System.out.println("前缀: '" + prefix + "'");
+
+        // 检查插槽列表是否为空
+        if (component.getSlots() == null || component.getSlots().isEmpty()) {
+            System.out.println("插槽补全: 组件没有插槽");
+            return;
+        }
+
+        int count = 0;
+        for (ElementPlusSlot slot : component.getSlots()) {
+            if (slot == null || slot.getName() == null) {
+                continue;
+            }
+            String slotName = "slot:" + slot.getName();
+            String description = slot.getDescription() != null ? slot.getDescription() : "";
+            String scope = slot.getScope() != null ? slot.getScope() : "";
+            // 构建示例代码
+            final String insertText;
+            if (!scope.isEmpty()) {
+                insertText = "<template #" + slot.getName() + "=\"" + scope + "\">\n  <!-- " + description + " -->\n</template>";
+            } else {
+                insertText = "<template #" + slot.getName() + ">\n  <!-- " + description + " -->\n</template>";
+            }
+            try {
+                result.addElement(
+                        LookupElementBuilder.create(slotName)
+                                .withTypeText("卡槽", true)
+                                .withTailText("  " + description + (scope.isEmpty() ? "" : " (作用域: " + scope + ")"), true)
+                                .withPresentableText(slotName)
+                                .withInsertHandler((insertionContext, item) -> {
+                                    insertionContext.getDocument().replaceString(
+                                            insertionContext.getStartOffset(),
+                                            insertionContext.getTailOffset(),
+                                            insertText
+                                    );
+                                })
+                                .withLookupString(slot.getName())
+                );
+            } catch (Exception e) {
+                // 如果创建失败，尝试创建一个简单的卡槽补全项
+                try {
+                    result.addElement(
+                            LookupElementBuilder.create(slotName)
+                                    .withTypeText("卡槽", true)
+                                    .withTailText("  " + description, true)
+                    );
+                } catch (Exception ignored) {
+                    // 如果连简单补全都失败，则跳过
+                }
+            }
+//            // 根据前缀过滤插槽
+//            if (prefix != null && !prefix.isEmpty()) {
+//                String slotName = slot.getName().toLowerCase();
+//                String prefixLower = prefix.toLowerCase();
+//                if (!slotName.contains(prefixLower)) {
+//                    System.out.println("插槽过滤: " + slot.getName() + " 不包含前缀 '" + prefix + "'");
+//                    continue;
+//                } else {
+//                    System.out.println("插槽匹配: " + slot.getName() + " 包含前缀 '" + prefix + "'");
+//                }
+//            }
+//
+//            String slotName = slot.getName();
+//            String description = slot.getDescription() != null ? slot.getDescription() : "";
+//            String scope = "scope"; // 默认作用域
+//
+//            // 构建示例代码
+//            final String insertText = "<template #" + slotName + "=\"" + scope + "\">\n  <!-- " + description + " -->\n</template>";
+//
+//            System.out.println("创建插槽补全元素: " + slotName);
+//
+//            try {
+//                LookupElementBuilder slotElement = LookupElementBuilder.create(slotName)
+//                        .withTypeText("卡槽", true)
+//                        .withTailText("  " + description + " (作用域: " + scope + ")", true)
+//                        .withPresentableText(slotName)
+//                        .withIcon(ElementPlusIcons.SLOT_ICON)
+//                        .withBoldness(true) // 加粗显示，提高优先级
+//                        .withInsertHandler((insertionContext, item) -> {
+//                            try {
+//                                // 替换当前文本为插槽模板
+//                                insertionContext.getDocument().replaceString(
+//                                        insertionContext.getStartOffset(),
+//                                        insertionContext.getTailOffset(),
+//                                        insertText
+//                                );
+//                            } catch (Exception e) {
+//                                // 忽略插入时的异常
+//                                System.out.println("插入插槽模板失败: " + e.getMessage());
+//                            }
+//                        })
+//                        .withLookupString(slotName);
+//
+//                result.addElement(slotElement);
+//                count++;
+//                System.out.println("已添加插槽补全: " + slotName);
+//            } catch (com.intellij.openapi.progress.ProcessCanceledException e) {
+//                // 用户取消操作，这是正常行为，不需要处理
+//                System.out.println("用户取消插槽补全操作");
+//                return; // 直接返回，不再继续处理
+//            } catch (Exception e) {
+//                System.out.println("创建插槽补全失败: " + slotName + ", 错误: " + e.getMessage());
+//
+//                // 如果创建失败，尝试创建一个简单的卡槽补全项
+//                try {
+//                    result.addElement(
+//                            LookupElementBuilder.create(slotName)
+//                                    .withTypeText("卡槽", true)
+//                                    .withTailText("  " + description, true)
+//                    );
+//                    count++;
+//                    System.out.println("已添加简单插槽补全: " + slotName);
+//                } catch (com.intellij.openapi.progress.ProcessCanceledException ignored) {
+//                    // 用户取消操作，直接返回
+//                    System.out.println("用户取消简单插槽补全操作");
+//                    return;
+//                } catch (Exception ignored) {
+//                    System.out.println("连简单插槽补全都失败: " + slotName);
+//                }
+//            }
+        }
+
+        System.out.println("添加了 " + count + " 个插槽补全");
+
+        // 强制刷新补全结果集
+        if (count > 0) {
+            result.stopHere();
+            System.out.println("强制停止补全，确保插槽选项显示");
+        }
+    }
+
     /**
      * 分析补全上下文
      */
@@ -197,17 +359,17 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
         int offset = element.getTextOffset();
         String beforeText = fileText.substring(0, offset);
         String currentText = element.getText();
-        
+
         System.out.println("分析上下文 - beforeText: '" + beforeText + "'");
         System.out.println("当前文本: '" + currentText + "'");
-        
+
         // 检查当前文本是否以@开头
         if (currentText.startsWith("@")) {
             System.out.println("当前文本以@开头，直接检查事件");
             String currentComponent = getCurrentComponent(beforeText);
             // 去掉@符号，并处理IntelliJ IDEA的后缀
             String eventPrefix = extractValidEventPrefix(currentText.substring(1));
-            
+
             if (currentComponent != null && eventPrefix != null) {
                 System.out.println("返回事件上下文: " + currentComponent + " 前缀: " + eventPrefix);
                 return new CompletionContext(CompletionType.EVENT, currentComponent, eventPrefix);
@@ -215,13 +377,42 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
                 System.out.println("事件检测失败 - 组件: " + currentComponent + ", 前缀: " + eventPrefix);
             }
         }
-        
+
+        // 检查当前文本是否以slot或sl开头（先清理IntelliJ IDEA后缀）
+        String cleanCurrentText = currentText.replace("IntellijIdeaRulezzz", "");
+        if (cleanCurrentText.startsWith("slot") || cleanCurrentText.startsWith("sl")) {
+            System.out.println("当前文本以slot或sl开头，直接检查插槽");
+            System.out.println("清理后的文本: '" + cleanCurrentText + "'");
+            String currentComponent = getCurrentComponent(beforeText);
+
+            // 去掉前缀，获取插槽名称前缀
+            String slotPrefix = "";
+            if (cleanCurrentText.startsWith("slot")) {
+                slotPrefix = cleanCurrentText.substring(4); // 去掉"slot"
+            } else if (cleanCurrentText.startsWith("sl")) {
+                slotPrefix = cleanCurrentText.substring(2); // 去掉"sl"
+            }
+
+            // 如果没有找到组件，尝试从beforeText中查找
+            if (currentComponent == null) {
+                currentComponent = getCurrentComponent(beforeText);
+            }
+
+            if (currentComponent != null) {
+                System.out.println("返回插槽上下文: " + currentComponent + " 前缀: " + slotPrefix);
+                return new CompletionContext(CompletionType.SLOT, currentComponent, slotPrefix);
+            } else {
+                System.out.println("插槽检测失败 - 找不到组件");
+            }
+        }
+
+
         // 检查beforeText是否包含@符号
         if (beforeText.contains("@")) {
             System.out.println("beforeText包含@符号，检查事件");
             String currentComponent = getCurrentComponent(beforeText);
             String eventPrefix = getEventPrefix(beforeText);
-            
+
             if (currentComponent != null && eventPrefix != null) {
                 System.out.println("返回事件上下文: " + currentComponent + " 前缀: " + eventPrefix);
                 return new CompletionContext(CompletionType.EVENT, currentComponent, eventPrefix);
@@ -229,35 +420,50 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
                 System.out.println("事件检测失败 - 组件: " + currentComponent + ", 前缀: " + eventPrefix);
             }
         }
-        
+
+        // 检查beforeText是否包含slot或sl符号
+        if (beforeText.contains("slot") || beforeText.contains("sl")) {
+            System.out.println("beforeText包含slot或sl符号，检查插槽");
+            String currentComponent = getCurrentComponent(beforeText);
+            String slotPrefix = getSlotPrefix(beforeText);
+
+            if (currentComponent != null) {
+                System.out.println("返回插槽上下文: " + currentComponent + " 前缀: " + slotPrefix);
+                return new CompletionContext(CompletionType.SLOT, currentComponent, slotPrefix);
+            } else {
+                System.out.println("插槽检测失败 - 找不到组件");
+            }
+        }
+
+
         // 检查是否在组件标签位置
         if (beforeText.endsWith("<") || beforeText.matches(".*<\\s*$")) {
             System.out.println("检测到组件标签位置");
             return new CompletionContext(CompletionType.COMPONENT, null, null);
         }
-        
+
         // 获取当前组件
         String currentComponent = getCurrentComponent(beforeText);
         System.out.println("当前组件: " + currentComponent);
-        
+
         // 检查是否在属性位置（在组件标签内，有空格但没有=）
         if (currentComponent != null && isInComponentTag(beforeText)) {
             String prefix = getAttributePrefix(beforeText);
             System.out.println("检测到属性位置，前缀: '" + prefix + "'");
             return new CompletionContext(CompletionType.ATTRIBUTE, currentComponent, prefix);
         }
-        
+
         // 检查是否在组件名称位置
         String componentPrefix = getComponentPrefix(beforeText);
         if (componentPrefix != null) {
             System.out.println("检测到组件名称位置，前缀: '" + componentPrefix + "'");
             return new CompletionContext(CompletionType.COMPONENT, null, componentPrefix);
         }
-        
+
         System.out.println("默认返回组件上下文");
         return new CompletionContext(CompletionType.COMPONENT, null, null);
     }
-    
+
     /**
      * 获取当前组件名称
      */
@@ -268,16 +474,16 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
         while (matcher.find()) {
             lastComponent = matcher.group(1);
         }
-        
+
         // 检查是否是Element Plus组件
         Pattern elementPlusPattern = Pattern.compile("el-[a-zA-Z-]+");
         if (lastComponent != null && elementPlusPattern.matcher(lastComponent).matches()) {
             return lastComponent;
         }
-        
+
         return null;
     }
-    
+
     /**
      * 获取组件前缀
      */
@@ -285,7 +491,7 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
         if (beforeText.endsWith("<")) {
             return "";
         }
-        
+
         // 查找最近的<符号
         int lastOpenTag = beforeText.lastIndexOf('<');
         if (lastOpenTag >= 0) {
@@ -294,10 +500,10 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
                 return afterOpenTag;
             }
         }
-        
+
         return null;
     }
-    
+
     /**
      * 检查是否在组件标签内
      */
@@ -305,9 +511,9 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
         // 查找最近的<和>符号
         int lastOpenTag = beforeText.lastIndexOf('<');
         int lastCloseTag = beforeText.lastIndexOf('>');
-        
+
         System.out.println("检查是否在组件标签内 - lastOpenTag: " + lastOpenTag + ", lastCloseTag: " + lastCloseTag);
-        
+
         // 如果最近的<在>之后，说明在标签内
         if (lastOpenTag > lastCloseTag) {
             // 检查是否在Element Plus组件标签内
@@ -317,11 +523,11 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
             System.out.println("包含el-: " + containsEl);
             return containsEl;
         }
-        
+
         System.out.println("不在组件标签内");
         return false;
     }
-    
+
     /**
      * 获取属性前缀
      */
@@ -330,14 +536,14 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
         int lastOpenTag = beforeText.lastIndexOf('<');
         if (lastOpenTag >= 0) {
             String afterOpenTag = beforeText.substring(lastOpenTag + 1);
-            
+
             // 如果已经输入了空格，说明在属性位置
             if (afterOpenTag.contains(" ")) {
                 // 获取最后一个空格后的内容
                 int lastSpace = afterOpenTag.lastIndexOf(' ');
                 if (lastSpace >= 0) {
                     String afterLastSpace = afterOpenTag.substring(lastSpace + 1);
-                    
+
                     // 如果没有=，说明正在输入属性名
                     if (!afterLastSpace.contains("=")) {
                         return afterLastSpace;
@@ -347,7 +553,7 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
         }
         return null;
     }
-    
+
     /**
      * 获取事件前缀
      */
@@ -355,11 +561,11 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
         // 查找最近的@符号
         int lastAt = beforeText.lastIndexOf('@');
         System.out.println("查找@符号 - lastAt: " + lastAt);
-        
+
         if (lastAt >= 0) {
             String afterAt = beforeText.substring(lastAt + 1);
             System.out.println("@符号后的内容: '" + afterAt + "'");
-            
+
             // 如果没有=，说明正在输入事件名
             if (!afterAt.contains("=")) {
                 // 简化逻辑：直接提取有效的事件名前缀
@@ -378,7 +584,7 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
         }
         return null;
     }
-    
+
     /**
      * 提取有效的事件名前缀
      */
@@ -386,18 +592,18 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
         if (text == null || text.isEmpty()) {
             return text; // 返回空字符串而不是null
         }
-        
+
         System.out.println("提取事件前缀 - 原始文本: '" + text + "'");
-        
+
         // 直接替换掉IntelliJ IDEA的后缀
         String cleanText = text.replace("IntellijIdeaRulezzz", "");
         System.out.println("清理后的文本: '" + cleanText + "'");
-        
+
         // 如果清理后为空，返回空字符串
         if (cleanText.isEmpty()) {
             return cleanText;
         }
-        
+
         // 查找第一个非字母数字字符的位置
         for (int i = 0; i < cleanText.length(); i++) {
             char c = cleanText.charAt(i);
@@ -410,26 +616,101 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
                 return null;
             }
         }
-        
+
         // 如果全部都是有效字符，返回整个字符串
         System.out.println("返回完整事件前缀: '" + cleanText + "'");
         return cleanText;
     }
-    
+
+    /**
+     * 提取有效的插槽名前缀
+     */
+    private String extractValidSlotPrefix(String text) {
+        if (text == null || text.isEmpty()) {
+            return text; // 返回空字符串而不是null
+        }
+
+        System.out.println("提取插槽前缀 - 原始文本: '" + text + "'");
+
+        // 直接替换掉IntelliJ IDEA的后缀
+        String cleanText = text.replace("IntellijIdeaRulezzz", "");
+        System.out.println("清理后的文本: '" + cleanText + "'");
+
+        // 如果清理后为空，返回空字符串
+        if (cleanText.isEmpty()) {
+            return cleanText;
+        }
+
+        // 查找第一个非字母数字字符的位置
+        for (int i = 0; i < cleanText.length(); i++) {
+            char c = cleanText.charAt(i);
+            if (!Character.isLetterOrDigit(c) && c != '-') {
+                if (i > 0) {
+                    String result = cleanText.substring(0, i);
+                    System.out.println("提取到插槽前缀: '" + result + "'");
+                    return result;
+                }
+                return null;
+            }
+        }
+
+        // 如果全部都是有效字符，返回整个字符串
+        System.out.println("返回完整插槽前缀: '" + cleanText + "'");
+        return cleanText;
+    }
+
+    /**
+     * 获取插槽前缀
+     */
+    private String getSlotPrefix(String beforeText) {
+        // 查找最近的slot或sl符号
+        int lastSlot = beforeText.lastIndexOf("slot");
+        int lastSl = beforeText.lastIndexOf("sl");
+        int lastIndex = Math.max(lastSlot, lastSl);
+
+        System.out.println("查找slot或sl符号 - lastSlot: " + lastSlot + ", lastSl: " + lastSl + ", lastIndex: " + lastIndex);
+
+        if (lastIndex >= 0) {
+            String afterPrefix;
+            if (lastSlot > lastSl) {
+                afterPrefix = beforeText.substring(lastSlot + 4); // 4是"slot"的长度
+                System.out.println("slot符号后的内容: '" + afterPrefix + "'");
+            } else {
+                afterPrefix = beforeText.substring(lastSl + 2); // 2是"sl"的长度
+                System.out.println("sl符号后的内容: '" + afterPrefix + "'");
+            }
+
+            // 清理IntelliJ IDEA后缀
+            afterPrefix = afterPrefix.replace("IntellijIdeaRulezzz", "");
+
+            // 如果没有=，说明正在输入插槽名
+            if (!afterPrefix.contains("=")) {
+                // 直接返回清理后的前缀
+                System.out.println("提取到插槽前缀: '" + afterPrefix + "'");
+                return afterPrefix;
+            } else {
+                System.out.println("插槽前缀检测失败 - afterPrefix: '" + afterPrefix + "' 包含等号");
+            }
+        } else {
+            System.out.println("插槽前缀检测失败 - 未找到slot或sl符号");
+        }
+        return null;
+    }
+
     private String capitalize(String str) {
         if (str == null || str.isEmpty()) {
             return str;
         }
         return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
-    
+
     /**
      * 补全上下文类型
      */
     private enum CompletionType {
-        COMPONENT, ATTRIBUTE, EVENT
+        COMPONENT, ATTRIBUTE, EVENT, SLOT
     }
-    
+
     /**
      * 补全上下文
      */
@@ -437,21 +718,21 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
         private final CompletionType type;
         private final String currentComponent;
         private final String prefix;
-        
+
         public CompletionContext(CompletionType type, String currentComponent, String prefix) {
             this.type = type;
             this.currentComponent = currentComponent;
             this.prefix = prefix;
         }
-        
+
         public CompletionType getType() {
             return type;
         }
-        
+
         public String getCurrentComponent() {
             return currentComponent;
         }
-        
+
         public String getPrefix() {
             return prefix;
         }
