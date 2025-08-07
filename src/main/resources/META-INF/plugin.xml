@@ -41,21 +41,48 @@
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <completion.contributor language="XML" implementationClass="com.chu7.ElementPlusCompletionContributor"/>
-        <projectConfigurable instance="com.chu7.ElementLibraryConfigurable"/>
-        <projectService serviceImplementation="com.chu7.ElementLibrarySettings"/>
-        <projectService serviceImplementation="com.chu7.ComponentLibraryManager"/>
-        <lang.documentationProvider language="XML" implementationClass="com.chu7.ElementPlusDocumentationProvider"/>
+        <!-- 注册Element Plus补全贡献者 -->
+        <completion.contributor 
+            language="Vue" 
+            implementationClass="com.chu7.vuecomponentassistant.completion.ElementPlusCompletionContributor"/>
+        
+        <!-- 注册HTML补全贡献者 -->
+        <completion.contributor 
+            language="HTML" 
+            implementationClass="com.chu7.vuecomponentassistant.completion.ElementPlusCompletionContributor"/>
+        
+        <!-- 注册Element Plus文档提供者 -->
+        <lang.documentation.provider 
+            language="Vue" 
+            implementationClass="com.chu7.vuecomponentassistant.documentation.ElementPlusDocumentationProvider"/>
+        
+        <!-- 注册HTML文档提供者 -->
+        <lang.documentation.provider 
+            language="HTML" 
+            implementationClass="com.chu7.vuecomponentassistant.documentation.ElementPlusDocumentationProvider"/>
+        
+        <!-- 注册设置页面 -->
+        <applicationConfigurable 
+            parentId="tools" 
+            instance="com.chu7.vuecomponentassistant.settings.ElementPlusSettingsConfigurable"
+            id="com.chu7.vuecomponentassistant.settings.ElementPlusSettingsConfigurable"
+            displayName="Element Plus Assistant"/>
+        
+        <!-- 注册设置服务 -->
+        <applicationService 
+            serviceImplementation="com.chu7.vuecomponentassistant.settings.ElementPlusSettings"/>
     </extensions>
 
     <actions>
-        <!-- 右键菜单动作 -->
-        <action id="ShowDocumentationAction"
-                class="com.chu7.ShowDocumentationAction"
-                text="显示文档"
-                description="显示组件、属性或事件的详细文档">
+        <!-- 注册Element Plus文档动作 -->
+        <action id="ElementPlus.Documentation" 
+                class="com.chu7.vuecomponentassistant.action.ElementPlusDocumentationAction" 
+                text="查看 Element Plus 文档" 
+                description="打开当前组件的官方文档">
             <add-to-group group-id="EditorPopupMenu" anchor="first"/>
         </action>
     </actions>
+
+
     <idea-version since-build="231.0" until-build="241.*"/>
 </idea-plugin>
