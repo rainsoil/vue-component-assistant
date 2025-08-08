@@ -1,113 +1,162 @@
-[
-  {
-    "name": "My Custom Library",
-    "description": "自定义组件库示例",
-    "version": "1.0.0",
-    "author": "Your Name",
-    "website": "https://your-website.com",
-    "docUrl": "https://your-docs.com",
-    "components": [
-      {
-        "name": "my-button",
-        "description": "自定义按钮组件",
-        "version": "1.0.0",
-        "example": "<my-button type=\"primary\">按钮</my-button>",
-        "docUrl": "https://your-docs.com/my-button",
-        "props": [
-          {
-            "name": "type",
-            "type": "string",
-            "description": "按钮类型",
-            "defaultValue": "default",
-            "required": false,
-            "options": ["primary", "success", "warning", "danger", "default"]
-          },
-          {
-            "name": "size",
-            "type": "string",
-            "description": "按钮尺寸",
-            "defaultValue": "default",
-            "required": false,
-            "options": ["large", "default", "small"]
-          },
-          {
-            "name": "disabled",
-            "type": "boolean",
-            "description": "是否禁用",
-            "defaultValue": "false",
-            "required": false
-          }
-        ],
-        "events": [
-          {
-            "name": "click",
-            "description": "点击事件",
-            "parameters": "event"
-          }
-        ],
-        "slots": [
-          {
-            "name": "default",
-            "description": "按钮内容"
-          },
-          {
-            "name": "icon",
-            "description": "按钮图标"
-          }
-        ]
-      },
-      {
-        "name": "my-input",
-        "description": "自定义输入框组件",
-        "version": "1.0.0",
-        "example": "<my-input v-model=\"value\" />",
-        "docUrl": "https://your-docs.com/my-input",
-        "props": [
-          {
-            "name": "modelValue",
-            "type": "string",
-            "description": "绑定值",
-            "defaultValue": "",
-            "required": false
-          },
-          {
-            "name": "placeholder",
-            "type": "string",
-            "description": "占位符",
-            "defaultValue": "",
-            "required": false
-          },
-          {
-            "name": "disabled",
-            "type": "boolean",
-            "description": "是否禁用",
-            "defaultValue": "false",
-            "required": false
-          }
-        ],
-        "events": [
-          {
-            "name": "input",
-            "description": "输入事件",
-            "parameters": "value"
-          },
-          {
-            "name": "change",
-            "description": "值改变事件",
-            "parameters": "value"
-          }
-        ],
-        "slots": [
-          {
-            "name": "prefix",
-            "description": "输入框头部内容"
-          },
-          {
-            "name": "suffix",
-            "description": "输入框尾部内容"
-          }
-        ]
-      }
-    ]
-  }
-] 
+{
+  "name": "my-custom-library",
+  "displayName": "我的自定义组件库",
+  "version": "1.0.0",
+  "description": "这是一个示例自定义组件库，包含常用的UI组件",
+  "componentPrefix": "my-",
+  "documentationUrlTemplate": "https://example.com/docs/%s",
+  "components": [
+    {
+      "name": "my-button",
+      "description": "自定义按钮组件",
+      "version": "1.0.0",
+      "example": "<my-button type=\"primary\">按钮</my-button>",
+      "docUrl": "https://example.com/my-button",
+      "props": [
+        {
+          "name": "type",
+          "type": "string",
+          "description": "按钮类型",
+          "defaultValue": "default",
+          "required": false,
+          "options": ["primary", "success", "warning", "danger", "info", "default"]
+        },
+        {
+          "name": "size",
+          "type": "string",
+          "description": "按钮尺寸",
+          "defaultValue": "default",
+          "required": false,
+          "options": ["large", "default", "small"]
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "description": "是否禁用",
+          "defaultValue": false,
+          "required": false
+        }
+      ],
+      "events": [
+        {
+          "name": "click",
+          "description": "点击事件",
+          "parameters": "event"
+        }
+      ],
+      "slots": [
+        {
+          "name": "default",
+          "description": "按钮内容"
+        },
+        {
+          "name": "icon",
+          "description": "按钮图标"
+        }
+      ]
+    },
+    {
+      "name": "my-input",
+      "description": "自定义输入框组件",
+      "version": "1.0.0",
+      "example": "<my-input v-model=\"value\" placeholder=\"请输入内容\" />",
+      "docUrl": "https://example.com/my-input",
+      "props": [
+        {
+          "name": "modelValue",
+          "type": "string",
+          "description": "绑定值",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "description": "占位符",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "description": "是否禁用",
+          "defaultValue": false,
+          "required": false
+        },
+        {
+          "name": "clearable",
+          "type": "boolean",
+          "description": "是否可清空",
+          "defaultValue": false,
+          "required": false
+        }
+      ],
+      "events": [
+        {
+          "name": "input",
+          "description": "输入事件",
+          "parameters": "value"
+        },
+        {
+          "name": "change",
+          "description": "值改变事件",
+          "parameters": "value"
+        },
+        {
+          "name": "clear",
+          "description": "清空事件",
+          "parameters": ""
+        }
+      ],
+      "slots": [
+        {
+          "name": "prefix",
+          "description": "输入框头部内容"
+        },
+        {
+          "name": "suffix",
+          "description": "输入框尾部内容"
+        }
+      ]
+    },
+    {
+      "name": "my-card",
+      "description": "自定义卡片组件",
+      "version": "1.0.0",
+      "example": "<my-card title=\"卡片标题\">卡片内容</my-card>",
+      "docUrl": "https://example.com/my-card",
+      "props": [
+        {
+          "name": "title",
+          "type": "string",
+          "description": "卡片标题",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "shadow",
+          "type": "string",
+          "description": "阴影效果",
+          "defaultValue": "always",
+          "required": false,
+          "options": ["always", "hover", "never"]
+        }
+      ],
+      "events": [],
+      "slots": [
+        {
+          "name": "header",
+          "description": "卡片头部"
+        },
+        {
+          "name": "default",
+          "description": "卡片内容"
+        },
+        {
+          "name": "footer",
+          "description": "卡片底部"
+        }
+      ]
+    }
+  ]
+} 

@@ -96,6 +96,22 @@
                 description="查看当前组件的详细文档信息">
             <add-to-group group-id="EditorPopupMenu" anchor="first"/>
         </action>
+        
+        <!-- 注册自定义组件库管理动作 -->
+        <action id="CustomLibrary.Management" 
+                class="com.chu7.vuecomponentassistant.action.CustomLibraryManagementAction" 
+                text="🔧 自定义组件库管理" 
+                description="上传和管理自定义组件库">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+        
+        <!-- 注册Element Plus组件库管理动作 -->
+        <action id="ElementPlus.LibraryManagement" 
+                class="com.chu7.vuecomponentassistant.action.CustomLibraryManagementAction" 
+                text="📚 组件库管理" 
+                description="管理所有组件库（Element Plus、Element UI、Ant Design Vue、自定义组件库）">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
     </actions>
 
 

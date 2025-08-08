@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
+import com.chu7.vuecomponentassistant.utils.CustomComponentLibraryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -142,6 +143,31 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
             components = componentProvider.getAllComponents();
         }
 
+        // 添加调试信息
+        System.out.println("=== 组件补全调试信息 ===");
+        System.out.println("前缀: '" + prefix + "'");
+        System.out.println("找到组件数量: " + components.size());
+        
+        // 显示前几个组件的详细信息
+        for (int i = 0; i < Math.min(5, components.size()); i++) {
+            ElementPlusComponent component = components.get(i);
+            System.out.println("组件 " + (i + 1) + ": " + component.getName() + 
+                             " (库: " + componentProvider.getComponentLibraryDisplayName(component.getName()) + ")");
+        }
+        
+        // 检查自定义组件库
+        List<CustomComponentLibraryManager.CustomLibraryConfig> customLibraries = 
+            CustomComponentLibraryManager.getAllCustomLibraries();
+        System.out.println("自定义组件库数量: " + customLibraries.size());
+        for (CustomComponentLibraryManager.CustomLibraryConfig config : customLibraries) {
+            System.out.println("自定义库: " + config.getDisplayName() + " (前缀: " + config.getComponentPrefix() + ")");
+            System.out.println("  组件数量: " + config.getComponents().size());
+            for (ElementPlusComponent component : config.getComponents()) {
+                System.out.println("    - " + component.getName());
+            }
+        }
+        System.out.println("========================");
+
         // 限制显示数量，避免过多选项影响用户体验
         int count = 0;
         int maxCount = 30; // 最多显示30个组件
@@ -151,7 +177,7 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
 
             // 创建组件补全元素
             LookupElementBuilder element = LookupElementBuilder.create(component.getName())
-                    .withTypeText(componentProvider.getLibraryDisplayName() + " Component") // 动态显示类型标识
+                    .withTypeText(componentProvider.getComponentLibraryDisplayName(component.getName()) + " Component") // 动态显示类型标识
                     .withTailText(" " + component.getDescription()) // 显示组件描述
                     .withIcon(ElementPlusIcons.COMPONENT_ICON) // 设置组件图标
                     .withInsertHandler((insertContext, item) -> {
@@ -487,18 +513,18 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
         }
 
         // 检查当前文本是否以slot或sl开头（先清理IntelliJ IDEA后缀）
-        String cleanCurrentText = currentText.replace("IntellijIdeaRulezzz", "");
-        if (cleanCurrentText.startsWith("slot") || cleanCurrentText.startsWith("sl")) {
+        String cleanCurrentTextForSlot = currentText.replace("IntellijIdeaRulezzz", "");
+        if (cleanCurrentTextForSlot.startsWith("slot") || cleanCurrentTextForSlot.startsWith("sl")) {
             System.out.println("当前文本以slot或sl开头，直接检查插槽");
-            System.out.println("清理后的文本: '" + cleanCurrentText + "'");
+            System.out.println("清理后的文本: '" + cleanCurrentTextForSlot + "'");
             String currentComponent = getCurrentComponent(beforeText);
 
             // 去掉前缀，获取插槽名称前缀
             String slotPrefix = "";
-            if (cleanCurrentText.startsWith("slot")) {
-                slotPrefix = cleanCurrentText.substring(4); // 去掉"slot"
-            } else if (cleanCurrentText.startsWith("sl")) {
-                slotPrefix = cleanCurrentText.substring(2); // 去掉"sl"
+            if (cleanCurrentTextForSlot.startsWith("slot")) {
+                slotPrefix = cleanCurrentTextForSlot.substring(4); // 去掉"slot"
+            } else if (cleanCurrentTextForSlot.startsWith("sl")) {
+                slotPrefix = cleanCurrentTextForSlot.substring(2); // 去掉"sl"
             }
 
             // 如果没有找到组件，尝试从beforeText中查找
@@ -547,6 +573,17 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
         // 检查是否在组件标签位置
         if (beforeText.endsWith("<") || beforeText.matches(".*<\\s*$")) {
             System.out.println("检测到组件标签位置");
+            
+            // 检查当前文本是否包含组件前缀
+            String cleanCurrentText = currentText.replace("IntellijIdeaRulezzz", "");
+            System.out.println("清理后的当前文本: '" + cleanCurrentText + "'");
+            
+            // 如果当前文本看起来像组件前缀（包含字母、数字、连字符）
+            if (cleanCurrentText.matches("[a-zA-Z][a-zA-Z0-9-]*")) {
+                System.out.println("当前文本看起来像组件前缀，返回组件前缀上下文: '" + cleanCurrentText + "'");
+                return new CompletionContext(CompletionType.COMPONENT, null, cleanCurrentText);
+            }
+            
             return new CompletionContext(CompletionType.COMPONENT, null, null);
         }
 
@@ -567,6 +604,18 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
             System.out.println("检测到组件名称位置，前缀: '" + componentPrefix + "'");
             return new CompletionContext(CompletionType.COMPONENT, null, componentPrefix);
         }
+        
+        // 如果 beforeText 以 < 开头但不在组件标签位置，检查当前文本
+        if (beforeText.contains("<") && !beforeText.endsWith("<")) {
+            String cleanCurrentText = currentText.replace("IntellijIdeaRulezzz", "");
+            System.out.println("beforeText 包含 < 但不以 < 结尾，检查当前文本: '" + cleanCurrentText + "'");
+            
+            // 如果当前文本看起来像组件前缀
+            if (cleanCurrentText.matches("[a-zA-Z][a-zA-Z0-9-]*")) {
+                System.out.println("当前文本看起来像组件前缀，返回组件前缀上下文: '" + cleanCurrentText + "'");
+                return new CompletionContext(CompletionType.COMPONENT, null, cleanCurrentText);
+            }
+        }
 
         System.out.println("默认返回组件上下文");
         return new CompletionContext(CompletionType.COMPONENT, null, null);
@@ -576,20 +625,26 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
      * 获取当前组件名称
      */
     private String getCurrentComponent(String beforeText) {
+        System.out.println("getCurrentComponent - 输入 beforeText: '" + beforeText + "'");
+        
         Pattern componentPattern = Pattern.compile("<([a-zA-Z][a-zA-Z0-9-]*)\\b");
         Matcher matcher = componentPattern.matcher(beforeText);
         String lastComponent = null;
         while (matcher.find()) {
             lastComponent = matcher.group(1);
+            System.out.println("getCurrentComponent - 找到组件: '" + lastComponent + "'");
         }
 
         // 使用ComponentProvider动态检测组件库
         if (lastComponent != null && componentProvider != null) {
-            if (componentProvider.isComponentFromCurrentLibrary(lastComponent)) {
+            boolean isFromCurrentLibrary = componentProvider.isComponentFromCurrentLibrary(lastComponent);
+            System.out.println("getCurrentComponent - 组件 '" + lastComponent + "' 是否来自当前库: " + isFromCurrentLibrary);
+            if (isFromCurrentLibrary) {
                 return lastComponent;
             }
         }
 
+        System.out.println("getCurrentComponent - 返回 null");
         return null;
     }
 
@@ -597,19 +652,35 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
      * 获取组件前缀
      */
     private String getComponentPrefix(String beforeText) {
+        System.out.println("getComponentPrefix - 输入 beforeText: '" + beforeText + "'");
+        
         if (beforeText.endsWith("<")) {
+            System.out.println("getComponentPrefix - beforeText 以 < 结尾，返回空字符串");
             return "";
         }
 
         // 查找最近的<符号
         int lastOpenTag = beforeText.lastIndexOf('<');
+        System.out.println("getComponentPrefix - lastOpenTag: " + lastOpenTag);
+        
         if (lastOpenTag >= 0) {
             String afterOpenTag = beforeText.substring(lastOpenTag + 1);
-            if (!afterOpenTag.contains(" ") && !afterOpenTag.contains(">")) {
+            System.out.println("getComponentPrefix - afterOpenTag: '" + afterOpenTag + "'");
+            
+            // 检查是否包含空格或>符号，如果包含说明已经输入了属性或标签结束
+            boolean containsSpace = afterOpenTag.contains(" ");
+            boolean containsCloseTag = afterOpenTag.contains(">");
+            System.out.println("getComponentPrefix - containsSpace: " + containsSpace + ", containsCloseTag: " + containsCloseTag);
+            
+            if (!containsSpace && !containsCloseTag) {
+                System.out.println("getComponentPrefix - 返回前缀: '" + afterOpenTag + "'");
                 return afterOpenTag;
+            } else {
+                System.out.println("getComponentPrefix - afterOpenTag 包含空格或>符号，返回 null");
             }
         }
 
+        System.out.println("getComponentPrefix - 返回 null");
         return null;
     }
 
@@ -629,22 +700,30 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
             String tagContent = beforeText.substring(lastOpenTag);
             System.out.println("标签内容: '" + tagContent + "'");
             
-            if (componentProvider != null) {
-                // 提取组件名称并检查
-                Pattern componentPattern = Pattern.compile("<([a-zA-Z][a-zA-Z0-9-]*)\\b");
-                Matcher matcher = componentPattern.matcher(tagContent);
-                if (matcher.find()) {
-                    String componentName = matcher.group(1);
-                    boolean isCurrentLibrary = componentProvider.isComponentFromCurrentLibrary(componentName);
-                    System.out.println("组件: " + componentName + ", 是否当前库: " + isCurrentLibrary);
-                    return isCurrentLibrary;
+            // 如果标签内容以<开头但没有完整的组件名（如<my-），则不在组件标签内
+            if (tagContent.startsWith("<") && !tagContent.contains(" ") && !tagContent.contains(">")) {
+                // 检查是否有完整的组件名（至少包含一个字母数字字符）
+                String afterOpenTag = tagContent.substring(1);
+                if (afterOpenTag.matches("[a-zA-Z][a-zA-Z0-9-]*")) {
+                    // 有完整的组件名，检查是否属于当前库
+                    if (componentProvider != null) {
+                        boolean isCurrentLibrary = componentProvider.isComponentFromCurrentLibrary(afterOpenTag);
+                        System.out.println("组件: " + afterOpenTag + ", 是否当前库: " + isCurrentLibrary);
+                        return isCurrentLibrary;
+                    }
+                } else {
+                    // 没有完整的组件名，不在组件标签内
+                    System.out.println("没有完整的组件名，不在组件标签内");
+                    return false;
                 }
             }
             
-            // 如果无法检测，默认检查是否包含el-（向后兼容）
-            boolean containsEl = tagContent.contains("el-");
-            System.out.println("包含el-: " + containsEl);
-            return containsEl;
+            // 检查是否包含已知的组件前缀（包括自定义组件库）
+            boolean containsKnownPrefix = tagContent.contains("el-") || 
+                                        tagContent.contains("my-") || 
+                                        tagContent.contains("ant-");
+            System.out.println("包含已知前缀: " + containsKnownPrefix);
+            return containsKnownPrefix;
         }
 
         System.out.println("不在组件标签内");

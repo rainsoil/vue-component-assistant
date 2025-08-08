@@ -1,5 +1,6 @@
 package com.chu7.vuecomponentassistant.completion;
 
+import com.chu7.vuecomponentassistant.utils.CustomComponentLibraryManager;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
@@ -100,25 +101,56 @@ public class ComponentProvider {
      * 获取所有组件列表
      */
     public List<ElementPlusComponent> getAllComponents() {
-        return new ArrayList<>(componentsList);
+        List<ElementPlusComponent> allComponents = new ArrayList<>();
+        
+        // 添加内置组件库的组件
+        allComponents.addAll(componentsList);
+        
+        // 添加自定义组件库的组件
+        List<CustomComponentLibraryManager.CustomLibraryConfig> customLibraries = 
+            CustomComponentLibraryManager.getAllCustomLibraries();
+        for (CustomComponentLibraryManager.CustomLibraryConfig config : customLibraries) {
+            allComponents.addAll(config.getComponents());
+        }
+        
+        return allComponents;
     }
     
     /**
      * 根据组件名获取组件
      */
     public ElementPlusComponent getComponent(String componentName) {
-        return componentsMap.get(componentName);
+        // 先从内置组件库查找
+        ElementPlusComponent component = componentsMap.get(componentName);
+        if (component != null) {
+            return component;
+        }
+        
+        // 从自定义组件库查找
+        return CustomComponentLibraryManager.getCustomComponent(componentName);
     }
     
     /**
      * 根据前缀搜索组件
      */
     public List<ElementPlusComponent> searchComponents(String prefix) {
-        if (prefix == null || prefix.isEmpty()) {
-            return getAllComponents();
+        List<ElementPlusComponent> allComponents = new ArrayList<>();
+        
+        // 添加内置组件库的组件
+        allComponents.addAll(componentsList);
+        
+        // 添加自定义组件库的组件
+        List<CustomComponentLibraryManager.CustomLibraryConfig> customLibraries = 
+            CustomComponentLibraryManager.getAllCustomLibraries();
+        for (CustomComponentLibraryManager.CustomLibraryConfig config : customLibraries) {
+            allComponents.addAll(config.getComponents());
         }
         
-        return componentsList.stream()
+        if (prefix == null || prefix.isEmpty()) {
+            return allComponents;
+        }
+        
+        return allComponents.stream()
                 .filter(component -> component.getName().toLowerCase().contains(prefix.toLowerCase()))
                 .collect(java.util.stream.Collectors.toList());
     }
@@ -176,6 +208,19 @@ public class ComponentProvider {
     }
     
     /**
+     * 获取组件所属的组件库显示名称
+     */
+    public String getComponentLibraryDisplayName(String componentName) {
+        // 检查是否是自定义组件库的组件
+        if (CustomComponentLibraryManager.isCustomComponent(componentName)) {
+            return CustomComponentLibraryManager.getCustomLibraryDisplayName(componentName);
+        }
+        
+        // 返回内置组件库的显示名称
+        return libraryType.getDisplayName();
+    }
+    
+    /**
      * 获取组件前缀
      */
     public String getComponentPrefix() {
@@ -193,13 +238,25 @@ public class ComponentProvider {
      * 检查组件是否属于当前组件库
      */
     public boolean isComponentFromCurrentLibrary(String componentName) {
-        return ComponentLibraryDetector.isComponentFromLibrary(componentName, libraryType);
+        // 检查是否是内置组件库的组件
+        if (ComponentLibraryDetector.isComponentFromLibrary(componentName, libraryType)) {
+            return true;
+        }
+        
+        // 检查是否是自定义组件库的组件
+        return CustomComponentLibraryManager.isCustomComponent(componentName);
     }
     
     /**
      * 生成组件的文档 URL
      */
     public String generateDocumentationUrl(String componentName) {
+        // 检查是否是自定义组件库的组件
+        if (CustomComponentLibraryManager.isCustomComponent(componentName)) {
+            return CustomComponentLibraryManager.generateCustomDocumentationUrl(componentName);
+        }
+        
+        // 生成内置组件库的文档URL
         String template = getDocumentationUrlTemplate();
         if (template.isEmpty()) {
             return "";
