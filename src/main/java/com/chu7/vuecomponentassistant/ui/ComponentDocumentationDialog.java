@@ -218,8 +218,12 @@ public class ComponentDocumentationDialog extends DialogWrapper {
      */
     private void openOfficialDocumentation() {
         try {
-            String docUrl = "https://element-plus.org/zh-CN/component/" + 
-                           componentName.substring(3) + ".html";
+            // 根据组件名称生成文档 URL
+            String docUrl = generateDocumentationUrl();
+            if (docUrl.isEmpty()) {
+                Messages.showErrorDialog("无法生成文档链接", "错误");
+                return;
+            }
             Desktop.getDesktop().browse(URI.create(docUrl));
         } catch (IOException e) {
             Messages.showErrorDialog(
@@ -227,6 +231,25 @@ public class ComponentDocumentationDialog extends DialogWrapper {
                 "错误"
             );
         }
+    }
+
+    /**
+     * 生成文档 URL
+     */
+    private String generateDocumentationUrl() {
+        // 根据组件前缀判断组件库类型
+        if (componentName.startsWith("el-")) {
+            // Element UI 或 Element Plus
+            String componentKey = componentName.substring(3);
+            // 这里可以根据项目配置进一步判断是 Element UI 还是 Element Plus
+            // 暂时使用 Element Plus 的 URL 格式
+            return "https://element-plus.org/zh-CN/component/" + componentKey + ".html";
+        } else if (componentName.startsWith("a-")) {
+            // Ant Design Vue
+            String componentKey = componentName.substring(2);
+            return "https://antdv.com/components/" + componentKey + "-cn";
+        }
+        return "";
     }
 
     /**

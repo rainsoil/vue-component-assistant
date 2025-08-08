@@ -1,11 +1,12 @@
 package com.chu7.vuecomponentassistant.documentation;
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlTag;
 import com.chu7.vuecomponentassistant.completion.ElementPlusComponent;
-import com.chu7.vuecomponentassistant.completion.ElementPlusComponentProvider;
+import com.chu7.vuecomponentassistant.completion.ComponentProvider;
 import com.chu7.vuecomponentassistant.completion.ElementPlusProp;
 import com.chu7.vuecomponentassistant.completion.ElementPlusEvent;
 import com.chu7.vuecomponentassistant.completion.ElementPlusSlot;
@@ -27,14 +28,14 @@ import java.util.List;
 public class ElementPlusDocumentationProvider extends AbstractDocumentationProvider {
 
     /** 组件数据提供者，用于获取组件详细信息 */
-    private final ElementPlusComponentProvider componentProvider;
+    private ComponentProvider componentProvider;
 
     /**
      * 构造函数
-     * 初始化组件数据提供者
+     * 组件提供者将在 generateDoc 中根据项目动态创建
      */
     public ElementPlusDocumentationProvider() {
-        this.componentProvider = new ElementPlusComponentProvider();
+        // 组件提供者将在 generateDoc 中根据项目动态创建
         System.out.println("ElementPlusDocumentationProvider 已初始化");
     }
 
@@ -52,6 +53,18 @@ public class ElementPlusDocumentationProvider extends AbstractDocumentationProvi
         System.out.println("元素类型: " + (element != null ? element.getClass().getSimpleName() : "null"));
         System.out.println("元素文本: " + (element != null ? element.getText() : "null"));
         
+        // 获取当前项目
+        Project project = element != null ? element.getProject() : null;
+        if (project == null) {
+            System.out.println("无法获取项目信息，返回测试文档");
+            return generateTestDocumentation(element);
+        }
+
+        // 根据项目动态创建组件提供者
+        if (componentProvider == null) {
+            componentProvider = new ComponentProvider(project);
+        }
+        
         // 尝试从不同元素类型中提取组件名称
         String componentName = extractComponentName(element);
         if (componentName == null) {
@@ -61,13 +74,13 @@ public class ElementPlusDocumentationProvider extends AbstractDocumentationProvi
         
         System.out.println("提取到组件名称: " + componentName);
 
-        // 检查是否是 Element Plus 组件
-        if (!isElementPlusComponent(componentName)) {
-            System.out.println("不是 Element Plus 组件，返回测试文档");
+        // 检查是否是当前组件库的组件
+        if (!componentProvider.isComponentFromCurrentLibrary(componentName)) {
+            System.out.println("不是 " + componentProvider.getLibraryDisplayName() + " 组件，返回测试文档");
             return generateTestDocumentation(element);
         }
 
-        System.out.println("检测到 Element Plus 组件: " + componentName);
+        System.out.println("检测到 " + componentProvider.getLibraryDisplayName() + " 组件: " + componentName);
 
         // 获取组件详细信息
         ElementPlusComponent component = componentProvider.getComponent(componentName);
@@ -145,17 +158,7 @@ public class ElementPlusDocumentationProvider extends AbstractDocumentationProvi
         return null;
     }
 
-    /**
-     * 检查是否是 Element Plus 组件
-     * 
-     * @param tagName 标签名称
-     * @return 如果是 Element Plus 组件返回 true，否则返回 false
-     */
-    private boolean isElementPlusComponent(String tagName) {
-        boolean isElementPlus = tagName != null && tagName.startsWith("el-");
-        System.out.println("检查组件: " + tagName + " -> " + isElementPlus);
-        return isElementPlus;
-    }
+
 
     /**
      * 生成组件文档内容

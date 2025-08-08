@@ -11,12 +11,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.xml.XmlTag;
 import com.chu7.vuecomponentassistant.completion.ElementPlusComponent;
-import com.chu7.vuecomponentassistant.completion.ElementPlusComponentProvider;
+import com.chu7.vuecomponentassistant.completion.ComponentProvider;
 import com.chu7.vuecomponentassistant.completion.ElementPlusProp;
 import com.chu7.vuecomponentassistant.completion.ElementPlusEvent;
 import com.chu7.vuecomponentassistant.completion.ElementPlusSlot;
 import com.chu7.vuecomponentassistant.documentation.DocumentationStyleGenerator;
 import com.chu7.vuecomponentassistant.ui.ComponentDocumentationDialog;
+import com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -35,13 +36,13 @@ import java.util.List;
 public class ElementPlusDocumentationAction extends AnAction {
 
     /** 组件数据提供者 */
-    private final ElementPlusComponentProvider componentProvider;
+    private ComponentProvider componentProvider;
 
     /**
      * 构造函数
      */
     public ElementPlusDocumentationAction() {
-        this.componentProvider = new ElementPlusComponentProvider();
+        // 组件提供者将在 actionPerformed 中根据项目动态创建
     }
 
     /**
@@ -56,6 +57,11 @@ public class ElementPlusDocumentationAction extends AnAction {
         if (project == null) {
             Messages.showErrorDialog("无法获取项目信息", "错误");
             return;
+        }
+
+        // 根据项目动态创建组件提供者
+        if (componentProvider == null) {
+            componentProvider = new ComponentProvider(project);
         }
 
         // 获取当前编辑器
@@ -88,9 +94,9 @@ public class ElementPlusDocumentationAction extends AnAction {
             return;
         }
 
-        // 检查是否是 Element Plus 组件
-        if (!isElementPlusComponent(componentName)) {
-            Messages.showErrorDialog("不是 Element Plus 组件: " + componentName, "提示");
+        // 检查是否是当前组件库的组件
+        if (!componentProvider.isComponentFromCurrentLibrary(componentName)) {
+            Messages.showErrorDialog("不是 " + componentProvider.getLibraryDisplayName() + " 组件: " + componentName, "提示");
             return;
         }
 
@@ -116,15 +122,24 @@ public class ElementPlusDocumentationAction extends AnAction {
         // 获取当前元素
         PsiElement element = e.getData(CommonDataKeys.PSI_ELEMENT);
         
-        // 检查是否是 Element Plus 组件
-        boolean isElementPlusComponent = false;
+        // 检查是否是当前组件库的组件
+        boolean isCurrentLibraryComponent = false;
         if (element != null) {
             String componentName = extractComponentName(element);
-            isElementPlusComponent = isElementPlusComponent(componentName);
+            if (componentName != null) {
+                // 检查组件前缀
+                String prefix = "";
+                if (componentName.startsWith("el-")) {
+                    prefix = "el-";
+                } else if (componentName.startsWith("a-")) {
+                    prefix = "a-";
+                }
+                isCurrentLibraryComponent = !prefix.isEmpty();
+            }
         }
         
-        // 只有在 Element Plus 组件上才启用此动作
-        e.getPresentation().setEnabledAndVisible(isElementPlusComponent);
+        // 只有在支持的组件库组件上才启用此动作
+        e.getPresentation().setEnabledAndVisible(isCurrentLibraryComponent);
     }
 
     /**
@@ -168,13 +183,13 @@ public class ElementPlusDocumentationAction extends AnAction {
     }
 
     /**
-     * 检查是否是 Element Plus 组件
+     * 检查是否是支持的组件库组件
      * 
      * @param componentName 组件名称
-     * @return 是否是 Element Plus 组件
+     * @return 是否是支持的组件库组件
      */
-    private boolean isElementPlusComponent(String componentName) {
-        return componentName != null && componentName.startsWith("el-");
+    private boolean isSupportedComponent(String componentName) {
+        return componentName != null && (componentName.startsWith("el-") || componentName.startsWith("a-"));
     }
 
     /**

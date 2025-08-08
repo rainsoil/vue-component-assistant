@@ -3,6 +3,7 @@ package com.chu7.vuecomponentassistant.completion;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
@@ -13,10 +14,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Element Plus 智能补全提供者
+ * Vue 组件智能补全提供者
  * 
  * 功能说明：
- * 1. 组件补全：输入 < 时提供 Element Plus 组件列表
+ * 1. 组件补全：输入 < 时提供当前组件库的组件列表
  * 2. 属性补全：在组件标签内输入空格时提供该组件的属性列表
  * 3. 事件补全：输入 @ 时提供该组件的事件列表
  * 4. 插槽补全：输入 sl 或 slot 时提供该组件的插槽列表
@@ -26,21 +27,22 @@ import java.util.regex.Pattern;
  * - 自动插入完整的标签结构
  * - 提供详细的中文描述和文档链接
  * - 支持作用域插槽的完整模板生成
+ * - 动态检测项目使用的组件库（Element UI、Element Plus、Ant Design Vue）
  * 
  * @author Vue Component Assistant Team
- * @version 1.0.0
+ * @version 2.0.0
  */
 public class ElementPlusTestCompletionProvider extends CompletionProvider<CompletionParameters> {
 
-    /** 组件数据提供者，负责加载和管理 Element Plus 组件数据 */
-    private final ElementPlusComponentProvider componentProvider;
+    /** 组件数据提供者，负责加载和管理组件数据 */
+    private ComponentProvider componentProvider;
 
     /**
      * 构造函数
-     * 初始化组件数据提供者，用于获取 Element Plus 组件的详细信息
+     * 组件提供者将在 addCompletions 中根据项目动态创建
      */
     public ElementPlusTestCompletionProvider() {
-        this.componentProvider = new ElementPlusComponentProvider();
+        // 组件提供者将在 addCompletions 中根据项目动态创建
     }
 
     /**
@@ -60,6 +62,17 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
     protected void addCompletions(@NotNull CompletionParameters parameters,
                                   @NotNull ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
+
+        // 获取当前项目
+        Project project = parameters.getEditor().getProject();
+        if (project == null) {
+            return;
+        }
+
+        // 根据项目动态创建组件提供者
+        if (componentProvider == null) {
+            componentProvider = new ComponentProvider(project);
+        }
 
         // 获取当前光标位置的 PSI 元素
         PsiElement element = parameters.getPosition();
@@ -81,6 +94,7 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
         System.out.println("上下文类型: " + completionContext.getType());
         System.out.println("当前组件: " + completionContext.getCurrentComponent());
         System.out.println("前缀: " + completionContext.getPrefix());
+        System.out.println("组件库: " + componentProvider.getLibraryDisplayName());
         System.out.println("==================");
 
         // 根据上下文类型提供相应的补全选项
@@ -108,7 +122,7 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
      * 添加组件补全选项
      * 
      * 功能说明：
-     * - 当用户输入 < 时，提供 Element Plus 组件列表
+     * - 当用户输入 < 时，提供当前组件库的组件列表
      * - 支持前缀过滤，只显示匹配的组件
      * - 自动插入完整的组件标签结构
      * - 限制显示数量，避免选项过多影响用户体验
@@ -137,7 +151,7 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
 
             // 创建组件补全元素
             LookupElementBuilder element = LookupElementBuilder.create(component.getName())
-                    .withTypeText("Element Plus Component") // 显示类型标识
+                    .withTypeText(componentProvider.getLibraryDisplayName() + " Component") // 动态显示类型标识
                     .withTailText(" " + component.getDescription()) // 显示组件描述
                     .withIcon(ElementPlusIcons.COMPONENT_ICON) // 设置组件图标
                     .withInsertHandler((insertContext, item) -> {
@@ -569,10 +583,11 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
             lastComponent = matcher.group(1);
         }
 
-        // 检查是否是Element Plus组件
-        Pattern elementPlusPattern = Pattern.compile("el-[a-zA-Z-]+");
-        if (lastComponent != null && elementPlusPattern.matcher(lastComponent).matches()) {
-            return lastComponent;
+        // 使用ComponentProvider动态检测组件库
+        if (lastComponent != null && componentProvider != null) {
+            if (componentProvider.isComponentFromCurrentLibrary(lastComponent)) {
+                return lastComponent;
+            }
         }
 
         return null;
@@ -610,9 +625,23 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
 
         // 如果最近的<在>之后，说明在标签内
         if (lastOpenTag > lastCloseTag) {
-            // 检查是否在Element Plus组件标签内
+            // 检查是否在当前组件库的组件标签内
             String tagContent = beforeText.substring(lastOpenTag);
             System.out.println("标签内容: '" + tagContent + "'");
+            
+            if (componentProvider != null) {
+                // 提取组件名称并检查
+                Pattern componentPattern = Pattern.compile("<([a-zA-Z][a-zA-Z0-9-]*)\\b");
+                Matcher matcher = componentPattern.matcher(tagContent);
+                if (matcher.find()) {
+                    String componentName = matcher.group(1);
+                    boolean isCurrentLibrary = componentProvider.isComponentFromCurrentLibrary(componentName);
+                    System.out.println("组件: " + componentName + ", 是否当前库: " + isCurrentLibrary);
+                    return isCurrentLibrary;
+                }
+            }
+            
+            // 如果无法检测，默认检查是否包含el-（向后兼容）
             boolean containsEl = tagContent.contains("el-");
             System.out.println("包含el-: " + containsEl);
             return containsEl;
