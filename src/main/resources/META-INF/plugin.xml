@@ -79,13 +79,13 @@
         <!-- 注册设置页面 -->
         <applicationConfigurable 
             parentId="tools" 
-            instance="com.chu7.vuecomponentassistant.settings.ElementPlusSettingsConfigurable"
-            id="com.chu7.vuecomponentassistant.settings.ElementPlusSettingsConfigurable"
-            displayName="Element Plus Assistant"/>
+            instance="com.chu7.vuecomponentassistant.settings.VueComponentAssistantSettingsConfigurable"
+            id="com.chu7.vuecomponentassistant.settings.VueComponentAssistantSettingsConfigurable"
+            displayName="Vue Kit"/>
         
         <!-- 注册设置服务 -->
         <applicationService 
-            serviceImplementation="com.chu7.vuecomponentassistant.settings.ElementPlusSettings"/>
+            serviceImplementation="com.chu7.vuecomponentassistant.settings.PluginSettings"/>
     </extensions>
 
     <actions>
@@ -97,21 +97,7 @@
             <add-to-group group-id="EditorPopupMenu" anchor="first"/>
         </action>
         
-        <!-- 注册自定义组件库管理动作 -->
-        <action id="CustomLibrary.Management" 
-                class="com.chu7.vuecomponentassistant.action.CustomLibraryManagementAction" 
-                text="🔧 自定义组件库管理" 
-                description="上传和管理自定义组件库">
-            <add-to-group group-id="ToolsMenu" anchor="last"/>
-        </action>
-        
-        <!-- 注册Element Plus组件库管理动作 -->
-        <action id="ElementPlus.LibraryManagement" 
-                class="com.chu7.vuecomponentassistant.action.CustomLibraryManagementAction" 
-                text="📚 组件库管理" 
-                description="管理所有组件库（Element Plus、Element UI、Ant Design Vue、自定义组件库）">
-            <add-to-group group-id="ToolsMenu" anchor="last"/>
-        </action>
+
     </actions>
 
 

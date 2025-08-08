@@ -3,12 +3,14 @@
 
 
         <my-button></my-button>
+        <my-input></my-input>
 
-        <el-button>
+
+        <el-table border="false" @sort-change="handleSort-change">
             <template #default>
-                <!-- 按钮内容 -->
+                <!-- 自定义列内容 -->
             </template>
-        </el-button>
+        </el-table>
     </div>
 </template>
 

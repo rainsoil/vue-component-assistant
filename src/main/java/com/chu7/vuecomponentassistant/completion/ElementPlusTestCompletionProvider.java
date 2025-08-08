@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
 import com.chu7.vuecomponentassistant.utils.CustomComponentLibraryManager;
+import com.chu7.vuecomponentassistant.settings.PluginSettings;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -64,6 +65,12 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
                                   @NotNull ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
 
+        // 检查补全设置
+        PluginSettings settings = PluginSettings.getInstance();
+        if (!settings.isEnableComponentCompletion()) {
+            return; // 如果组件补全被禁用，直接返回
+        }
+
         // 获取当前项目
         Project project = parameters.getEditor().getProject();
         if (project == null) {
@@ -106,15 +113,21 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
                 break;
             case ATTRIBUTE:
                 // 属性补全：在组件标签内输入空格时显示属性列表
-                addAttributeCompletions(result, completionContext.getCurrentComponent(), completionContext.getPrefix());
+                if (settings.isEnableAttributeCompletion()) {
+                    addAttributeCompletions(result, completionContext.getCurrentComponent(), completionContext.getPrefix());
+                }
                 break;
             case EVENT:
                 // 事件补全：输入 @ 时显示事件列表
-                addEventCompletions(result, completionContext.getCurrentComponent(), completionContext.getPrefix());
+                if (settings.isEnableEventCompletion()) {
+                    addEventCompletions(result, completionContext.getCurrentComponent(), completionContext.getPrefix());
+                }
                 break;
             case SLOT:
                 // 插槽补全：输入 sl 或 slot 时显示插槽列表
-                addSlotCompletions(result, completionContext.getCurrentComponent(), completionContext.getPrefix());
+                if (settings.isEnableSlotCompletion()) {
+                    addSlotCompletions(result, completionContext.getCurrentComponent(), completionContext.getPrefix());
+                }
                 break;
         }
     }

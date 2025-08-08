@@ -18,6 +18,7 @@ import com.chu7.vuecomponentassistant.completion.ElementPlusSlot;
 import com.chu7.vuecomponentassistant.documentation.DocumentationStyleGenerator;
 import com.chu7.vuecomponentassistant.ui.ComponentDocumentationDialog;
 import com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector;
+import com.chu7.vuecomponentassistant.settings.PluginSettings;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -52,6 +53,13 @@ public class ElementPlusDocumentationAction extends AnAction {
      */
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
+        // 检查右键文档设置
+        PluginSettings settings = PluginSettings.getInstance();
+        if (!settings.isEnableRightClickDocumentation()) {
+            Messages.showInfoMessage("右键文档功能已禁用，请在设置中启用", "提示");
+            return;
+        }
+        
         // 获取当前项目
         Project project = e.getProject();
         if (project == null) {
@@ -119,6 +127,13 @@ public class ElementPlusDocumentationAction extends AnAction {
      */
     @Override
     public void update(@NotNull AnActionEvent e) {
+        // 检查右键文档设置
+        PluginSettings settings = PluginSettings.getInstance();
+        if (!settings.isEnableRightClickDocumentation()) {
+            e.getPresentation().setEnabledAndVisible(false);
+            return;
+        }
+        
         // 获取当前元素
         PsiElement element = e.getData(CommonDataKeys.PSI_ELEMENT);
         

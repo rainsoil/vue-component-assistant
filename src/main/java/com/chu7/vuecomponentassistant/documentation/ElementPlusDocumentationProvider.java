@@ -10,6 +10,7 @@ import com.chu7.vuecomponentassistant.completion.ComponentProvider;
 import com.chu7.vuecomponentassistant.completion.ElementPlusProp;
 import com.chu7.vuecomponentassistant.completion.ElementPlusEvent;
 import com.chu7.vuecomponentassistant.completion.ElementPlusSlot;
+import com.chu7.vuecomponentassistant.settings.PluginSettings;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -48,6 +49,13 @@ public class ElementPlusDocumentationProvider extends AbstractDocumentationProvi
     @Nullable
     @Override
     public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+        // 检查悬停文档设置
+        PluginSettings settings = PluginSettings.getInstance();
+        if (!settings.isEnableHoverDocumentation()) {
+            System.out.println("悬停文档功能已禁用");
+            return null; // 返回 null 表示不显示文档
+        }
+        
         // 添加调试信息
         System.out.println("=== 文档提供者被调用 ===");
         System.out.println("元素类型: " + (element != null ? element.getClass().getSimpleName() : "null"));
