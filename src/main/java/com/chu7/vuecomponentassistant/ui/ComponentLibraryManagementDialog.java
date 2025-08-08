@@ -32,7 +32,7 @@ import java.util.HashMap;
  * - 新增组件库（上传JSON文件）
  * - 导出模板功能
  * 
- * @author Vue Component Assistant Team
+ * @author VueKit Team
  * @version 2.0.0
  */
 public class ComponentLibraryManagementDialog extends DialogWrapper {

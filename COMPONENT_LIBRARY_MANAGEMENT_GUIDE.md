@@ -2,7 +2,7 @@
 
 ## 概述
 
-Vue Component Assistant 支持多种组件库的管理，包括内置组件库和自定义组件库。本指南将详细介绍如何使用和管理这些组件库。
+VueKit 支持多种组件库的管理，包括内置组件库和自定义组件库。本指南将详细介绍如何使用和管理这些组件库。
 
 ## 内置组件库
 
@@ -340,7 +340,7 @@ export default {
 
 ### 缓存机制
 
-- **缓存位置**：`用户主目录/.intellij_idea_system/vue-component-assistant/custom_component_libraries.json`
+- **缓存位置**：`用户主目录/.intellij_idea_system/vuekit/custom_component_libraries.json`
 - **自动保存**：数据变更时自动保存到缓存文件
 - **自动加载**：启动时自动从缓存文件加载数据
 - **跨会话**：重启IDE后数据不丢失

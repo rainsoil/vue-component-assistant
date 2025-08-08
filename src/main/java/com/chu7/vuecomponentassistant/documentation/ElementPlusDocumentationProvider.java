@@ -23,7 +23,7 @@ import java.util.List;
  * - 包括组件介绍、属性列表、事件列表、插槽列表、文档链接等
  * - 提供完整的中文描述和示例代码
  * 
- * @author Vue Component Assistant Team
+ * @author VueKit Team
  * @version 1.0.0
  */
 public class ElementPlusDocumentationProvider extends AbstractDocumentationProvider {

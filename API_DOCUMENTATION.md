@@ -1,8 +1,8 @@
-# Vue Component Assistant API 文档
+# VueKit API 文档
 
 ## 概述
 
-本文档详细介绍了 Vue Component Assistant 插件的 API 接口，包括核心类、方法、配置选项等。
+本文档详细介绍了 VueKit 插件的 API 接口，包括核心类、方法、配置选项等。
 
 ## 核心类
 

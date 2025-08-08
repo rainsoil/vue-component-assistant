@@ -1,8 +1,8 @@
-# Vue Component Assistant 项目总结
+# VueKit 项目总结
 
 ## 项目概述
 
-Vue Component Assistant 是一个专为 Vue.js 开发者设计的 IntelliJ IDEA 插件，提供智能组件补全、文档提示和开发辅助功能。该项目旨在提高 Vue.js 开发效率，支持多种主流组件库和自定义组件库。
+VueKit 是一个专为 Vue.js 开发者设计的 IntelliJ IDEA 插件，提供智能组件补全、文档提示和开发辅助功能。该项目旨在提高 Vue.js 开发效率，支持多种主流组件库和自定义组件库。
 
 ## 核心功能
 
@@ -60,7 +60,7 @@ Vue Component Assistant 是一个专为 Vue.js 开发者设计的 IntelliJ IDEA 
 ### 数据持久化
 
 - **缓存机制**：使用文件系统进行数据持久化
-- **缓存位置**：`用户主目录/.intellij_idea_system/vue-component-assistant/custom_component_libraries.json`
+- **缓存位置**：`用户主目录/.intellij_idea_system/vuekit/custom_component_libraries.json`
 - **自动保存**：数据变更时自动保存到缓存文件
 - **自动加载**：启动时自动从缓存文件加载数据
 
@@ -76,7 +76,7 @@ Vue Component Assistant 是一个专为 Vue.js 开发者设计的 IntelliJ IDEA 
 ## 项目结构
 
 ```
-vue-component-assistant/
+vuekit/
 ├── src/main/java/com/chu7/vuecomponentassistant/
 │   ├── action/                    # 动作处理类
 │   ├── completion/                # 补全相关类
@@ -213,13 +213,13 @@ vue-component-assistant/
 ## 联系方式
 
 - **邮箱**: luyanan0718@163.com
-- **GitHub**: https://github.com/rainsoil/vue-component-assistant
-- **Issues**: https://github.com/rainsoil/vue-component-assistant/issues
+- **GitHub**: https://github.com/rainsoil/vuekit
+- **Issues**: https://github.com/rainsoil/vuekit/issues
 
 ## 致谢
 
-感谢所有为 Vue Component Assistant 项目做出贡献的开发者！
+感谢所有为 VueKit 项目做出贡献的开发者！
 
 ---
 
-**Vue Component Assistant** - 让 Vue.js 开发更高效！ 🚀
+**VueKit** - 让 Vue.js 开发更高效！ 🚀

@@ -1,8 +1,8 @@
-# Vue Component Assistant 开发指南
+# VueKit 开发指南
 
 ## 概述
 
-本文档为 Vue Component Assistant 插件的开发者提供详细的开发指南，包括环境搭建、项目结构、开发流程、测试方法等。
+本文档为 VueKit 插件的开发者提供详细的开发指南，包括环境搭建、项目结构、开发流程、测试方法等。
 
 ## 环境要求
 
@@ -24,8 +24,8 @@
 ### 1. 克隆项目
 
 ```bash
-git clone https://github.com/rainsoil/vue-component-assistant.git
-cd vue-component-assistant
+git clone https://github.com/rainsoil/vuekit.git
+cd vuekit
 ```
 
 ### 2. 导入项目
@@ -81,7 +81,7 @@ patchPluginXml {
 ## 项目结构
 
 ```
-vue-component-assistant/
+vuekit/
 ├── build.gradle                    # Gradle 构建配置
 ├── settings.gradle                 # Gradle 设置
 ├── README.md                       # 项目说明文档
@@ -505,9 +505,9 @@ version '2.0.0'
 ## 联系方式
 
 - **邮箱**: luyanan0718@163.com
-- **GitHub**: https://github.com/rainsoil/vue-component-assistant
-- **Issues**: https://github.com/rainsoil/vue-component-assistant/issues
+- **GitHub**: https://github.com/rainsoil/vuekit
+- **Issues**: https://github.com/rainsoil/vuekit/issues
 
 ---
 
-感谢您为 Vue Component Assistant 项目做出贡献！ 🚀
+感谢您为 VueKit 项目做出贡献！ 🚀

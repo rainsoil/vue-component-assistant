@@ -31,7 +31,7 @@ import java.util.List;
  * - 弹框显示组件的完整信息，包括属性、事件、插槽等
  * - 提供更好的用户体验，比悬浮提示更详细
  * 
- * @author Vue Component Assistant Team
+ * @author VueKit Team
  * @version 1.0.0
  */
 public class ElementPlusDocumentationAction extends AnAction {

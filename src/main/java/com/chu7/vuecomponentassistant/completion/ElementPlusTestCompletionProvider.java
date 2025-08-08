@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
  * - 支持作用域插槽的完整模板生成
  * - 动态检测项目使用的组件库（Element UI、Element Plus、Ant Design Vue）
  * 
- * @author Vue Component Assistant Team
+ * @author VueKit Team
  * @version 2.0.0
  */
 public class ElementPlusTestCompletionProvider extends CompletionProvider<CompletionParameters> {
