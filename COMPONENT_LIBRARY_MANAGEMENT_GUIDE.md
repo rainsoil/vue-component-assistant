@@ -1,74 +1,59 @@
-# 🔧 组件库管理功能使用指南
+# 组件库管理指南
 
-## 📋 功能概述
+## 概述
 
-Vue Component Assistant 插件现在提供了完整的组件库管理功能，让您可以轻松管理所有组件库。
+Vue Component Assistant 支持多种组件库的管理，包括内置组件库和自定义组件库。本指南将详细介绍如何使用和管理这些组件库。
 
-## 🚀 如何访问组件库管理功能
+## 内置组件库
 
-### 方法一：通过设置页面（推荐）
-1. 打开 IntelliJ IDEA
-2. 进入 **File** → **Settings** (Windows/Linux) 或 **IntelliJ IDEA** → **Preferences** (macOS)
-3. 在左侧导航栏中找到 **Tools** → **Element Plus Assistant**
-4. 在设置页面中，您会看到 "📚 自定义组件库管理" 部分
-5. 点击 "🔧 管理自定义组件库" 按钮
+### 支持的组件库
 
-### 方法二：通过工具菜单
-1. 在 IntelliJ IDEA 中，点击顶部菜单 **Tools**
-2. 选择 **📚 组件库管理** 或 **🔧 自定义组件库管理**
+| 组件库 | 版本 | 状态 | 说明 |
+|--------|------|------|------|
+| Element Plus | 最新版本 | ✅ 支持 | 现代化的Vue 3组件库 |
+| Element UI | 经典版本 | ✅ 支持 | Vue 2经典组件库 |
+| Ant Design Vue | 最新版本 | ✅ 支持 | 企业级UI组件库 |
 
-## 🎯 功能特性
+### 自动检测
 
-### 1. 📚 组件展示
-- **首先展示所有组件**：打开管理功能后，首先会显示所有可用组件的概览
-- **按组件库分组**：组件按组件库分组显示
-- **详细信息**：显示组件库名称、组件数量、组件列表和描述
+插件会自动检测项目中使用的组件库：
 
-### 2. 📦 上传组件库
-- 支持上传自定义组件库的 JSON 文件
-- 支持直接输入 JSON 内容
-- 提供配置验证功能
-- 支持多个自定义组件库同时加载
+1. **读取 package.json**
+   - 检查项目根目录的 `package.json` 文件
+   - 分析 `dependencies` 和 `devDependencies` 中的组件库
 
-### 3. 📤 导出组件库
-- 可以导出任何组件库（内置或自定义）为 JSON 文件
-- 选择保存位置
-- 保持完整的组件信息结构
+2. **智能识别**
+   - 识别 `element-plus` → Element Plus
+   - 识别 `element-ui` → Element UI
+   - 识别 `ant-design-vue` → Ant Design Vue
 
-### 4. 🗑️ 删除组件库
-- **只能删除自定义组件库**
-- **内置组件库不可删除**（Element Plus、Element UI、Ant Design Vue）
-- 提供确认对话框防止误删
+3. **自动加载**
+   - 根据检测结果自动加载对应的组件数据
+   - 提供相应的补全和文档功能
 
-### 5. 📋 导出模板
-- 导出标准的组件库 JSON 模板
-- 包含完整的示例组件结构
-- 方便创建新的组件库
+### 手动配置
 
-## 🛡️ 安全保护
+如果自动检测失败，可以手动配置：
 
-### 内置组件库保护
-- **Element Plus** - 不可删除
-- **Element UI** - 不可删除  
-- **Ant Design Vue** - 不可删除
+1. 打开 **File** → **Settings** → **Tools** → **Element Plus Assistant**
+2. 禁用 **自动检测组件库**
+3. 选择默认组件库
+4. 点击 **Apply** 保存设置
 
-这些内置组件库是插件的核心功能，完全受到保护，用户无法删除。
+## 自定义组件库
 
-### 数据验证
-- 上传前验证 JSON 格式
-- 检查必需字段
-- 提供详细的错误提示
+### JSON格式说明
 
-## 📦 自定义组件库 JSON 格式
+#### 单个组件库格式
 
-### 基本结构
 ```json
 {
-  "name": "my-component-library",
-  "displayName": "我的组件库",
+  "name": "my-custom-library",
+  "displayName": "我的自定义组件库",
   "version": "1.0.0",
-  "description": "自定义组件库描述",
+  "description": "这是一个示例自定义组件库",
   "componentPrefix": "my-",
+  "documentationUrlTemplate": "https://example.com/docs/%s",
   "components": [
     {
       "name": "my-button",
@@ -83,7 +68,22 @@ Vue Component Assistant 插件现在提供了完整的组件库管理功能，�
           "description": "按钮类型",
           "defaultValue": "default",
           "required": false,
-          "options": ["primary", "success", "warning", "danger"]
+          "options": ["primary", "success", "warning", "danger", "info", "default"]
+        },
+        {
+          "name": "size",
+          "type": "string",
+          "description": "按钮尺寸",
+          "defaultValue": "medium",
+          "required": false,
+          "options": ["large", "medium", "small"]
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "description": "是否禁用",
+          "defaultValue": false,
+          "required": false
         }
       ],
       "events": [
@@ -91,12 +91,83 @@ Vue Component Assistant 插件现在提供了完整的组件库管理功能，�
           "name": "click",
           "description": "点击事件",
           "parameters": "event"
+        },
+        {
+          "name": "dblclick",
+          "description": "双击事件",
+          "parameters": "event"
         }
       ],
       "slots": [
         {
           "name": "default",
           "description": "按钮内容"
+        },
+        {
+          "name": "icon",
+          "description": "按钮图标"
+        }
+      ]
+    },
+    {
+      "name": "my-input",
+      "description": "自定义输入框组件",
+      "version": "1.0.0",
+      "example": "<my-input v-model=\"value\" placeholder=\"请输入内容\" />",
+      "docUrl": "https://example.com/my-input",
+      "props": [
+        {
+          "name": "value",
+          "type": "string",
+          "description": "输入值",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "description": "占位符",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "description": "是否禁用",
+          "defaultValue": false,
+          "required": false
+        }
+      ],
+      "events": [
+        {
+          "name": "input",
+          "description": "输入事件",
+          "parameters": "value"
+        },
+        {
+          "name": "change",
+          "description": "值改变事件",
+          "parameters": "value"
+        },
+        {
+          "name": "focus",
+          "description": "获得焦点事件",
+          "parameters": "event"
+        },
+        {
+          "name": "blur",
+          "description": "失去焦点事件",
+          "parameters": "event"
+        }
+      ],
+      "slots": [
+        {
+          "name": "prefix",
+          "description": "输入框前缀"
+        },
+        {
+          "name": "suffix",
+          "description": "输入框后缀"
         }
       ]
     }
@@ -104,113 +175,314 @@ Vue Component Assistant 插件现在提供了完整的组件库管理功能，�
 }
 ```
 
-## 🔧 使用步骤
+#### 多个组件库格式
 
-### 1. 查看所有组件
-1. 打开组件库管理功能
-2. 首先会显示所有组件的概览
-3. 查看各个组件库的组件列表
+```json
+[
+  {
+    "name": "library1",
+    "displayName": "组件库1",
+    "version": "1.0.0",
+    "description": "第一个自定义组件库",
+    "componentPrefix": "lib1-",
+    "components": [...]
+  },
+  {
+    "name": "library2",
+    "displayName": "组件库2",
+    "version": "1.0.0",
+    "description": "第二个自定义组件库",
+    "componentPrefix": "lib2-",
+    "components": [...]
+  }
+]
+```
 
-### 2. 上传自定义组件库
-1. 选择 "📦 上传新组件库"
-2. 选择 JSON 文件或输入 JSON 内容
-3. 点击 "验证配置" 检查格式
-4. 点击 "加载组件库" 完成上传
+### 字段说明
 
-### 3. 导出组件库
-1. 选择 "📤 导出组件库"
-2. 选择要导出的组件库
-3. 选择保存位置
-4. 完成导出
+#### 组件库级别字段
 
-### 4. 删除自定义组件库
-1. 选择 "🗑️ 删除自定义组件库"
-2. 选择要删除的自定义组件库
+| 字段 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| `name` | string | ✅ | 组件库唯一标识名称 |
+| `displayName` | string | ❌ | 显示名称，默认为 `name` |
+| `version` | string | ❌ | 版本号，默认为 "1.0.0" |
+| `description` | string | ❌ | 描述信息 |
+| `componentPrefix` | string | ❌ | 组件前缀，如 "my-" |
+| `documentationUrlTemplate` | string | ❌ | 文档URL模板，支持 %s 占位符 |
+
+#### 组件级别字段
+
+| 字段 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| `name` | string | ✅ | 组件名称 |
+| `description` | string | ❌ | 组件描述 |
+| `version` | string | ❌ | 组件版本 |
+| `example` | string | ❌ | 使用示例 |
+| `docUrl` | string | ❌ | 文档URL |
+| `props` | array | ❌ | 属性列表 |
+| `events` | array | ❌ | 事件列表 |
+| `slots` | array | ❌ | 插槽列表 |
+
+#### 属性字段
+
+| 字段 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| `name` | string | ✅ | 属性名称 |
+| `type` | string | ❌ | 属性类型 |
+| `description` | string | ❌ | 属性描述 |
+| `defaultValue` | any | ❌ | 默认值 |
+| `required` | boolean | ❌ | 是否必填 |
+| `options` | array | ❌ | 可选值列表 |
+
+#### 事件字段
+
+| 字段 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| `name` | string | ✅ | 事件名称 |
+| `description` | string | ❌ | 事件描述 |
+| `parameters` | string | ❌ | 事件参数 |
+
+#### 插槽字段
+
+| 字段 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| `name` | string | ✅ | 插槽名称 |
+| `description` | string | ❌ | 插槽描述 |
+
+### 导入自定义组件库
+
+#### 方法一：通过组件库管理界面
+
+1. 打开 **Tools** → **📚 组件库管理**
+2. 点击 **上传组件库** 按钮
+3. 选择JSON文件
+4. 点击 **确定** 完成导入
+
+#### 方法二：通过设置页面
+
+1. 打开 **File** → **Settings** → **Tools** → **Element Plus Assistant**
+2. 点击 **管理自定义组件库** 按钮
+3. 在弹出窗口中点击 **上传组件库**
+4. 选择JSON文件并导入
+
+### 使用自定义组件
+
+导入成功后，可以像使用内置组件一样使用自定义组件：
+
+```vue
+<template>
+  <!-- 输入 <my- 时会显示自定义组件 -->
+  <my-button type="primary" @click="handleClick">
+    自定义按钮
+  </my-button>
+  
+  <my-input 
+    v-model="value"
+    placeholder="请输入内容"
+    @input="handleInput"
+    @change="handleChange"
+  />
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      value: ''
+    }
+  },
+  methods: {
+    handleClick() {
+      console.log('按钮被点击')
+    },
+    handleInput(value) {
+      console.log('输入值:', value)
+    },
+    handleChange(value) {
+      console.log('值改变:', value)
+    }
+  }
+}
+</script>
+```
+
+## 组件库管理
+
+### 查看组件库
+
+1. 打开 **Tools** → **📚 组件库管理**
+2. 查看所有已加载的组件库列表
+3. 显示组件库名称、版本、组件数量等信息
+
+### 删除组件库
+
+1. 在组件库管理界面选择要删除的组件库
+2. 点击 **删除** 按钮
 3. 确认删除操作
+4. **注意**：内置组件库（Element Plus、Element UI、Ant Design Vue）不能删除
 
-### 5. 导出模板
-1. 选择 "📋 导出组件库模板"
+### 导出组件库
+
+1. 选择要导出的组件库
+2. 点击 **导出** 按钮
+3. 选择保存位置
+4. 保存为JSON文件
+
+### 导出模板
+
+1. 点击 **导出模板** 按钮
 2. 选择保存位置
-3. 获得标准模板
+3. 保存模板文件
+4. 可以基于模板创建自己的组件库
 
-## 📝 示例用法
+## 数据持久化
 
-### 查看组件概览
-```
-📚 所有可用组件：
+### 缓存机制
 
-🏷️ Element Plus (45 个组件)
-──────────────────────────────────────────────────
- 1. el-button        - 按钮组件
- 2. el-input         - 输入框组件
- 3. el-select        - 选择器组件
- ...
+- **缓存位置**：`用户主目录/.intellij_idea_system/vue-component-assistant/custom_component_libraries.json`
+- **自动保存**：数据变更时自动保存到缓存文件
+- **自动加载**：启动时自动从缓存文件加载数据
+- **跨会话**：重启IDE后数据不丢失
 
-🏷️ 我的自定义组件库 (3 个组件)
-──────────────────────────────────────────────────
- 1. my-button        - 自定义按钮组件
- 2. my-input         - 自定义输入框组件
- 3. my-select        - 自定义选择器组件
-```
+### 缓存文件格式
 
-### 管理操作
-```
-请选择要执行的操作：
-📦 上传新组件库
-📤 导出组件库
-🗑️ 删除自定义组件库
-📋 导出组件库模板
-❌ 取消
+```json
+[
+  {
+    "name": "my-custom-library",
+    "displayName": "我的自定义组件库",
+    "version": "1.0.0",
+    "description": "这是一个示例自定义组件库",
+    "componentPrefix": "my-",
+    "documentationUrlTemplate": "https://example.com/docs/%s",
+    "components": [...]
+  }
+]
 ```
 
-## 🐛 故障排除
+### 手动管理缓存
+
+如果需要手动管理缓存文件：
+
+1. **备份缓存**：复制缓存文件到安全位置
+2. **恢复缓存**：将备份文件复制回缓存位置
+3. **清空缓存**：删除缓存文件，重启IDE后重新导入
+
+## 最佳实践
+
+### 组件库设计
+
+1. **命名规范**
+   - 使用有意义的组件库名称
+   - 使用统一的组件前缀
+   - 避免与内置组件库冲突
+
+2. **文档完善**
+   - 为每个组件提供详细描述
+   - 提供使用示例
+   - 完善属性和事件说明
+
+3. **版本管理**
+   - 使用语义化版本号
+   - 记录版本变更历史
+   - 保持向后兼容性
+
+### 团队协作
+
+1. **统一标准**
+   - 团队使用统一的组件库格式
+   - 建立组件库开发规范
+   - 统一命名和文档标准
+
+2. **共享机制**
+   - 将组件库文件纳入版本控制
+   - 建立组件库发布流程
+   - 提供组件库更新机制
+
+3. **质量保证**
+   - 建立组件库审查机制
+   - 进行充分的测试验证
+   - 保持文档的及时更新
+
+### 性能优化
+
+1. **数据优化**
+   - 避免冗余的组件数据
+   - 优化JSON文件大小
+   - 使用压缩格式存储
+
+2. **加载优化**
+   - 按需加载组件数据
+   - 实现增量更新机制
+   - 优化缓存策略
+
+## 故障排除
 
 ### 常见问题
 
-#### 1. 找不到管理功能
-**问题**：在工具菜单中找不到组件库管理选项
-**解决**：
-- 确保插件已正确安装和启用
-- 尝试通过设置页面访问：File → Settings → Tools → Element Plus Assistant
-- 重启 IntelliJ IDEA
+#### Q: 导入自定义组件库失败
 
-#### 2. 上传失败
-**问题**：上传自定义组件库时出现错误
-**解决**：
-- 检查 JSON 格式是否正确
-- 确保所有必需字段都存在
-- 使用 "验证配置" 功能检查格式
+**A:** 请检查以下几点：
+1. JSON文件格式是否正确
+2. 必需字段是否完整
+3. 组件名称是否重复
+4. 文件编码是否为UTF-8
 
-#### 3. 组件不显示
-**问题**：上传的自定义组件没有出现在补全列表中
-**解决**：
-- 确保组件库已成功上传
-- 检查组件前缀是否正确
-- 重启 IntelliJ IDEA
+#### Q: 自定义组件不显示
 
-#### 4. 内置组件库被误删
-**问题**：内置组件库被意外删除
-**解决**：
-- 内置组件库不可删除，此问题不会发生
-- 如果出现问题，重新安装插件
+**A:** 请检查以下几点：
+1. 组件库是否成功导入
+2. 组件前缀是否正确
+3. 输入的前缀是否匹配
+4. 缓存是否正常加载
 
-## 📞 技术支持
+#### Q: 重启后组件库丢失
 
-如果遇到问题，请：
-1. 查看本文档的故障排除部分
-2. 检查 IntelliJ IDEA 的事件日志
-3. 提交 Issue 到项目仓库
+**A:** 请检查以下几点：
+1. 缓存目录是否有写入权限
+2. 缓存文件是否被删除
+3. 是否有其他程序占用缓存文件
+4. 尝试重新导入组件库
 
-## 🔄 版本更新
+#### Q: 组件库冲突
 
-### v2.0.0
-- ✅ 新增完整的组件库管理功能
-- ✅ 支持组件库展示、上传、导出、删除
-- ✅ 内置组件库保护机制
-- ✅ 模板导出功能
-- ✅ 改进的用户界面
-- ✅ 设置页面集成
+**A:** 请检查以下几点：
+1. 组件库名称是否重复
+2. 组件前缀是否冲突
+3. 组件名称是否重复
+4. 删除冲突的组件库
+
+### 调试方法
+
+#### 查看日志
+
+1. 打开 **Help** → **Diagnostic Tools** → **Debug Log Settings**
+2. 添加日志配置：`com.chu7.vuecomponentassistant`
+3. 重启IDEA查看控制台输出
+
+#### 检查缓存
+
+1. 查看缓存文件是否存在
+2. 检查缓存文件内容是否正确
+3. 验证缓存文件权限
+
+#### 验证数据
+
+1. 使用JSON验证工具检查格式
+2. 手动解析JSON数据
+3. 验证组件数据结构
+
+## 示例项目
+
+### 完整示例
+
+参考 `src/main/resources/data/custom-component-library-example.json` 文件，这是一个完整的自定义组件库示例。
+
+### 模板文件
+
+使用 **导出模板** 功能获取标准的组件库模板文件，可以基于模板快速创建自己的组件库。
 
 ---
 
-**注意**：本功能需要 IntelliJ IDEA 2023.1 或更高版本。
+**组件库管理是插件的重要功能，合理使用可以大大提高开发效率！** 📚

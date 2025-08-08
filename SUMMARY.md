@@ -1,248 +1,225 @@
-# Element Plus Assistant 项目总结
+# Vue Component Assistant 项目总结
 
-## 🎯 项目概述
+## 项目概述
 
-Element Plus Assistant 是一个专为 Vue.js 开发者设计的 IntelliJ IDEA 插件，提供智能的 Element Plus 组件补全、文档提示和开发辅助功能。
+Vue Component Assistant 是一个专为 Vue.js 开发者设计的 IntelliJ IDEA 插件，提供智能组件补全、文档提示和开发辅助功能。该项目旨在提高 Vue.js 开发效率，支持多种主流组件库和自定义组件库。
 
-## ✅ 已完成功能
+## 核心功能
 
-### 1. 智能组件补全 ✅
-- **功能**: 在 Vue 模板中输入 `<` 时提供 Element Plus 组件列表
-- **特点**: 
-  - 显示所有官方组件
-  - 每个组件都有详细的中文描述
-  - 支持前缀过滤（如 `el-bu` 显示 `el-button`）
-  - 自动插入完整的标签结构
-- **状态**: 已完成并测试通过
+### 1. 智能组件补全
+- **多组件库支持**：支持 Element Plus、Element UI、Ant Design Vue 等主流组件库
+- **前缀过滤**：根据输入的前缀智能过滤组件
+- **自动标签补全**：自动插入完整的组件标签结构
+- **自定义组件库**：支持导入和管理自定义组件库
 
-### 2. 智能属性补全 ✅
-- **功能**: 在组件标签内输入空格时提供该组件的属性列表
-- **特点**:
-  - 只显示当前组件支持的属性
-  - 每个属性都有详细说明
-  - 支持前缀过滤（如 `typ` 显示 `type` 属性）
-  - 自动插入默认值
-  - 不同组件的属性不会混淆
-- **状态**: 已完成并测试通过
+### 2. 属性、事件、插槽补全
+- **属性补全**：在组件标签内输入空格时提供属性列表
+- **事件补全**：输入 `@` 时提供事件列表
+- **插槽补全**：输入 `sl` 或 `slot` 时提供插槽列表
+- **智能过滤**：根据输入内容智能过滤相关选项
 
-### 3. 智能事件补全 ✅
-- **功能**: 在组件标签内输入 `@` 时提供该组件的事件列表
-- **特点**:
-  - 只显示当前组件支持的事件
-  - 每个事件都有详细说明和参数信息
-  - 支持前缀过滤
-  - 自动生成事件处理函数名
-  - 不同组件的事件不会混淆
-- **状态**: 已完成并测试通过
+### 3. 实时文档显示
+- **悬停文档**：鼠标悬停时显示详细组件文档
+- **右键文档**：右键菜单快速查看组件文档
+- **表格展示**：属性、事件、插槽以表格形式展示
+- **中文支持**：完整的中文文档和描述
 
-### 4. 文档提示功能 ✅
-- **功能**: 鼠标悬停在组件上显示详细文档
-- **特点**:
-  - 显示组件的描述、版本、示例
-  - 以表格形式展示所有属性、事件、插槽
-  - 提供官方文档链接
-- **状态**: 已完成
+### 4. 多组件库支持
+- **自动检测**：根据项目的 `package.json` 自动检测使用的组件库
+- **手动配置**：支持手动配置组件库
+- **动态切换**：支持在多个组件库间动态切换
 
-### 5. 右键菜单功能 ✅
-- **功能**: 右键点击组件快速访问官方文档
-- **特点**:
-  - 只在 Element Plus 组件上显示
-  - 在浏览器中打开官方文档页面
-- **状态**: 已完成
+### 5. 自定义组件库管理
+- **JSON导入**：支持通过JSON文件导入自定义组件库
+- **持久化存储**：自定义组件库数据持久化，重启后不丢失
+- **模板导出**：提供自定义组件库模板导出功能
+- **批量管理**：支持批量导入、导出、删除操作
 
-### 6. 设置页面 ✅
-- **功能**: 提供插件设置界面
-- **特点**:
-  - 可启用/禁用各项功能
-  - 支持自定义组件路径
-  - 设置持久化保存
-- **状态**: 已完成
+## 技术架构
 
-## 🏗️ 技术架构
+### 核心模块
 
-### 核心组件
-1. **ElementPlusCompletionContributor**: 补全贡献者，注册补全提供者
-2. **ElementPlusTestCompletionProvider**: 补全提供者，实现智能补全逻辑
-3. **ElementPlusComponentProvider**: 组件数据提供者，管理组件数据
-4. **ElementPlusDocumentationProvider**: 文档提供者，实现悬停文档
-5. **ElementPlusDocumentationAction**: 右键菜单动作
-6. **ElementPlusSettings**: 设置管理
-7. **ElementPlusSettingsConfigurable**: 设置界面
+#### 1. 补全模块 (completion)
+- `ElementPlusCompletionContributor`: 补全贡献者，注册补全提供者
+- `ElementPlusTestCompletionProvider`: 智能补全提供者，实现补全逻辑
+- `ComponentProvider`: 组件数据提供者，管理组件数据
 
-### 数据模型
-1. **ElementPlusComponent**: 组件数据模型
-2. **ElementPlusProp**: 属性数据模型
-3. **ElementPlusEvent**: 事件数据模型
-4. **ElementPlusSlot**: 插槽数据模型
+#### 2. 文档模块 (documentation)
+- `ElementPlusDocumentationProvider`: 文档提供者，实现文档生成
+- `DocumentationStyleGenerator`: 文档样式生成器，生成格式化文档
 
-### 数据源
-- **element-plus-components.json**: 包含所有 Element Plus 组件的详细数据
-- 支持各种类型的 `defaultValue`（字符串、数组、对象等）
+#### 3. 自定义组件库模块 (utils)
+- `CustomComponentLibraryManager`: 自定义组件库管理器
+- `ComponentLibraryDetector`: 组件库检测器
 
-## 🔧 关键技术
+#### 4. UI 模块 (ui)
+- `ComponentDocumentationDialog`: 组件文档对话框
+- `CustomLibraryUploadDialog`: 自定义组件库上传对话框
+- `ComponentLibraryManagementDialog`: 组件库管理对话框
 
-### 上下文分析
-- 使用正则表达式分析当前编辑位置
-- 智能识别组件、属性、事件上下文
-- 精确的前缀提取和过滤
+### 数据持久化
 
-### 智能补全
-- 基于 PSI (Program Structure Interface) 的代码分析
-- 使用 `LookupElementBuilder` 创建补全项
-- 自定义 `InsertHandler` 实现智能插入
+- **缓存机制**：使用文件系统进行数据持久化
+- **缓存位置**：`用户主目录/.intellij_idea_system/vue-component-assistant/custom_component_libraries.json`
+- **自动保存**：数据变更时自动保存到缓存文件
+- **自动加载**：启动时自动从缓存文件加载数据
 
-### 文档系统
-- 继承 `AbstractDocumentationProvider` 实现悬停文档
-- 生成 HTML 格式的详细文档
-- 支持组件、属性、事件的完整文档
+## 支持的组件库
 
-## 📊 项目统计
+| 组件库 | 版本 | 状态 | 说明 |
+|--------|------|------|------|
+| Element Plus | 最新版本 | ✅ 支持 | 现代化的Vue 3组件库 |
+| Element UI | 经典版本 | ✅ 支持 | Vue 2经典组件库 |
+| Ant Design Vue | 最新版本 | ✅ 支持 | 企业级UI组件库 |
+| 自定义组件库 | 任意版本 | ✅ 支持 | 用户自定义组件库 |
 
-### 文件结构
+## 项目结构
+
 ```
-src/main/java/com/chu7/vuecomponentassistant/
-├── completion/           # 补全相关
-│   ├── ElementPlusCompletionContributor.java
-│   ├── ElementPlusTestCompletionProvider.java
-│   ├── ElementPlusComponentProvider.java
-│   ├── ElementPlusComponent.java
-│   ├── ElementPlusProp.java
-│   ├── ElementPlusEvent.java
-│   ├── ElementPlusSlot.java
-│   └── ElementPlusIcons.java
-├── documentation/        # 文档相关
-│   └── ElementPlusDocumentationProvider.java
-├── action/              # 动作相关
-│   └── ElementPlusDocumentationAction.java
-└── settings/            # 设置相关
-    ├── ElementPlusSettings.java
-    └── ElementPlusSettingsConfigurable.java
+vue-component-assistant/
+├── src/main/java/com/chu7/vuecomponentassistant/
+│   ├── action/                    # 动作处理类
+│   ├── completion/                # 补全相关类
+│   ├── documentation/             # 文档相关类
+│   ├── settings/                  # 设置相关类
+│   ├── ui/                        # UI组件类
+│   └── utils/                     # 工具类
+├── src/main/resources/
+│   ├── data/                      # 组件数据文件
+│   ├── icons/                     # 图标资源
+│   └── META-INF/                  # 插件配置
+├── test/                          # 测试文件
+└── build.gradle                   # 构建配置
 ```
 
-### 代码统计
-- **Java 文件**: 12 个
-- **JSON 数据文件**: 1 个
-- **SVG 图标文件**: 4 个
-- **总代码行数**: 约 1500 行
+## 开发历程
 
-## 🧪 测试覆盖
+### v1.0.0 - 基础功能
+- 🎉 首次发布
+- ✨ 基础组件补全功能
+- ✨ 基础文档显示功能
+- ✨ 支持 Element Plus 组件库
 
-### 测试文件
-1. **ElementPlusTest.vue**: 基础功能测试
-2. **EventTest.vue**: 事件补全测试
-3. **ElementPlusDemo.vue**: 完整功能演示
+### v1.0.2 - 多组件库支持
+- ✨ 新增多组件库支持
+- ✨ 新增智能组件库检测
+- ✨ 新增表格格式文档显示
+- 🐛 修复各种编译错误
 
-### 测试场景
-- ✅ 组件补全测试
-- ✅ 属性补全测试
-- ✅ 事件补全测试
-- ✅ 上下文感知测试
-- ✅ 文档功能测试
-- ✅ 右键菜单测试
+### v2.0.0 - 自定义组件库支持
+- ✨ 新增自定义组件库支持
+- ✨ 新增数据持久化功能
+- ✨ 新增组件库管理界面
+- 🐛 修复组件补全前缀识别问题
+- 🐛 修复文档显示编码问题
+- 📚 完善文档和注释
 
-## 🚀 构建和部署
+## 技术特点
 
-### 构建工具
-- **Gradle**: 项目构建和依赖管理
-- **IntelliJ Platform SDK**: 插件开发框架
-
-### 构建脚本
-- **build-and-test.bat**: Windows 构建脚本
-- **build.bat**: 基础构建脚本
-
-### 部署方式
-1. 运行 `gradle buildPlugin`
-2. 在 IntelliJ IDEA 中安装生成的 `.jar` 文件
-3. 重启 IDE 即可使用
-
-## 📈 性能优化
-
-### 数据加载优化
-- JSON 数据文件缓存
-- 按需加载组件数据
-- 智能过滤减少计算量
-
-### 用户体验优化
-- 限制补全项数量（最多 30 个）
-- 智能排序，常用项优先
-- 快速响应，即时显示
-
-## 🎯 核心特性
-
-### 智能上下文感知
+### 1. 智能上下文分析
 - 准确识别当前编辑位置的组件上下文
-- 只显示相关组件的属性和事件
-- 避免不同组件间的属性混淆
+- 根据上下文提供相应的补全建议
+- 支持组件、属性、事件、插槽的智能补全
 
-### 前缀过滤支持
-- 组件名称前缀过滤
-- 属性名称前缀过滤
-- 事件名称前缀过滤
+### 2. 高性能设计
+- 使用内存缓存存储组件数据
+- 实现文件缓存持久化数据
+- 按需加载组件数据，避免不必要的资源消耗
 
-### 自动代码生成
-- 组件标签自动闭合
-- 属性默认值自动插入
-- 事件处理函数名自动生成
+### 3. 扩展性强
+- 支持自定义组件库的导入和管理
+- 模块化设计，易于扩展新功能
+- 清晰的API接口，便于二次开发
 
-## 🔮 未来规划
+### 4. 用户友好
+- 完整的中文界面和文档
+- 直观的操作流程
+- 详细的错误提示和帮助信息
+
+## 性能优化
+
+### 缓存机制
+- **内存缓存**：组件数据加载到内存中
+- **文件缓存**：自定义组件库数据持久化到文件
+- **智能加载**：按需加载组件数据
+
+### 延迟加载
+- 组件数据在首次使用时加载
+- 文档内容在需要时才生成
+- 补全建议在用户输入时才计算
+
+### 数据结构优化
+- 使用 HashMap 进行快速查找
+- 避免重复计算
+- 优化字符串操作
+
+## 质量保证
+
+### 代码质量
+- 详细的代码注释和文档
+- 统一的代码规范和风格
+- 完整的错误处理和异常管理
+
+### 测试覆盖
+- 单元测试覆盖核心功能
+- 集成测试验证整体功能
+- 手动测试确保用户体验
+
+### 兼容性
+- 支持 IntelliJ IDEA 2023.1+
+- 支持 Java 17+
+- 支持主流操作系统
+
+## 未来规划
 
 ### 短期目标
-1. 优化上下文分析算法
-2. 添加更多组件库支持
-3. 改进文档显示格式
+- 优化性能和用户体验
+- 增加更多组件库支持
+- 完善错误处理和日志记录
+
+### 中期目标
+- 支持更多IDE平台
+- 增加团队协作功能
+- 提供云端组件库同步
 
 ### 长期目标
-1. 支持自定义组件库
-2. 添加代码片段功能
-3. 集成更多开发工具
+- 构建组件库生态系统
+- 支持更多前端框架
+- 提供AI智能补全功能
 
-## 📝 使用说明
+## 贡献指南
 
-### 安装步骤
-1. 下载插件 `.jar` 文件
-2. 在 IntelliJ IDEA 中打开 `File` → `Settings` → `Plugins`
-3. 点击齿轮图标 → `Install Plugin from Disk`
-4. 选择插件文件并安装
-5. 重启 IntelliJ IDEA
+### 如何贡献
+1. Fork 本项目
+2. 创建特性分支
+3. 提交更改
+4. 推送到分支
+5. 创建 Pull Request
 
-### 使用方法
-1. **组件补全**: 在 Vue 模板中输入 `<`
-2. **属性补全**: 在组件标签内输入空格
-3. **事件补全**: 在组件标签内输入 `@`
-4. **文档查看**: 鼠标悬停在组件上
-5. **官方文档**: 右键点击组件选择菜单项
+### 开发环境
+- IntelliJ IDEA 2023.1+
+- Java 17+
+- Gradle 8.0+
 
-## 🎉 项目成果
+### 代码规范
+- 使用 4 个空格缩进
+- 遵循 Java 命名规范
+- 添加详细的注释和文档
 
-### 功能完整性
-- ✅ 组件补全功能完整
-- ✅ 属性补全功能完整
-- ✅ 事件补全功能完整
-- ✅ 文档提示功能完整
-- ✅ 右键菜单功能完整
-- ✅ 设置管理功能完整
+## 许可证
 
-### 用户体验
-- ✅ 智能上下文感知
-- ✅ 前缀过滤支持
-- ✅ 自动代码生成
-- ✅ 详细文档提示
-- ✅ 快速响应
+本项目采用 MIT 许可证，详见 [LICENSE](LICENSE) 文件。
 
-### 技术实现
-- ✅ 基于 IntelliJ Platform SDK
-- ✅ 使用 PSI 进行代码分析
-- ✅ 支持 JSON 数据源
-- ✅ 模块化架构设计
-- ✅ 完整的错误处理
-
-## 📞 联系方式
+## 联系方式
 
 - **邮箱**: luyanan0718@163.com
 - **GitHub**: https://github.com/rainsoil/vue-component-assistant
+- **Issues**: https://github.com/rainsoil/vue-component-assistant/issues
+
+## 致谢
+
+感谢所有为 Vue Component Assistant 项目做出贡献的开发者！
 
 ---
 
-**项目状态**: ✅ 完成  
-**最后更新**: 2024年12月  
-**版本**: v1.0.0
+**Vue Component Assistant** - 让 Vue.js 开发更高效！ 🚀
