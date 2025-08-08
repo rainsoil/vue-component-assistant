@@ -1,14 +1,13 @@
 <idea-plugin>
     <id>com.chu7.vue-component-assistant</id>
     <name>Vue-Component-Assistant(Vue组件助手)</name>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <vendor email="luyanan0718@163.com" url="https://github.com/rainsoil/vue-component-assistant">luyanan</vendor>
 
     <description>
         <![CDATA[
             Vue Component Assistant (Vue Component Assistant)</h3>
             <p>A specialized IntelliJ IDEA plugin for Vue.js developers, offering intelligent component completion, documentation tooltips, and development assistance features.</p>
-深色版本
     <h4>Main Features:</h4>
     <ul>
         <li><b>Smart Component Completion</b> - Supports major UI component libraries including Element Plus, Element UI, and Ant Design Vue</li>

@@ -7,12 +7,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.xml.XmlTag;
 import com.chu7.vuecomponentassistant.completion.ElementPlusComponent;
 import com.chu7.vuecomponentassistant.completion.ElementPlusComponentProvider;
 import com.chu7.vuecomponentassistant.completion.ElementPlusProp;
 import com.chu7.vuecomponentassistant.completion.ElementPlusEvent;
 import com.chu7.vuecomponentassistant.completion.ElementPlusSlot;
+import com.chu7.vuecomponentassistant.documentation.DocumentationStyleGenerator;
+import com.chu7.vuecomponentassistant.ui.ComponentDocumentationDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -66,7 +70,10 @@ public class ElementPlusDocumentationAction extends AnAction {
         if (element == null) {
             // 尝试从编辑器获取元素
             int offset = editor.getCaretModel().getOffset();
-            element = editor.getDocument().getPsiFile(project).findElementAt(offset);
+            PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+            if (psiFile != null) {
+                element = psiFile.findElementAt(offset);
+            }
         }
 
         if (element == null) {
@@ -96,7 +103,7 @@ public class ElementPlusDocumentationAction extends AnAction {
 
         // 生成并显示文档
         String documentation = generateDocumentation(component);
-        showDocumentationDialog(componentName, documentation);
+        showDocumentationDialog(project, componentName, documentation);
     }
 
     /**
@@ -177,95 +184,20 @@ public class ElementPlusDocumentationAction extends AnAction {
      * @return 格式化的文档内容
      */
     private String generateDocumentation(ElementPlusComponent component) {
-        StringBuilder doc = new StringBuilder();
-        
-        // 组件标题
-        doc.append("📋 ").append(component.getName()).append("\n");
-        doc.append("=".repeat(50)).append("\n\n");
-        
-        // 组件描述
-        if (component.getDescription() != null && !component.getDescription().isEmpty()) {
-            doc.append("📝 组件描述:\n");
-            doc.append(component.getDescription()).append("\n\n");
-        }
-
-        // 属性列表
-        List<ElementPlusProp> props = component.getProps();
-        if (props != null && !props.isEmpty()) {
-            doc.append("🔧 属性列表:\n");
-            doc.append("-".repeat(30)).append("\n");
-            for (ElementPlusProp prop : props) {
-                doc.append("• ").append(prop.getName());
-                if (prop.getDescription() != null && !prop.getDescription().isEmpty()) {
-                    doc.append(" - ").append(prop.getDescription());
-                }
-                if (prop.getDefaultValue() != null) {
-                    doc.append(" (默认值: ").append(prop.getDefaultValueAsString()).append(")");
-                }
-                doc.append("\n");
-            }
-            doc.append("\n");
-        }
-
-        // 事件列表
-        List<ElementPlusEvent> events = component.getEvents();
-        if (events != null && !events.isEmpty()) {
-            doc.append("🎯 事件列表:\n");
-            doc.append("-".repeat(30)).append("\n");
-            for (ElementPlusEvent event : events) {
-                doc.append("• @").append(event.getName());
-                if (event.getDescription() != null && !event.getDescription().isEmpty()) {
-                    doc.append(" - ").append(event.getDescription());
-                }
-                doc.append("\n");
-            }
-            doc.append("\n");
-        }
-
-        // 插槽列表
-        List<ElementPlusSlot> slots = component.getSlots();
-        if (slots != null && !slots.isEmpty()) {
-            doc.append("🔌 插槽列表:\n");
-            doc.append("-".repeat(30)).append("\n");
-            for (ElementPlusSlot slot : slots) {
-                doc.append("• #").append(slot.getName());
-                if (slot.getDescription() != null && !slot.getDescription().isEmpty()) {
-                    doc.append(" - ").append(slot.getDescription());
-                }
-                if (slot.getScope() != null && !slot.getScope().isEmpty()) {
-                    doc.append(" (作用域: ").append(slot.getScope()).append(")");
-                }
-                doc.append("\n");
-            }
-            doc.append("\n");
-        }
-
-        // 使用示例
-        doc.append("💡 使用示例:\n");
-        doc.append("-".repeat(30)).append("\n");
-        doc.append("<").append(component.getName()).append(">\n");
-        doc.append("  <!-- 组件内容 -->\n");
-        doc.append("</").append(component.getName()).append(">\n\n");
-
-        // 文档链接
-        doc.append("📖 相关文档:\n");
-        doc.append("-".repeat(30)).append("\n");
-        doc.append("官方文档: https://element-plus.org/zh-CN/component/")
-           .append(component.getName().substring(3)).append(".html\n");
-
-        return doc.toString();
+        return DocumentationStyleGenerator.generateHtmlDocumentation(component);
     }
 
     /**
      * 显示文档对话框
      * 
+     * @param project 当前项目
      * @param componentName 组件名称
      * @param documentation 文档内容
      */
-    private void showDocumentationDialog(String componentName, String documentation) {
-        Messages.showInfoMessage(
-            documentation,
-            "📚 " + componentName + " 组件文档"
+    private void showDocumentationDialog(Project project, String componentName, String documentation) {
+        ComponentDocumentationDialog dialog = new ComponentDocumentationDialog(
+            project, componentName, documentation
         );
+        dialog.show();
     }
 }

@@ -43,7 +43,18 @@ public class ElementPlusComponentProvider {
                 return;
             }
             
-            String jsonContent = FileUtil.loadTextAndClose(inputStream);
+            // 使用标准 Java 方法读取文件，确保 UTF-8 编码
+            byte[] bytes = inputStream.readAllBytes();
+            String jsonContent = new String(bytes, StandardCharsets.UTF_8);
+            inputStream.close();
+            
+            // 添加编码调试信息
+            System.out.println("=== JSON 文件编码测试 ===");
+            System.out.println("文件大小: " + bytes.length + " 字节");
+            System.out.println("内容长度: " + jsonContent.length() + " 字符");
+            System.out.println("内容前200字符: " + jsonContent.substring(0, Math.min(200, jsonContent.length())));
+            System.out.println("是否包含中文字符: " + jsonContent.contains("按钮"));
+            System.out.println("是否包含emoji: " + jsonContent.contains("📦"));
             Gson gson = new Gson();
             Type listType = new TypeToken<List<ElementPlusComponent>>(){}.getType();
             List<ElementPlusComponent> components = gson.fromJson(jsonContent, listType);

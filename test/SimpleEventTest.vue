@@ -2,9 +2,12 @@
     <div>
 
 
-        <el-input placeholder="" @clear="handleClear">
+        <el-input  placeholder="">
 
 
+            <template #append>
+  <!-- 输入框尾部内容 -->
+</template>
 
 
         </el-input>
