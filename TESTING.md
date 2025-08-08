@@ -1,8 +1,8 @@
-# Vue Component Assistant 测试指南
+# VueKit 测试指南
 
 ## 概述
 
-本文档提供了 Vue Component Assistant 插件的完整测试指南，包括单元测试、集成测试和手动测试的方法。
+本文档提供了 VueKit 插件的完整测试指南，包括单元测试、集成测试和手动测试的方法。
 
 ## 测试环境
 
@@ -103,7 +103,7 @@ void testDetectElementUI() {
    - 打开 IntelliJ IDEA
    - 进入 **File** → **Settings** → **Plugins**
    - 点击齿轮图标 → **Install Plugin from Disk**
-   - 选择 `build/distributions/vue-component-assistant-*.zip`
+   - 选择 `build/distributions/vuekit-*.zip`
    - 重启 IntelliJ IDEA
 
 ### 测试项目设置
@@ -417,7 +417,7 @@ jobs:
 #!/bin/bash
 # test.sh
 
-echo "Running Vue Component Assistant tests..."
+echo "Running VueKit tests..."
 
 # 运行单元测试
 ./gradlew test
@@ -426,7 +426,7 @@ echo "Running Vue Component Assistant tests..."
 ./gradlew buildPlugin
 
 # 检查构建结果
-if [ -f "build/distributions/vue-component-assistant-*.zip" ]; then
+if [ -f "build/distributions/vuekit-*.zip" ]; then
     echo "✅ 测试通过，插件构建成功"
     exit 0
 else

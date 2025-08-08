@@ -1,6 +1,6 @@
-# Vue Component Assistant (Vue组件助手)
+# VueKit
 
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/rainsoil/vue-component-assistant)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/rainsoil/vuekit)
 [![IntelliJ IDEA](https://img.shields.io/badge/IntelliJ%20IDEA-2023.1+-orange.svg)](https://www.jetbrains.com/idea/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -52,7 +52,7 @@
 
 1. 在 IntelliJ IDEA 中打开 **Settings/Preferences**
 2. 选择 **Plugins**
-3. 搜索 "Vue Component Assistant"
+3. 搜索 "VueKit"
 4. 点击 **Install** 安装插件
 5. 重启 IntelliJ IDEA
 
@@ -192,7 +192,7 @@
 
 ### 缓存机制
 
-- **缓存位置**：`用户主目录/.intellij_idea_system/vue-component-assistant/custom_component_libraries.json`
+- **缓存位置**：`用户主目录/.intellij_idea_system/vuekit/custom_component_libraries.json`
 - **自动保存**：数据变更时自动保存到缓存文件
 - **自动加载**：启动时自动从缓存文件加载数据
 
@@ -201,7 +201,7 @@
 ### 项目结构
 
 ```
-vue-component-assistant/
+vuekit/
 ├── src/main/java/com/chu7/vuecomponentassistant/
 │   ├── action/                    # 动作处理类
 │   ├── completion/                # 补全相关类
@@ -290,8 +290,8 @@ A: 在 IntelliJ IDEA 中：
 ## 📞 联系方式
 
 - 邮箱：luyanan0718@163.com
-- 项目地址：https://github.com/rainsoil/vue-component-assistant
-- 问题反馈：https://github.com/rainsoil/vue-component-assistant/issues
+- 项目地址：https://github.com/rainsoil/vuekit
+- 问题反馈：https://github.com/rainsoil/vuekit/issues
 
 ## 📝 更新日志
 
@@ -317,4 +317,4 @@ A: 在 IntelliJ IDEA 中：
 
 ---
 
-**Vue Component Assistant** - 让 Vue.js 开发更高效！ 🚀
+**VueKit** - 让 Vue.js 开发更高效！ 🚀

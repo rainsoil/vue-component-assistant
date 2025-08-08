@@ -25,7 +25,7 @@ import java.net.URI;
  * - 提供打开官方文档的按钮
  * - 使用 Element Plus 风格的界面设计
  * 
- * @author Vue Component Assistant Team
+ * @author VueKit Team
  * @version 1.0.0
  */
 public class ComponentDocumentationDialog extends DialogWrapper {

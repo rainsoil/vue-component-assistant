@@ -33,7 +33,7 @@ import java.util.HashMap;
  * - 提供组件库删除功能（内置组件库不可删除）
  * - 提供导出模板功能
  * 
- * @author Vue Component Assistant Team
+ * @author VueKit Team
  * @version 1.0.0
  */
 public class CustomLibraryManagementAction extends AnAction {

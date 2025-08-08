@@ -25,7 +25,7 @@ import java.util.Map;
  * - 提供组件查询功能
  * - 支持组件属性、事件、插槽等信息
  * 
- * @author Vue Component Assistant Team
+ * @author VueKit Team
  * @version 2.0.0
  */
 public class ComponentProvider {

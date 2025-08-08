@@ -20,7 +20,7 @@ import java.util.Map;
  * - 检测项目使用的组件库类型
  * - 支持 Element UI、Element Plus、Ant Design Vue
  * 
- * @author Vue Component Assistant Team
+ * @author VueKit Team
  * @version 1.0.0
  */
 public class ComponentLibraryDetector {

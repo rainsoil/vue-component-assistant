@@ -1,12 +1,12 @@
 <idea-plugin>
-    <id>com.chu7.vue-component-assistant</id>
-    <name>Vue-Component-Assistant(Vue组件助手)</name>
+    <id>com.chu7.vuekit</id>
+    <name>VueKit</name>
     <version>1.0.2</version>
-    <vendor email="luyanan0718@163.com" url="https://github.com/rainsoil/vue-component-assistant">luyanan</vendor>
+    <vendor email="luyanan0718@163.com" url="https://github.com/rainsoil/vuekit">luyanan</vendor>
 
     <description>
         <![CDATA[
-            Vue Component Assistant (Vue Component Assistant)</h3>
+            VueKit - Vue Component Development Toolkit</h3>
             <p>A specialized IntelliJ IDEA plugin for Vue.js developers, offering intelligent component completion, documentation tooltips, and development assistance features.</p>
     <h4>Main Features:</h4>
     <ul>
@@ -81,7 +81,7 @@
             parentId="tools" 
             instance="com.chu7.vuecomponentassistant.settings.ElementPlusSettingsConfigurable"
             id="com.chu7.vuecomponentassistant.settings.ElementPlusSettingsConfigurable"
-            displayName="Element Plus Assistant"/>
+            displayName="VueKit"/>
         
         <!-- 注册设置服务 -->
         <applicationService 

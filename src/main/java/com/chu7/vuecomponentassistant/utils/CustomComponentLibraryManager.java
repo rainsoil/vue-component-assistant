@@ -33,7 +33,7 @@ import java.util.Map;
  * 
  * 持久化机制：
  * - 使用文件系统进行数据持久化
- * - 缓存文件位置：用户主目录/.intellij_idea_system/vue-component-assistant/custom_component_libraries.json
+ * - 缓存文件位置：用户主目录/.intellij_idea_system/vuekit/custom_component_libraries.json
  * - 启动时自动加载缓存数据
  * - 数据变更时自动保存到缓存文件
  * 
@@ -55,7 +55,7 @@ import java.util.Map;
  *      {组件库2配置}
  *    ]
  * 
- * @author Vue Component Assistant Team
+ * @author VueKit Team
  * @version 2.0.0
  * @since 1.0.0
  */
@@ -70,7 +70,7 @@ public class CustomComponentLibraryManager {
      * 用于存储单个自定义组件库的完整配置信息，
      * 包括基本信息、组件列表等。
      * 
-     * @author Vue Component Assistant Team
+     * @author VueKit Team
      * @version 1.0.0
      */
     public static class CustomLibraryConfig {
@@ -256,8 +256,8 @@ public class CustomComponentLibraryManager {
             // 获取用户主目录
             String userHome = System.getProperty("user.home");
             
-            // 创建缓存目录：用户主目录/.intellij_idea_system/vue-component-assistant
-            Path cacheDir = Paths.get(userHome, ".intellij_idea_system", "vue-component-assistant");
+                    // 创建缓存目录：用户主目录/.intellij_idea_system/vuekit
+        Path cacheDir = Paths.get(userHome, ".intellij_idea_system", "vuekit");
             if (!Files.exists(cacheDir)) {
                 Files.createDirectories(cacheDir);
                 LOG.info("创建缓存目录: " + cacheDir);

@@ -27,7 +27,7 @@ import java.nio.charset.StandardCharsets;
  * - 提供配置验证功能
  * - 显示上传结果和错误信息
  * 
- * @author Vue Component Assistant Team
+ * @author VueKit Team
  * @version 1.0.0
  */
 public class CustomLibraryUploadDialog extends DialogWrapper {

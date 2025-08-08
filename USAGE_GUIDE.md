@@ -1,12 +1,12 @@
-# Vue Component Assistant 使用指南
+# VueKit 使用指南
 
 ## 快速开始
 
 ### 安装插件
 
 1. **下载插件**
-   - 从 [GitHub Releases](https://github.com/rainsoil/vue-component-assistant/releases) 下载最新版本
-   - 或从 JetBrains 插件市场搜索 "Vue Component Assistant"
+   - 从 [GitHub Releases](https://github.com/rainsoil/vuekit/releases) 下载最新版本
+- 或从 JetBrains 插件市场搜索 "VueKit"
 
 2. **安装插件**
    - 打开 IntelliJ IDEA
@@ -306,10 +306,10 @@
 
 如果您在使用过程中遇到问题，可以通过以下方式获取帮助：
 
-- **GitHub Issues**: https://github.com/rainsoil/vue-component-assistant/issues
+- **GitHub Issues**: https://github.com/rainsoil/vuekit/issues
 - **邮箱支持**: luyanan0718@163.com
 - **文档**: 查看项目中的 README.md 和 API_DOCUMENTATION.md
 
 ---
 
-**Vue Component Assistant** - 让 Vue.js 开发更高效！ 🚀
+**VueKit** - 让 Vue.js 开发更高效！ 🚀

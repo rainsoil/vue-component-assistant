@@ -15,7 +15,7 @@ import java.util.List;
  * - 支持 HTML 格式（用于悬浮提示）和纯文本格式（用于右键菜单）
  * - 参照 Element Plus 官网的设计风格
  * 
- * @author Vue Component Assistant Team
+ * @author VueKit Team
  * @version 1.0.0
  */
 public class DocumentationStyleGenerator {
