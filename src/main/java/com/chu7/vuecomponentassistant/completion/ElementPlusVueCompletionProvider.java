@@ -19,7 +19,6 @@ import java.util.regex.Pattern;
 public class ElementPlusVueCompletionProvider extends CompletionProvider<CompletionParameters> {
 
     private final ElementPlusComponentProvider componentProvider;
-    private final ElementPlusContextAnalyzer contextAnalyzer;
 
     // 匹配Vue模板中的各种模式
     private static final Pattern COMPONENT_TAG_PATTERN = Pattern.compile("<([a-zA-Z][a-zA-Z0-9-]*)\\b");
@@ -28,7 +27,6 @@ public class ElementPlusVueCompletionProvider extends CompletionProvider<Complet
 
     public ElementPlusVueCompletionProvider() {
         this.componentProvider = new ElementPlusComponentProvider();
-        this.contextAnalyzer = new ElementPlusContextAnalyzer();
     }
 
     @Override
@@ -110,7 +108,7 @@ public class ElementPlusVueCompletionProvider extends CompletionProvider<Complet
                         // 插入属性名和等号
                         Editor editor = insertContext.getEditor();
                         int offset = insertContext.getTailOffset();
-                        String defaultValue = prop.getDefaultValue() != null ? prop.getDefaultValue().toString() : "";
+                        String defaultValue = prop.getDefaultValueAsString();
                         editor.getDocument().insertString(offset, "=\"" + defaultValue + "\"");
                         editor.getCaretModel().moveToOffset(offset - 1);
                     });

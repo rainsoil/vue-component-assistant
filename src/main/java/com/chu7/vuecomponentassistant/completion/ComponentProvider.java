@@ -2,7 +2,6 @@ package com.chu7.vuecomponentassistant.completion;
 
 import com.chu7.vuecomponentassistant.utils.CustomComponentLibraryManager;
 import com.chu7.vuecomponentassistant.utils.VueKitLogger;
-import com.chu7.vuecomponentassistant.constants.VueKitConstants;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
@@ -122,6 +121,40 @@ public class ComponentProvider {
         }
         
         return allComponents;
+    }
+    
+    /**
+     * 根据前缀获取组件列表
+     */
+    public List<ElementPlusComponent> getComponentsByPrefix(String prefix) {
+        if (prefix == null || prefix.isEmpty()) {
+            return getAllComponents();
+        }
+        
+        List<ElementPlusComponent> matchingComponents = new ArrayList<>();
+        String lowerPrefix = prefix.toLowerCase();
+        
+        // 从内置组件库查找
+        for (ElementPlusComponent component : componentsList) {
+            if (component.getName() != null && 
+                component.getName().toLowerCase().startsWith(lowerPrefix)) {
+                matchingComponents.add(component);
+            }
+        }
+        
+        // 从自定义组件库查找
+        List<CustomComponentLibraryManager.CustomLibraryConfig> customLibraries = 
+            CustomComponentLibraryManager.getAllCustomLibraries();
+        for (CustomComponentLibraryManager.CustomLibraryConfig config : customLibraries) {
+            for (ElementPlusComponent component : config.getComponents()) {
+                if (component.getName() != null && 
+                    component.getName().toLowerCase().startsWith(lowerPrefix)) {
+                    matchingComponents.add(component);
+                }
+            }
+        }
+        
+        return matchingComponents;
     }
     
     /**
