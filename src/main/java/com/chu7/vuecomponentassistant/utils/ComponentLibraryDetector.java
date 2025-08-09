@@ -1,16 +1,14 @@
 package com.chu7.vuecomponentassistant.utils;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * 组件库检测器
@@ -65,7 +63,7 @@ public class ComponentLibraryDetector {
             return LibraryType.UNKNOWN;
         }
 
-        VirtualFile projectDir = project.getBaseDir();
+        VirtualFile projectDir = ProjectUtil.guessProjectDir(project);
         if (projectDir == null) {
             System.out.println("项目目录为空，返回 UNKNOWN");
             return LibraryType.UNKNOWN;

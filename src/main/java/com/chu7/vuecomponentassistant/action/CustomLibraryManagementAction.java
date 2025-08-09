@@ -5,12 +5,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.chu7.vuecomponentassistant.ui.CustomLibraryUploadDialog;
 import com.chu7.vuecomponentassistant.utils.CustomComponentLibraryManager;
 import com.chu7.vuecomponentassistant.completion.ComponentProvider;
 import com.chu7.vuecomponentassistant.completion.ElementPlusComponent;
-import com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -127,13 +125,13 @@ public class CustomLibraryManagementAction extends AnAction {
             "❌ 取消"
         };
         
-        int choice = Messages.showChooseDialog(
+        int choice = Messages.showDialog(
             project,
             "请选择要执行的操作：",
             "组件库管理",
-            Messages.getQuestionIcon(),
             options,
-            options[0]
+            0,
+            Messages.getQuestionIcon()
         );
         
         switch (choice) {
@@ -185,13 +183,13 @@ public class CustomLibraryManagementAction extends AnAction {
         
         // 选择要导出的组件库
         String[] libraryNames = componentsByLibrary.keySet().toArray(new String[0]);
-        int choice = Messages.showChooseDialog(
+        int choice = Messages.showDialog(
             project,
             "请选择要导出的组件库：",
             "导出组件库",
-            Messages.getQuestionIcon(),
             libraryNames,
-            libraryNames[0]
+            0,
+            Messages.getQuestionIcon()
         );
         
         if (choice >= 0 && choice < libraryNames.length) {
@@ -258,13 +256,13 @@ public class CustomLibraryManagementAction extends AnAction {
         }
         options[customLibraries.size()] = "取消";
         
-        int choice = Messages.showChooseDialog(
+        int choice = Messages.showDialog(
             project,
             "请选择要删除的自定义组件库：\n（内置组件库不可删除）",
             "删除自定义组件库",
-            Messages.getQuestionIcon(),
             options,
-            options[0]
+            0,
+            Messages.getQuestionIcon()
         );
         
         if (choice >= 0 && choice < customLibraries.size()) {
