@@ -1,6 +1,8 @@
 package com.chu7.vuecomponentassistant.completion;
 
 import com.chu7.vuecomponentassistant.utils.CustomComponentLibraryManager;
+import com.chu7.vuecomponentassistant.utils.VueKitLogger;
+import com.chu7.vuecomponentassistant.constants.VueKitConstants;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,7 +32,7 @@ import java.util.Map;
  */
 public class ComponentProvider {
     
-    private static final Logger LOG = Logger.getInstance(ComponentProvider.class);
+    private static final Logger LOG = VueKitLogger.getLogger(ComponentProvider.class);
     
     private final Map<String, ElementPlusComponent> componentsMap;
     private final List<ElementPlusComponent> componentsList;
@@ -38,31 +40,33 @@ public class ComponentProvider {
     private final String dataPath;
     
     public ComponentProvider(Project project) {
-        System.out.println("=== ComponentProvider 初始化开始 ===");
+        VueKitLogger.debug(LOG, "=== ComponentProvider 初始化开始 ===");
         this.componentsMap = new HashMap<>();
         this.componentsList = new ArrayList<>();
         
         // 检测项目使用的组件库
         this.libraryType = ComponentLibraryDetector.detectComponentLibrary(project);
-        System.out.println("检测到的组件库类型: " + this.libraryType.getDisplayName());
+        VueKitLogger.debug(LOG, "检测到的组件库类型: " + this.libraryType.getDisplayName());
         this.dataPath = ComponentLibraryDetector.getComponentDataPath(libraryType);
-        System.out.println("数据文件路径: " + this.dataPath);
+        VueKitLogger.debug(LOG, "数据文件路径: " + this.dataPath);
         
         // 打印检测信息
         ComponentLibraryDetector.printDetectionInfo(project);
         
         loadComponents();
-        System.out.println("=== ComponentProvider 初始化完成 ===");
+        VueKitLogger.debug(LOG, "=== ComponentProvider 初始化完成 ===");
     }
     
     /**
      * 加载组件数据
      */
     private void loadComponents() {
+        long startTime = System.currentTimeMillis();
+        
         try {
             InputStream inputStream = getClass().getResourceAsStream(dataPath);
             if (inputStream == null) {
-                LOG.error("Cannot find components data file: " + dataPath);
+                VueKitLogger.error(LOG, "Cannot find components data file: " + dataPath);
                 return;
             }
             
@@ -72,14 +76,14 @@ public class ComponentProvider {
             inputStream.close();
             
             // 添加编码调试信息
-            System.out.println("=== 组件数据加载信息 ===");
-            System.out.println("组件库类型: " + libraryType.getDisplayName());
-            System.out.println("数据文件路径: " + dataPath);
-            System.out.println("文件大小: " + bytes.length + " 字节");
-            System.out.println("内容长度: " + jsonContent.length() + " 字符");
-            System.out.println("内容前200字符: " + jsonContent.substring(0, Math.min(200, jsonContent.length())));
-            System.out.println("是否包含中文字符: " + jsonContent.contains("按钮"));
-            System.out.println("是否包含emoji: " + jsonContent.contains("📦"));
+            VueKitLogger.debug(LOG, "=== 组件数据加载信息 ===");
+            VueKitLogger.debug(LOG, "组件库类型: " + libraryType.getDisplayName());
+            VueKitLogger.debug(LOG, "数据文件路径: " + dataPath);
+            VueKitLogger.debug(LOG, "文件大小: " + bytes.length + " 字节");
+            VueKitLogger.debug(LOG, "内容长度: " + jsonContent.length() + " 字符");
+            VueKitLogger.debug(LOG, "内容前200字符: " + jsonContent.substring(0, Math.min(200, jsonContent.length())));
+            VueKitLogger.debug(LOG, "是否包含中文字符: " + jsonContent.contains("按钮"));
+            VueKitLogger.debug(LOG, "是否包含emoji: " + jsonContent.contains("📦"));
             
             Gson gson = new Gson();
             Type listType = new TypeToken<List<ElementPlusComponent>>(){}.getType();
@@ -90,10 +94,14 @@ public class ComponentProvider {
                 componentsList.add(component);
             }
             
-            LOG.info("Loaded " + components.size() + " " + libraryType.getDisplayName() + " components");
+            VueKitLogger.logLibraryDetection(LOG, libraryType.getDisplayName(), components.size());
+            
+            // 记录性能日志
+            long duration = System.currentTimeMillis() - startTime;
+            VueKitLogger.performance(LOG, "组件数据加载", duration);
             
         } catch (IOException e) {
-            LOG.error("Failed to load " + libraryType.getDisplayName() + " components data", e);
+            VueKitLogger.error(LOG, "Failed to load " + libraryType.getDisplayName() + " components data", e);
         }
     }
     

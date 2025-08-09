@@ -1,6 +1,7 @@
 package com.chu7.vuecomponentassistant.documentation;
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -11,6 +12,8 @@ import com.chu7.vuecomponentassistant.completion.ElementPlusProp;
 import com.chu7.vuecomponentassistant.completion.ElementPlusEvent;
 import com.chu7.vuecomponentassistant.completion.ElementPlusSlot;
 import com.chu7.vuecomponentassistant.settings.PluginSettings;
+import com.chu7.vuecomponentassistant.utils.VueKitLogger;
+import com.chu7.vuecomponentassistant.constants.VueKitConstants;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -28,6 +31,8 @@ import java.util.List;
  */
 public class ElementPlusDocumentationProvider extends AbstractDocumentationProvider {
 
+    private static final Logger LOG = VueKitLogger.getLogger(ElementPlusDocumentationProvider.class);
+
     /** 组件数据提供者，用于获取组件详细信息 */
     private ComponentProvider componentProvider;
 
@@ -37,7 +42,7 @@ public class ElementPlusDocumentationProvider extends AbstractDocumentationProvi
      */
     public ElementPlusDocumentationProvider() {
         // 组件提供者将在 generateDoc 中根据项目动态创建
-        System.out.println("ElementPlusDocumentationProvider 已初始化");
+        VueKitLogger.info(LOG, VueKitConstants.LOG_DOCUMENTATION_PROVIDER_CREATED);
     }
 
     /**
@@ -49,22 +54,24 @@ public class ElementPlusDocumentationProvider extends AbstractDocumentationProvi
     @Nullable
     @Override
     public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+        long startTime = System.currentTimeMillis();
+        
         // 检查悬停文档设置
         PluginSettings settings = PluginSettings.getInstance();
         if (!settings.isEnableHoverDocumentation()) {
-            System.out.println("悬停文档功能已禁用");
+            VueKitLogger.debug(LOG, "悬停文档功能已禁用");
             return null; // 返回 null 表示不显示文档
         }
         
         // 添加调试信息
-        System.out.println("=== 文档提供者被调用 ===");
-        System.out.println("元素类型: " + (element != null ? element.getClass().getSimpleName() : "null"));
-        System.out.println("元素文本: " + (element != null ? element.getText() : "null"));
+        VueKitLogger.debug(LOG, "=== 文档提供者被调用 ===");
+        VueKitLogger.debug(LOG, "元素类型: " + (element != null ? element.getClass().getSimpleName() : "null"));
+        VueKitLogger.debug(LOG, "元素文本: " + (element != null ? element.getText() : "null"));
         
         // 获取当前项目
         Project project = element != null ? element.getProject() : null;
         if (project == null) {
-            System.out.println("无法获取项目信息，返回测试文档");
+            VueKitLogger.warn(LOG, VueKitConstants.ERROR_NO_PROJECT);
             return generateTestDocumentation(element);
         }
 
@@ -76,30 +83,38 @@ public class ElementPlusDocumentationProvider extends AbstractDocumentationProvi
         // 尝试从不同元素类型中提取组件名称
         String componentName = extractComponentName(element);
         if (componentName == null) {
-            System.out.println("无法提取组件名称，返回测试文档");
+            VueKitLogger.debug(LOG, "无法提取组件名称");
             return generateTestDocumentation(element);
         }
         
-        System.out.println("提取到组件名称: " + componentName);
+        VueKitLogger.debug(LOG, "提取到组件名称: " + componentName);
 
         // 检查是否是当前组件库的组件
         if (!componentProvider.isComponentFromCurrentLibrary(componentName)) {
-            System.out.println("不是 " + componentProvider.getLibraryDisplayName() + " 组件，返回测试文档");
+            VueKitLogger.debug(LOG, "不是 " + componentProvider.getLibraryDisplayName() + " 组件");
             return generateTestDocumentation(element);
         }
 
-        System.out.println("检测到 " + componentProvider.getLibraryDisplayName() + " 组件: " + componentName);
+        VueKitLogger.debug(LOG, "检测到 " + componentProvider.getLibraryDisplayName() + " 组件: " + componentName);
 
         // 获取组件详细信息
         ElementPlusComponent component = componentProvider.getComponent(componentName);
         if (component == null) {
-            System.out.println("找不到组件信息: " + componentName + "，返回测试文档");
+            VueKitLogger.warn(LOG, "找不到组件信息: " + componentName);
             return generateTestDocumentation(element);
         }
 
-        System.out.println("找到组件信息，生成文档");
+        VueKitLogger.debug(LOG, "找到组件信息，生成文档");
+        
         // 生成完整的文档内容
-        return generateComponentDocumentation(component);
+        String documentation = generateComponentDocumentation(component);
+        
+        // 记录性能日志
+        long duration = System.currentTimeMillis() - startTime;
+        VueKitLogger.performanceWithThreshold(LOG, "文档生成", duration, VueKitConstants.DOCUMENTATION_THRESHOLD_MS);
+        VueKitLogger.logDocumentationGeneration(LOG, componentName, documentation != null);
+        
+        return documentation;
     }
 
     /**
