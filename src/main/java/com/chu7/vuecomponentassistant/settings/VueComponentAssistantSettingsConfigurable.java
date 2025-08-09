@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBTextField;
 import javax.swing.JButton;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
@@ -22,11 +21,11 @@ import java.awt.event.ActionListener;
 import java.util.List;
 
 /**
- * Vue Component Assistant 设置配置页面
+ * VueKit 设置配置页面
  * 
  * 在 Settings/Preferences 中显示插件设置
  * 
- * @author Vue Component Assistant Team
+ * @author VueKit Team
  * @version 2.0.0
  */
 public class VueComponentAssistantSettingsConfigurable implements Configurable {
@@ -46,7 +45,7 @@ public class VueComponentAssistantSettingsConfigurable implements Configurable {
     @Nls(capitalization = Nls.Capitalization.Title)
     @Override
     public String getDisplayName() {
-        return "Vue Component Assistant";
+        return "VueKit";
     }
     
     @Nullable

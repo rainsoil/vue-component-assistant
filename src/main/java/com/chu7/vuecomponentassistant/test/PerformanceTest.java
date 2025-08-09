@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * 
  * 提供性能监控、测试和优化功能
  * 
- * @author Vue Component Assistant Team
+ * @author VueKit Team
  * @version 2.0.0
  */
 public class PerformanceTest {
@@ -186,7 +186,7 @@ public class PerformanceTest {
      */
     public static String generatePerformanceReport() {
         StringBuilder report = new StringBuilder();
-        report.append("=== Vue Component Assistant 性能报告 ===\n\n");
+        report.append("=== VueKit 性能报告 ===\n\n");
         
         // 性能指标
         report.append("性能指标:\n");

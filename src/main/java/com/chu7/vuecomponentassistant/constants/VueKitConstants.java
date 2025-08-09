@@ -68,7 +68,7 @@ public final class VueKitConstants {
     public static final String CUSTOM_LIBRARY_CACHE_FILE = "custom_component_libraries.json";
     
     /** 插件缓存目录名 */
-    public static final String CACHE_DIRECTORY = "vue-component-assistant";
+    public static final String CACHE_DIRECTORY = "vuekit";
     
     // ==================== IntelliJ 相关 ====================
     
@@ -76,7 +76,7 @@ public final class VueKitConstants {
     public static final String INTELLIJ_COMPLETION_PLACEHOLDER = "IntellijIdeaRulezzz";
     
     /** 设置存储文件名 */
-    public static final String SETTINGS_STORAGE_FILE = "vue-component-assistant-settings.xml";
+    public static final String SETTINGS_STORAGE_FILE = "vuekit-settings.xml";
     
     // ==================== 界面文本 ====================
     

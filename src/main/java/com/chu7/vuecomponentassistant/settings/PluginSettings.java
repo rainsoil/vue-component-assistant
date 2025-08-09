@@ -18,12 +18,12 @@ import org.jetbrains.annotations.Nullable;
  * - 文档显示设置
  * - 性能优化设置
  * 
- * @author Vue Component Assistant Team
+ * @author VueKit Team
  * @version 2.0.0
  */
 @State(
-    name = "VueComponentAssistantSettings",
-    storages = @Storage("vue-component-assistant-settings.xml")
+    name = "VueKitSettings",
+    storages = @Storage("vuekit-settings.xml")
 )
 public class PluginSettings implements PersistentStateComponent<PluginSettings> {
     

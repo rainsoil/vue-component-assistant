@@ -9,7 +9,7 @@ import com.intellij.openapi.ui.Messages;
  * 
  * 提供统一的错误处理和日志记录机制
  * 
- * @author Vue Component Assistant Team
+ * @author VueKit Team
  * @version 2.0.0
  */
 public class ErrorHandler {
@@ -29,7 +29,7 @@ public class ErrorHandler {
         
         // 如果需要，显示用户友好的错误消息
         if (showUserMessage) {
-            showErrorMessage("Vue Component Assistant", message);
+            showErrorMessage("VueKit", message);
         }
     }
     

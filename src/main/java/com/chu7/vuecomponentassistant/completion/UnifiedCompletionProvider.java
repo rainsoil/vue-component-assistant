@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
  * - 智能上下文分析
  * - 缓存优化
  * 
- * @author Vue Component Assistant Team
+ * @author VueKit Team
  * @version 2.0.0
  */
 public class UnifiedCompletionProvider extends CompletionProvider<CompletionParameters> {

@@ -10,7 +10,7 @@ package com.chu7.vuecomponentassistant.completion;
  * 
  * 这个类帮助补全系统理解用户的意图并提供相应的补全选项
  * 
- * @author Vue Component Assistant Team
+ * @author VueKit Team
  * @version 2.0.0
  */
 public class CompletionContext {

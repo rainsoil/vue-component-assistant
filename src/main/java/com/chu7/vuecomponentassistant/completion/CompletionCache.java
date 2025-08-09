@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
  * 补全缓存管理器
  * 提供高性能的补全结果缓存机制
  * 
- * @author Vue Component Assistant Team
+ * @author VueKit Team
  * @version 2.0.0
  */
 public class CompletionCache {
