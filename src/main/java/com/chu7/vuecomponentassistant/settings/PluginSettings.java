@@ -46,6 +46,19 @@ public class PluginSettings implements PersistentStateComponent<PluginSettings> 
     private int maxCacheSize = 1000;
     private int cacheExpireTime = 300; // 5分钟
     
+    // 高级缓存配置
+    private int maxCompletionCacheSize = 500;
+    private int maxContextCacheSize = 300;
+    private int maxComponentDataCacheSize = 100;
+    private int maxDocumentationCacheSize = 200;
+    
+    private long completionCacheExpireTime = 5 * 60 * 1000; // 5分钟
+    private long contextCacheExpireTime = 3 * 60 * 1000; // 3分钟
+    private long componentDataCacheExpireTime = 30 * 60 * 1000; // 30分钟
+    private long documentationCacheExpireTime = 10 * 60 * 1000; // 10分钟
+    
+    private long cacheCleanupInterval = 2 * 60 * 1000; // 2分钟清理间隔
+    
     // 调试设置
     private boolean enableDebugMode = false;
     private boolean enablePerformanceLogging = false;
@@ -167,6 +180,80 @@ public class PluginSettings implements PersistentStateComponent<PluginSettings> 
     
     public void setCacheExpireTime(int cacheExpireTime) {
         this.cacheExpireTime = cacheExpireTime;
+    }
+    
+    // ==================== 高级缓存配置 ====================
+    
+    public int getMaxCompletionCacheSize() {
+        return maxCompletionCacheSize;
+    }
+    
+    public void setMaxCompletionCacheSize(int maxCompletionCacheSize) {
+        this.maxCompletionCacheSize = maxCompletionCacheSize;
+    }
+    
+    public int getMaxContextCacheSize() {
+        return maxContextCacheSize;
+    }
+    
+    public void setMaxContextCacheSize(int maxContextCacheSize) {
+        this.maxContextCacheSize = maxContextCacheSize;
+    }
+    
+    public int getMaxComponentDataCacheSize() {
+        return maxComponentDataCacheSize;
+    }
+    
+    public void setMaxComponentDataCacheSize(int maxComponentDataCacheSize) {
+        this.maxComponentDataCacheSize = maxComponentDataCacheSize;
+    }
+    
+    public int getMaxDocumentationCacheSize() {
+        return maxDocumentationCacheSize;
+    }
+    
+    public void setMaxDocumentationCacheSize(int maxDocumentationCacheSize) {
+        this.maxDocumentationCacheSize = maxDocumentationCacheSize;
+    }
+    
+    public long getCompletionCacheExpireTime() {
+        return completionCacheExpireTime;
+    }
+    
+    public void setCompletionCacheExpireTime(long completionCacheExpireTime) {
+        this.completionCacheExpireTime = completionCacheExpireTime;
+    }
+    
+    public long getContextCacheExpireTime() {
+        return contextCacheExpireTime;
+    }
+    
+    public void setContextCacheExpireTime(long contextCacheExpireTime) {
+        this.contextCacheExpireTime = contextCacheExpireTime;
+    }
+    
+    public long getComponentDataCacheExpireTime() {
+        return componentDataCacheExpireTime;
+    }
+    
+    public void setComponentDataCacheExpireTime(long componentDataCacheExpireTime) {
+        this.componentDataCacheExpireTime = componentDataCacheExpireTime;
+    }
+    
+    public long getDocumentationCacheExpireTime() {
+        return documentationCacheExpireTime;
+    }
+    
+    public void setDocumentationCacheExpireTime(long documentationCacheExpireTime) {
+        this.documentationCacheExpireTime = documentationCacheExpireTime;
+    }
+    
+    public long getCacheCleanupInterval() {
+        return cacheCleanupInterval;
+    }
+    
+    public void setCacheCleanupInterval(long cacheCleanupInterval) {
+        this.cacheCleanupInterval = cacheCleanupInterval;
     }
     
     // ==================== 调试设置 ====================

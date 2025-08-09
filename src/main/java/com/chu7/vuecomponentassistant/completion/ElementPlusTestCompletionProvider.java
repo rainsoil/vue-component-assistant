@@ -9,6 +9,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
 import com.chu7.vuecomponentassistant.utils.CustomComponentLibraryManager;
 import com.chu7.vuecomponentassistant.settings.PluginSettings;
+import com.chu7.vuecomponentassistant.utils.VueKitLogger;
+import com.chu7.vuecomponentassistant.constants.VueKitConstants;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -35,6 +38,8 @@ import java.util.regex.Pattern;
  * @version 2.0.0
  */
 public class ElementPlusTestCompletionProvider extends CompletionProvider<CompletionParameters> {
+
+    private static final Logger LOG = VueKitLogger.getLogger(ElementPlusTestCompletionProvider.class);
 
     /** 组件数据提供者，负责加载和管理组件数据 */
     private ComponentProvider componentProvider;
@@ -95,15 +100,14 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
         CompletionContext completionContext = analyzeContext(file, element);
 
         // 添加详细的调试信息，帮助开发者了解补全过程
-        System.out.println("=== 补全调试信息 ===");
-        System.out.println("文件: " + file.getName());
-        System.out.println("位置: " + element.getTextOffset());
-        System.out.println("当前文本: " + element.getText());
-        System.out.println("上下文类型: " + completionContext.getType());
-        System.out.println("当前组件: " + completionContext.getCurrentComponent());
-        System.out.println("前缀: " + completionContext.getPrefix());
-        System.out.println("组件库: " + componentProvider.getLibraryDisplayName());
-        System.out.println("==================");
+        VueKitLogger.debug(LOG, "=== 补全调试信息 ===");
+        VueKitLogger.debug(LOG, "文件: " + file.getName());
+        VueKitLogger.debug(LOG, "位置: " + element.getTextOffset());
+        VueKitLogger.debug(LOG, "当前文本: " + element.getText());
+        VueKitLogger.debug(LOG, "上下文类型: " + completionContext.getType());
+        VueKitLogger.debug(LOG, "当前组件: " + completionContext.getCurrentComponent());
+        VueKitLogger.debug(LOG, "前缀: " + completionContext.getPrefix());
+        VueKitLogger.debug(LOG, "组件库: " + componentProvider.getLibraryDisplayName());
 
         // 根据上下文类型提供相应的补全选项
         switch (completionContext.getType()) {
@@ -157,29 +161,28 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
         }
 
         // 添加调试信息
-        System.out.println("=== 组件补全调试信息 ===");
-        System.out.println("前缀: '" + prefix + "'");
-        System.out.println("找到组件数量: " + components.size());
+        VueKitLogger.debug(LOG, "=== 组件补全调试信息 ===");
+        VueKitLogger.debug(LOG, "前缀: '" + prefix + "'");
+        VueKitLogger.debug(LOG, "找到组件数量: " + components.size());
         
         // 显示前几个组件的详细信息
         for (int i = 0; i < Math.min(5, components.size()); i++) {
             ElementPlusComponent component = components.get(i);
-            System.out.println("组件 " + (i + 1) + ": " + component.getName() + 
+            VueKitLogger.debug(LOG, "组件 " + (i + 1) + ": " + component.getName() + 
                              " (库: " + componentProvider.getComponentLibraryDisplayName(component.getName()) + ")");
         }
         
         // 检查自定义组件库
         List<CustomComponentLibraryManager.CustomLibraryConfig> customLibraries = 
             CustomComponentLibraryManager.getAllCustomLibraries();
-        System.out.println("自定义组件库数量: " + customLibraries.size());
+        VueKitLogger.debug(LOG, "自定义组件库数量: " + customLibraries.size());
         for (CustomComponentLibraryManager.CustomLibraryConfig config : customLibraries) {
-            System.out.println("自定义库: " + config.getDisplayName() + " (前缀: " + config.getComponentPrefix() + ")");
-            System.out.println("  组件数量: " + config.getComponents().size());
+            VueKitLogger.debug(LOG, "自定义库: " + config.getDisplayName() + " (前缀: " + config.getComponentPrefix() + ")");
+            VueKitLogger.debug(LOG, "  组件数量: " + config.getComponents().size());
             for (ElementPlusComponent component : config.getComponents()) {
-                System.out.println("    - " + component.getName());
+                VueKitLogger.debug(LOG, "    - " + component.getName());
             }
         }
-        System.out.println("========================");
 
         // 限制显示数量，避免过多选项影响用户体验
         int count = 0;
@@ -220,18 +223,18 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
             return;
         }
 
-        System.out.println("属性补全: 为组件 " + componentName + " 添加属性");
-        System.out.println("组件属性数量: " + component.getProps().size());
-        System.out.println("前缀: '" + prefix + "'");
+        VueKitLogger.debug(LOG, "属性补全: 为组件 " + componentName + " 添加属性");
+        VueKitLogger.debug(LOG, "组件属性数量: " + component.getProps().size());
+        VueKitLogger.debug(LOG, "前缀: '" + prefix + "'");
 
         int count = 0;
         for (ElementPlusProp prop : component.getProps()) {
             // 根据前缀过滤属性
             if (prefix != null && !prefix.isEmpty() && !prop.getName().toLowerCase().contains(prefix.toLowerCase())) {
-                System.out.println("属性过滤: " + prop.getName() + " 不包含前缀 '" + prefix + "'");
+                VueKitLogger.debug(LOG, "属性过滤: " + prop.getName() + " 不包含前缀 '" + prefix + "'");
                 continue;
             } else {
-                System.out.println("属性匹配: " + prop.getName() + " 包含前缀 '" + prefix + "'");
+                VueKitLogger.debug(LOG, "属性匹配: " + prop.getName() + " 包含前缀 '" + prefix + "'");
             }
 
             LookupElementBuilder propElement = LookupElementBuilder.create(prop.getName())
@@ -251,7 +254,7 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
             count++;
         }
 
-        System.out.println("添加了 " + count + " 个属性补全");
+        VueKitLogger.debug(LOG, "添加了 " + count + " 个属性补全");
     }
 
     /**
@@ -259,19 +262,19 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
      */
     private void addEventCompletions(CompletionResultSet result, String componentName, String prefix) {
         if (componentName == null) {
-            System.out.println("事件补全: 组件名为空");
-            return;
-        }
+                    VueKitLogger.debug(LOG, "事件补全: 组件名为空");
+        return;
+    }
 
-        ElementPlusComponent component = componentProvider.getComponent(componentName);
-        if (component == null) {
-            System.out.println("事件补全: 找不到组件 " + componentName);
-            return;
-        }
+    ElementPlusComponent component = componentProvider.getComponent(componentName);
+    if (component == null) {
+        VueKitLogger.debug(LOG, "事件补全: 找不到组件 " + componentName);
+        return;
+    }
 
-        System.out.println("事件补全: 为组件 " + componentName + " 添加事件");
-        System.out.println("组件事件数量: " + component.getEvents().size());
-        System.out.println("前缀: '" + prefix + "'");
+    VueKitLogger.debug(LOG, "事件补全: 为组件 " + componentName + " 添加事件");
+    VueKitLogger.debug(LOG, "组件事件数量: " + component.getEvents().size());
+    VueKitLogger.debug(LOG, "前缀: '" + prefix + "'");
 
         int count = 0;
         for (ElementPlusEvent event : component.getEvents()) {
