@@ -1,6 +1,6 @@
 package com.chu7.vuecomponentassistant.loader;
 
-import com.chu7.vuecomponentassistant.completion.ElementPlusComponent;
+import com.chu7.vuecomponentassistant.remote.model.ComponentInfo;
 import com.chu7.vuecomponentassistant.utils.VueKitLogger;
 import com.chu7.vuecomponentassistant.constants.VueKitConstants;
 import com.chu7.vuecomponentassistant.cache.CacheManager;
@@ -48,7 +48,7 @@ public class LazyComponentLoader {
     private final Map<String, LoadingState> libraryLoadingStates;
     
     // 组件数据存储
-    private final Map<String, Map<String, ElementPlusComponent>> libraryComponents;
+    private final Map<String, Map<String, ComponentInfo>> libraryComponents;
     
     // 预加载队列
     private final Queue<String> preloadQueue;
@@ -102,12 +102,12 @@ public class LazyComponentLoader {
      * @param libraryType 组件库类型
      * @return 加载任务的CompletableFuture
      */
-    public CompletableFuture<Map<String, ElementPlusComponent>> loadLibraryAsync(String libraryType) {
+    public CompletableFuture<Map<String, ComponentInfo>> loadLibraryAsync(String libraryType) {
         // 检查缓存
         Object cached = cacheManager.getCachedComponentData(libraryType, "all");
         if (cached instanceof Map) {
             VueKitLogger.logCacheOperation(LOG, "hit", "library:" + libraryType);
-            return CompletableFuture.completedFuture((Map<String, ElementPlusComponent>) cached);
+            return CompletableFuture.completedFuture((Map<String, ComponentInfo>) cached);
         }
         
         // 检查是否已经在加载中
@@ -133,7 +133,7 @@ public class LazyComponentLoader {
             try {
                 VueKitLogger.debug(LOG, "开始异步加载组件库: " + libraryType);
                 
-                Map<String, ElementPlusComponent> components = loadLibrarySync(libraryType);
+                Map<String, ComponentInfo> components = loadLibrarySync(libraryType);
                 
                 if (components != null && !components.isEmpty()) {
                     libraryComponents.put(libraryType, components);
@@ -171,7 +171,7 @@ public class LazyComponentLoader {
     /**
      * 同步加载组件库（内部使用）
      */
-    private Map<String, ElementPlusComponent> loadLibrarySync(String libraryType) {
+    private Map<String, ComponentInfo> loadLibrarySync(String libraryType) {
         String dataPath = getDataPathForLibrary(libraryType);
         if (dataPath == null) {
             VueKitLogger.warn(LOG, "未知的组件库类型: " + libraryType);
@@ -192,12 +192,12 @@ public class LazyComponentLoader {
             VueKitLogger.debug(LOG, "读取组件数据文件: " + dataPath + ", 大小: " + bytes.length + " 字节");
             
             Gson gson = new Gson();
-            Type listType = new TypeToken<List<ElementPlusComponent>>(){}.getType();
-            List<ElementPlusComponent> componentList = gson.fromJson(jsonContent, listType);
+            Type listType = new TypeToken<List<ComponentInfo>>(){}.getType();
+            List<ComponentInfo> componentList = gson.fromJson(jsonContent, listType);
             
             // 转换为Map以提高查找效率
-            Map<String, ElementPlusComponent> componentsMap = new HashMap<>();
-            for (ElementPlusComponent component : componentList) {
+            Map<String, ComponentInfo> componentsMap = new HashMap<>();
+            for (ComponentInfo component : componentList) {
                 componentsMap.put(component.getName(), component);
             }
             
@@ -219,18 +219,18 @@ public class LazyComponentLoader {
      * @param componentName 组件名称
      * @return 组件数据的CompletableFuture
      */
-    public CompletableFuture<ElementPlusComponent> loadComponentAsync(String libraryType, String componentName) {
+    public CompletableFuture<ComponentInfo> loadComponentAsync(String libraryType, String componentName) {
         // 先检查缓存
         Object cached = cacheManager.getCachedComponentData(libraryType, componentName);
-        if (cached instanceof ElementPlusComponent) {
+        if (cached instanceof ComponentInfo) {
             VueKitLogger.logCacheOperation(LOG, "hit", "component:" + libraryType + ":" + componentName);
-            return CompletableFuture.completedFuture((ElementPlusComponent) cached);
+            return CompletableFuture.completedFuture((ComponentInfo) cached);
         }
         
         // 检查是否整个库已加载
-        Map<String, ElementPlusComponent> libraryMap = libraryComponents.get(libraryType);
+        Map<String, ComponentInfo> libraryMap = libraryComponents.get(libraryType);
         if (libraryMap != null) {
-            ElementPlusComponent component = libraryMap.get(componentName);
+            ComponentInfo component = libraryMap.get(componentName);
             if (component != null) {
                 cacheManager.cacheComponentData(libraryType, componentName, component);
                 return CompletableFuture.completedFuture(component);
@@ -239,7 +239,7 @@ public class LazyComponentLoader {
         
         // 如果库未加载，先加载整个库
         return loadLibraryAsync(libraryType).thenApply(components -> {
-            ElementPlusComponent component = components.get(componentName);
+            ComponentInfo component = components.get(componentName);
             if (component != null) {
                 cacheManager.cacheComponentData(libraryType, componentName, component);
             }
@@ -316,16 +316,9 @@ public class LazyComponentLoader {
     // ==================== 私有辅助方法 ====================
     
     private String getDataPathForLibrary(String libraryType) {
-        switch (libraryType.toLowerCase()) {
-            case "element-plus":
-                return VueKitConstants.ELEMENT_PLUS_DATA_FILE;
-            case "element-ui":
-                return VueKitConstants.ELEMENT_UI_DATA_FILE;
-            case "ant-design-vue":
-                return VueKitConstants.ANT_DESIGN_VUE_DATA_FILE;
-            default:
-                return null;
-        }
+        // 由于已经移除内置组件库，现在所有组件库都通过远程管理器加载
+        // 这个方法保留用于兼容性，但返回null表示需要从远程加载
+        return null;
     }
     
     private void waitForLibraryLoad(String libraryType) {

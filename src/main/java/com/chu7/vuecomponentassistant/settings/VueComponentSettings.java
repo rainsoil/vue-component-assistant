@@ -9,13 +9,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Element Plus 插件设置管理
+ * Vue Component 插件设置管理
  */
 @State(
-    name = "com.chu7.vuecomponentassistant.settings.ElementPlusSettings",
-    storages = @Storage("ElementPlusAssistantSettings.xml")
+    name = "com.chu7.vuecomponentassistant.settings.VueComponentSettings",
+    storages = @Storage("VueComponentAssistantSettings.xml")
 )
-public class ElementPlusSettings implements PersistentStateComponent<ElementPlusSettings> {
+public class VueComponentSettings implements PersistentStateComponent<VueComponentSettings> {
     
     private boolean autoCompletionEnabled = true;
     private boolean documentationEnabled = true;
@@ -23,18 +23,18 @@ public class ElementPlusSettings implements PersistentStateComponent<ElementPlus
     private boolean rightClickMenuEnabled = true;
     private String customComponentPath = "";
     
-    public static ElementPlusSettings getInstance() {
-        return ApplicationManager.getApplication().getService(ElementPlusSettings.class);
+    public static VueComponentSettings getInstance() {
+        return ApplicationManager.getApplication().getService(VueComponentSettings.class);
     }
     
     @Nullable
     @Override
-    public ElementPlusSettings getState() {
+    public VueComponentSettings getState() {
         return this;
     }
     
     @Override
-    public void loadState(@NotNull ElementPlusSettings state) {
+    public void loadState(@NotNull VueComponentSettings state) {
         XmlSerializerUtil.copyBean(state, this);
     }
     
@@ -78,4 +78,4 @@ public class ElementPlusSettings implements PersistentStateComponent<ElementPlus
     public void setCustomComponentPath(String customComponentPath) {
         this.customComponentPath = customComponentPath;
     }
-}
+} 

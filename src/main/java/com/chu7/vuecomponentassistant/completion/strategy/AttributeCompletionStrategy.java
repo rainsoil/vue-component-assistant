@@ -2,9 +2,7 @@ package com.chu7.vuecomponentassistant.completion.strategy;
 
 import com.chu7.vuecomponentassistant.completion.CompletionContext;
 import com.chu7.vuecomponentassistant.completion.ComponentProvider;
-import com.chu7.vuecomponentassistant.completion.ElementPlusComponent;
-import com.chu7.vuecomponentassistant.completion.ElementPlusIcons;
-import com.chu7.vuecomponentassistant.completion.ElementPlusProp;
+import com.chu7.vuecomponentassistant.remote.model.ComponentInfo;
 import com.chu7.vuecomponentassistant.settings.PluginSettings;
 import com.chu7.vuecomponentassistant.utils.VueKitLogger;
 import com.chu7.vuecomponentassistant.constants.VueKitConstants;
@@ -74,7 +72,7 @@ public class AttributeCompletionStrategy implements CompletionStrategy {
         VueKitLogger.debug(LOG, "开始属性补全，组件: " + componentName + ", 前缀: " + prefix);
         
         // 获取组件信息
-        ElementPlusComponent component = componentProvider.getComponent(componentName);
+        ComponentInfo component = componentProvider.getComponent(componentName);
         if (component == null) {
             VueKitLogger.debug(LOG, "找不到组件: " + componentName);
             return;
@@ -94,7 +92,7 @@ public class AttributeCompletionStrategy implements CompletionStrategy {
     /**
      * 添加组件特定属性
      */
-    private void addComponentAttributes(@NotNull ElementPlusComponent component,
+    private void addComponentAttributes(@NotNull ComponentInfo component,
                                       @Nullable String prefix,
                                       @NotNull CompletionResultSet result) {
         
@@ -102,7 +100,7 @@ public class AttributeCompletionStrategy implements CompletionStrategy {
         
         int addedCount = 0;
         
-        for (ElementPlusProp prop : component.getProps()) {
+        for (ComponentInfo.ComponentProp prop : component.getProps()) {
             // 前缀过滤
             if (prefix != null && !prefix.isEmpty()) {
                 String propName = prop.getName().toLowerCase();
@@ -170,13 +168,13 @@ public class AttributeCompletionStrategy implements CompletionStrategy {
      * 创建属性补全元素
      */
     @NotNull
-    private LookupElementBuilder createAttributeLookupElement(@NotNull ElementPlusProp prop,
-                                                            @NotNull ElementPlusComponent component) {
+    private LookupElementBuilder createAttributeLookupElement(@NotNull ComponentInfo.ComponentProp prop,
+                                                            @NotNull ComponentInfo component) {
         
         String propName = prop.getName();
         String propType = prop.getType();
         String propDescription = prop.getDescription();
-        String defaultValue = prop.getDefaultValueAsString();
+        String defaultValue = prop.getDefaultValue();
         boolean required = prop.isRequired();
         
         // 构建尾部文本（类型和描述）
@@ -200,7 +198,7 @@ public class AttributeCompletionStrategy implements CompletionStrategy {
         return LookupElementBuilder.create(propName)
                 .withTypeText(VueKitConstants.PROPERTY_TYPE_TEXT, true)
                 .withTailText(tailText.toString(), true)
-                .withIcon(ElementPlusIcons.PROPERTY_ICON)
+                .withIcon(null)
                 .withBoldness(required) // 必需属性加粗显示
                 .withInsertHandler((insertionContext, item) -> {
                     try {
@@ -235,7 +233,7 @@ public class AttributeCompletionStrategy implements CompletionStrategy {
         return LookupElementBuilder.create(attributeName)
                 .withTypeText("Vue属性", true)
                 .withTailText("  " + description, true)
-                .withIcon(ElementPlusIcons.PROPERTY_ICON)
+                .withIcon(null)
                 .withInsertHandler((insertionContext, item) -> {
                     try {
                         insertionContext.getDocument().replaceString(

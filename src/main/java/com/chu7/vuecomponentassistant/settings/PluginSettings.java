@@ -67,6 +67,11 @@ public class PluginSettings implements PersistentStateComponent<PluginSettings> 
     private boolean enableCustomLibrarySupport = true;
     private boolean autoDetectCustomLibraries = true;
     
+    // 官方组件库市场设置
+    private String officialLibraryMarketUrl = "https://gitee.com/rainsoil/vuekit-repo/raw/master/libraries.json";
+    private boolean enableOfficialLibraryMarket = true;
+    private int officialLibraryCacheExpireTime = 60 * 60; // 1小时
+    
     public static PluginSettings getInstance() {
         return ApplicationManager.getApplication().getService(PluginSettings.class);
     }
@@ -290,6 +295,32 @@ public class PluginSettings implements PersistentStateComponent<PluginSettings> 
     
     public void setAutoDetectCustomLibraries(boolean autoDetectCustomLibraries) {
         this.autoDetectCustomLibraries = autoDetectCustomLibraries;
+    }
+    
+    // ==================== 官方组件库市场设置 ====================
+    
+    public String getOfficialLibraryMarketUrl() {
+        return officialLibraryMarketUrl;
+    }
+    
+    public void setOfficialLibraryMarketUrl(String officialLibraryMarketUrl) {
+        this.officialLibraryMarketUrl = officialLibraryMarketUrl;
+    }
+    
+    public boolean isEnableOfficialLibraryMarket() {
+        return enableOfficialLibraryMarket;
+    }
+    
+    public void setEnableOfficialLibraryMarket(boolean enableOfficialLibraryMarket) {
+        this.enableOfficialLibraryMarket = enableOfficialLibraryMarket;
+    }
+    
+    public int getOfficialLibraryCacheExpireTime() {
+        return officialLibraryCacheExpireTime;
+    }
+    
+    public void setOfficialLibraryCacheExpireTime(int officialLibraryCacheExpireTime) {
+        this.officialLibraryCacheExpireTime = officialLibraryCacheExpireTime;
     }
     
     // ==================== 工具方法 ====================

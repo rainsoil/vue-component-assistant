@@ -1,9 +1,7 @@
 package com.chu7.vuecomponentassistant.validation;
 
-import com.chu7.vuecomponentassistant.completion.ElementPlusComponent;
-import com.chu7.vuecomponentassistant.completion.ElementPlusProp;
-import com.chu7.vuecomponentassistant.completion.ElementPlusEvent;
-import com.chu7.vuecomponentassistant.completion.ElementPlusSlot;
+import com.chu7.vuecomponentassistant.remote.model.ComponentInfo;
+
 import com.chu7.vuecomponentassistant.utils.VueKitLogger;
 import com.chu7.vuecomponentassistant.constants.VueKitConstants;
 import com.chu7.vuecomponentassistant.exceptions.JsonParseException;
@@ -116,7 +114,7 @@ public class DataValidator {
      * @return 验证结果
      */
     @NotNull
-    public ValidationResult validateComponents(@NotNull List<ElementPlusComponent> components, @Nullable Project project) {
+    public ValidationResult validateComponents(@NotNull List<ComponentInfo> components, @Nullable Project project) {
         VueKitLogger.debug(LOG, "开始验证组件列表，数量: " + components.size());
         
         ValidationResult result = new ValidationResult();
@@ -130,7 +128,7 @@ public class DataValidator {
             // 验证每个组件
             int validComponents = 0;
             for (int i = 0; i < components.size(); i++) {
-                ElementPlusComponent component = components.get(i);
+                ComponentInfo component = components.get(i);
                 
                 ValidationResult componentResult = validateComponent(component, i);
                 result.merge(componentResult);
@@ -167,7 +165,7 @@ public class DataValidator {
      * @return 验证结果
      */
     @NotNull
-    public ValidationResult validateComponent(@NotNull ElementPlusComponent component, int index) {
+    public ValidationResult validateComponent(@NotNull ComponentInfo component, int index) {
         ValidationResult result = new ValidationResult();
         String componentPrefix = "组件[" + index + "]";
         
@@ -229,7 +227,7 @@ public class DataValidator {
      * 验证属性
      */
     @NotNull
-    private ValidationResult validateProperty(@NotNull ElementPlusProp prop, @NotNull String prefix) {
+    private ValidationResult validateProperty(@NotNull ComponentInfo.ComponentProp prop, @NotNull String prefix) {
         ValidationResult result = new ValidationResult();
         
         // 验证属性名称
@@ -262,7 +260,7 @@ public class DataValidator {
      * 验证事件
      */
     @NotNull
-    private ValidationResult validateEvent(@NotNull ElementPlusEvent event, @NotNull String prefix) {
+    private ValidationResult validateEvent(@NotNull ComponentInfo.ComponentEvent event, @NotNull String prefix) {
         ValidationResult result = new ValidationResult();
         
         // 验证事件名称
@@ -289,7 +287,7 @@ public class DataValidator {
      * 验证插槽
      */
     @NotNull
-    private ValidationResult validateSlot(@NotNull ElementPlusSlot slot, @NotNull String prefix) {
+    private ValidationResult validateSlot(@NotNull ComponentInfo.ComponentSlot slot, @NotNull String prefix) {
         ValidationResult result = new ValidationResult();
         
         // 验证插槽名称

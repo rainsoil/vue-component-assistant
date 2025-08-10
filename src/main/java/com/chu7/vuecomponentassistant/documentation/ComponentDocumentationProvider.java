@@ -6,11 +6,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlTag;
-import com.chu7.vuecomponentassistant.completion.ElementPlusComponent;
+import com.chu7.vuecomponentassistant.remote.model.ComponentInfo;
 import com.chu7.vuecomponentassistant.completion.ComponentProvider;
-import com.chu7.vuecomponentassistant.completion.ElementPlusProp;
-import com.chu7.vuecomponentassistant.completion.ElementPlusEvent;
-import com.chu7.vuecomponentassistant.completion.ElementPlusSlot;
 import com.chu7.vuecomponentassistant.settings.PluginSettings;
 import com.chu7.vuecomponentassistant.utils.VueKitLogger;
 import com.chu7.vuecomponentassistant.constants.VueKitConstants;
@@ -19,19 +16,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Element Plus 组件文档提供者
+ * Vue Component 组件文档提供者
  * 
  * 功能说明：
- * - 当鼠标悬浮在 Element Plus 组件上时，显示详细的组件信息
+ * - 当鼠标悬浮在 Vue 组件上时，显示详细的组件信息
  * - 包括组件介绍、属性列表、事件列表、插槽列表、文档链接等
  * - 提供完整的中文描述和示例代码
  * 
  * @author VueKit Team
  * @version 1.0.0
  */
-public class ElementPlusDocumentationProvider extends AbstractDocumentationProvider {
+public class ComponentDocumentationProvider extends AbstractDocumentationProvider {
 
-    private static final Logger LOG = VueKitLogger.getLogger(ElementPlusDocumentationProvider.class);
+    private static final Logger LOG = VueKitLogger.getLogger(ComponentDocumentationProvider.class);
 
     /** 组件数据提供者，用于获取组件详细信息 */
     private ComponentProvider componentProvider;
@@ -40,7 +37,7 @@ public class ElementPlusDocumentationProvider extends AbstractDocumentationProvi
      * 构造函数
      * 组件提供者将在 generateDoc 中根据项目动态创建
      */
-    public ElementPlusDocumentationProvider() {
+    public ComponentDocumentationProvider() {
         // 组件提供者将在 generateDoc 中根据项目动态创建
         VueKitLogger.info(LOG, VueKitConstants.LOG_DOCUMENTATION_PROVIDER_CREATED);
     }
@@ -98,52 +95,46 @@ public class ElementPlusDocumentationProvider extends AbstractDocumentationProvi
         VueKitLogger.debug(LOG, "检测到 " + componentProvider.getLibraryDisplayName() + " 组件: " + componentName);
 
         // 获取组件详细信息
-        ElementPlusComponent component = componentProvider.getComponent(componentName);
+        ComponentInfo component = componentProvider.getComponent(componentName);
         if (component == null) {
             VueKitLogger.warn(LOG, "找不到组件信息: " + componentName);
             return generateTestDocumentation(element);
         }
 
-        VueKitLogger.debug(LOG, "找到组件信息，生成文档");
-        
-        // 生成完整的文档内容
+        // 生成组件文档
         String documentation = generateComponentDocumentation(component);
         
-        // 记录性能日志
-        long duration = System.currentTimeMillis() - startTime;
-        VueKitLogger.performanceWithThreshold(LOG, "文档生成", duration, VueKitConstants.DOCUMENTATION_THRESHOLD_MS);
-        VueKitLogger.logDocumentationGeneration(LOG, componentName, documentation != null);
+        // 记录性能信息
+        long endTime = System.currentTimeMillis();
+        VueKitLogger.debug(LOG, "文档生成耗时: " + (endTime - startTime) + "ms");
         
         return documentation;
     }
 
     /**
-     * 生成测试文档，确保功能被调用
+     * 生成测试文档（用于调试）
+     * 
+     * @param element 元素
+     * @return 测试文档内容
      */
     private String generateTestDocumentation(PsiElement element) {
         StringBuilder html = new StringBuilder();
         html.append("<div style='font-family: Arial, sans-serif; padding: 10px;'>");
-        html.append("<h3 style='color: #409EFF;'>🧪 测试文档</h3>");
-        html.append("<p>这是一个测试文档，证明文档提供者正在工作。</p>");
-        html.append("<p><strong>元素类型:</strong> " + element.getClass().getSimpleName() + "</p>");
-        html.append("<p><strong>元素文本:</strong> " + element.getText() + "</p>");
-        html.append("<p style='color: #67C23A;'>✅ 鼠标悬浮功能已激活！</p>");
-        html.append("<hr style='margin: 15px 0;'>");
-        html.append("<h4 style='color: #303133;'>📚 功能说明</h4>");
-        html.append("<ul style='color: #606266;'>");
-        html.append("<li>鼠标悬浮显示组件文档</li>");
-        html.append("<li>右键菜单查看详细文档</li>");
-        html.append("<li>智能补全和提示</li>");
-        html.append("</ul>");
+        html.append("<h3>🔍 调试信息</h3>");
+        html.append("<p><strong>元素类型:</strong> ").append(element != null ? element.getClass().getSimpleName() : "null").append("</p>");
+        html.append("<p><strong>元素文本:</strong> ").append(element != null ? element.getText() : "null").append("</p>");
+        html.append("<p><strong>项目:</strong> ").append(element != null && element.getProject() != null ? element.getProject().getName() : "null").append("</p>");
+        html.append("<hr>");
+        html.append("<p><em>这是测试文档，用于调试文档提供者功能。</em></p>");
         html.append("</div>");
         return html.toString();
     }
 
     /**
-     * 从不同的元素类型中提取组件名称
+     * 从 PSI 元素中提取组件名称
      * 
      * @param element PSI 元素
-     * @return 组件名称，如果无法提取则返回 null
+     * @return 组件名称
      */
     private String extractComponentName(PsiElement element) {
         if (element == null) {
@@ -153,7 +144,9 @@ public class ElementPlusDocumentationProvider extends AbstractDocumentationProvi
         // 如果是 XML 标签
         if (element instanceof XmlTag) {
             XmlTag tag = (XmlTag) element;
-            return tag.getName();
+            String tagName = tag.getName();
+            VueKitLogger.debug(LOG, "从 XML 标签提取到组件名称: " + tagName);
+            return tagName;
         }
 
         // 如果是文本元素，尝试解析
@@ -166,9 +159,9 @@ public class ElementPlusDocumentationProvider extends AbstractDocumentationProvi
                 end = text.indexOf('>', start);
             }
             if (start >= 0 && end > start) {
-                String tagName = text.substring(start + 1, end).trim();
-                System.out.println("从文本解析到标签: " + tagName);
-                return tagName;
+                String componentName = text.substring(start + 1, end).trim();
+                VueKitLogger.debug(LOG, "从文本元素提取到组件名称: " + componentName);
+                return componentName;
             }
         }
 
@@ -181,15 +174,13 @@ public class ElementPlusDocumentationProvider extends AbstractDocumentationProvi
         return null;
     }
 
-
-
     /**
-     * 生成组件文档内容
+     * 生成组件文档
      * 
      * @param component 组件信息
      * @return 格式化的 HTML 文档内容
      */
-    private String generateComponentDocumentation(ElementPlusComponent component) {
+    private String generateComponentDocumentation(ComponentInfo component) {
         return DocumentationStyleGenerator.generateHtmlDocumentation(component);
     }
-}
+} 

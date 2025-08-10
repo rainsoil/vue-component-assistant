@@ -1,419 +1,437 @@
 package com.chu7.vuecomponentassistant.ui;
 
+import com.chu7.vuecomponentassistant.remote.utils.HttpClient;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.*;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
-import com.chu7.vuecomponentassistant.utils.CustomComponentLibraryManager;
+import com.chu7.vuecomponentassistant.remote.ComponentLibraryManager;
+import com.chu7.vuecomponentassistant.remote.model.ComponentLibrary;
+import com.chu7.vuecomponentassistant.remote.model.ImportResult;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.charset.StandardCharsets;
 
 /**
- * 自定义组件库上传对话框
+ * 自定义组件库上传对话框 - 远程组件库版本
  * 
  * 功能说明：
- * - 允许用户选择JSON文件上传自定义组件库
- * - 支持直接输入JSON配置内容
- * - 提供配置验证功能
- * - 显示上传结果和错误信息
+ * - 支持本地JSON文件导入
+ * - 支持远程JSON URL导入
+ * - 预览组件库信息
+ * - 验证组件库格式
  * 
  * @author VueKit Team
- * @version 1.0.0
+ * @version 3.0.0
  */
 public class CustomLibraryUploadDialog extends DialogWrapper {
     
     private final Project project;
-    private JTextArea jsonContentArea;
-    private JLabel filePathLabel;
-    private JButton selectFileButton;
-    private JTextArea resultArea;
-    private JButton validateButton;
-    private JButton loadButton;
+    private final ComponentLibraryManager libraryManager;
     
-    public CustomLibraryUploadDialog(Project project) {
+    private JRadioButton localFileRadio;
+    private JRadioButton remoteUrlRadio;
+    private JTextField filePathField;
+    private JTextField urlField;
+    private JButton browseButton;
+    private JButton validateButton;
+    private JButton previewButton;
+    private JTextArea previewArea;
+    private JCheckBox enableAfterImportCheckBox;
+    
+    public CustomLibraryUploadDialog(Project project, ComponentLibraryManager libraryManager) {
         super(project);
         this.project = project;
-        setTitle("上传自定义组件库");
+        this.libraryManager = libraryManager;
+        setTitle("📁 导入自定义组件库");
         setSize(800, 600);
+        setResizable(true);
         init();
     }
     
     @Override
     protected JComponent createCenterPanel() {
-        // 创建主面板
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setPreferredSize(new Dimension(800, 600));
         
-        // 创建文件选择区域
-        JPanel filePanel = createFileSelectionPanel();
+        // 创建导入方式选择面板
+        JPanel importMethodPanel = createImportMethodPanel();
         
-        // 创建JSON内容编辑区域
-        JPanel contentPanel = createContentPanel();
+        // 创建输入面板
+        JPanel inputPanel = createInputPanel();
         
-        // 创建操作按钮区域
-        JPanel buttonPanel = createButtonPanel();
+        // 创建预览面板
+        JPanel previewPanel = createPreviewPanel();
         
-        // 创建结果显示区域
-        JPanel resultPanel = createResultPanel();
+        // 创建选项面板
+        JPanel optionsPanel = createOptionsPanel();
         
         // 组装主面板
-        mainPanel.add(filePanel, BorderLayout.NORTH);
-        mainPanel.add(contentPanel, BorderLayout.CENTER);
-        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
-        mainPanel.add(resultPanel, BorderLayout.EAST);
+        mainPanel.add(importMethodPanel, BorderLayout.NORTH);
+        mainPanel.add(inputPanel, BorderLayout.CENTER);
+        mainPanel.add(previewPanel, BorderLayout.SOUTH);
+        
+        // 添加选项面板到底部
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.add(optionsPanel, BorderLayout.NORTH);
+        mainPanel.add(bottomPanel, BorderLayout.EAST);
         
         return mainPanel;
     }
     
     /**
-     * 创建文件选择面板
+     * 创建导入方式选择面板
      */
-    private JPanel createFileSelectionPanel() {
-        filePathLabel = new JLabel("未选择文件");
-        filePathLabel.setBorder(JBUI.Borders.empty(5));
-        
-        selectFileButton = new JButton("选择JSON文件");
-        selectFileButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                selectJsonFile();
-            }
-        });
-        
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(JBUI.Borders.compound(
-            JBUI.Borders.customLine(Color.GRAY, 1),
-            JBUI.Borders.empty(10)
-        ));
-        panel.add(new JLabel("📁 选择组件库配置文件："), BorderLayout.NORTH);
-        panel.add(filePathLabel, BorderLayout.CENTER);
-        panel.add(selectFileButton, BorderLayout.EAST);
-        
-        return panel;
-    }
-    
-    /**
-     * 创建内容编辑面板
-     */
-    private JPanel createContentPanel() {
-        jsonContentArea = new JTextArea();
-        // 设置支持中文的字体
-        Font font = new Font("Microsoft YaHei", Font.PLAIN, 12);
-        if (!font.getFamily().equals("Microsoft YaHei")) {
-            font = new Font("SimSun", Font.PLAIN, 12);
-        }
-        if (!font.getFamily().equals("SimSun")) {
-            font = new Font("Dialog", Font.PLAIN, 12);
-        }
-        jsonContentArea.setFont(font);
-        jsonContentArea.setLineWrap(true);
-        jsonContentArea.setWrapStyleWord(true);
-        
-        // 设置示例内容
-        jsonContentArea.setText(getExampleJsonContent());
-        
-        JScrollPane scrollPane = new JBScrollPane(jsonContentArea);
-        scrollPane.setPreferredSize(new Dimension(500, 400));
-        
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(JBUI.Borders.compound(
-            JBUI.Borders.customLine(Color.GRAY, 1),
-            JBUI.Borders.empty(10)
-        ));
-        panel.add(new JLabel("📝 组件库配置内容（JSON格式）："), BorderLayout.NORTH);
-        panel.add(scrollPane, BorderLayout.CENTER);
-        
-        return panel;
-    }
-    
-    /**
-     * 创建按钮面板
-     */
-    private JPanel createButtonPanel() {
-        validateButton = new JButton("🔍 验证配置");
-        validateButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                validateConfiguration();
-            }
-        });
-        
-        loadButton = new JButton("📦 加载组件库");
-        loadButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                loadCustomLibrary();
-            }
-        });
-        
-        JButton clearButton = new JButton("🗑️ 清空内容");
-        clearButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                jsonContentArea.setText("");
-            }
-        });
-        
-        JButton exampleButton = new JButton("📋 加载示例");
-        exampleButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                jsonContentArea.setText(getExampleJsonContent());
-            }
-        });
-        
+    private JPanel createImportMethodPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        panel.add(validateButton);
-        panel.add(loadButton);
-        panel.add(clearButton);
-        panel.add(exampleButton);
+        panel.setBorder(BorderFactory.createTitledBorder("选择导入方式"));
+        
+        localFileRadio = new JRadioButton("本地JSON文件");
+        remoteUrlRadio = new JRadioButton("远程JSON地址");
+        
+        ButtonGroup group = new ButtonGroup();
+        group.add(localFileRadio);
+        group.add(remoteUrlRadio);
+        
+        // 默认选择本地文件
+        localFileRadio.setSelected(true);
+        
+        // 添加选择监听器
+        localFileRadio.addActionListener(e -> updateInputPanel());
+        remoteUrlRadio.addActionListener(e -> updateInputPanel());
+        
+        panel.add(localFileRadio);
+        panel.add(remoteUrlRadio);
         
         return panel;
     }
     
     /**
-     * 创建结果显示面板
+     * 创建输入面板
      */
-    private JPanel createResultPanel() {
-        resultArea = new JTextArea();
-        resultArea.setEditable(false);
-        resultArea.setFont(new Font("Microsoft YaHei", Font.PLAIN, 12));
-        resultArea.setBackground(new Color(248, 249, 250));
-        
-        JScrollPane scrollPane = new JBScrollPane(resultArea);
-        scrollPane.setPreferredSize(new Dimension(250, 400));
-        
+    private JPanel createInputPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(JBUI.Borders.compound(
-            JBUI.Borders.customLine(Color.GRAY, 1),
-            JBUI.Borders.empty(10)
-        ));
-        panel.add(new JLabel("📊 操作结果："), BorderLayout.NORTH);
+        panel.setBorder(BorderFactory.createTitledBorder("输入信息"));
+        
+        // 本地文件输入
+        JPanel localFilePanel = new JPanel(new BorderLayout());
+        localFilePanel.add(new JLabel("文件路径:"), BorderLayout.WEST);
+        filePathField = new JTextField();
+        localFilePanel.add(filePathField, BorderLayout.CENTER);
+        browseButton = new JButton("浏览");
+        browseButton.addActionListener(e -> browseFile());
+        localFilePanel.add(browseButton, BorderLayout.EAST);
+        
+        // 远程URL输入
+        JPanel remoteUrlPanel = new JPanel(new BorderLayout());
+        remoteUrlPanel.add(new JLabel("远程地址:"), BorderLayout.WEST);
+        urlField = new JTextField();
+        remoteUrlPanel.add(urlField, BorderLayout.CENTER);
+        validateButton = new JButton("验证");
+        validateButton.addActionListener(e -> validateUrl());
+        remoteUrlPanel.add(validateButton, BorderLayout.EAST);
+        
+        // 预览按钮
+        previewButton = new JButton("预览");
+        previewButton.addActionListener(e -> previewLibrary());
+        
+        // 组装面板
+        JPanel inputFieldsPanel = new JPanel(new GridLayout(2, 1, 5, 5));
+        inputFieldsPanel.add(localFilePanel);
+        inputFieldsPanel.add(remoteUrlPanel);
+        
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        buttonPanel.add(previewButton);
+        
+        panel.add(inputFieldsPanel, BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+        
+        return panel;
+    }
+    
+    /**
+     * 创建预览面板
+     */
+    private JPanel createPreviewPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createTitledBorder("预览信息"));
+        panel.setPreferredSize(new Dimension(600, 200));
+        
+        previewArea = new JTextArea();
+        previewArea.setEditable(false);
+        previewArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        previewArea.setLineWrap(true);
+        previewArea.setWrapStyleWord(true);
+        
+        JScrollPane scrollPane = new JScrollPane(previewArea);
         panel.add(scrollPane, BorderLayout.CENTER);
         
         return panel;
     }
     
     /**
-     * 选择JSON文件
+     * 创建选项面板
      */
-    private void selectJsonFile() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
-            @Override
-            public boolean accept(File f) {
-                return f.isDirectory() || f.getName().toLowerCase().endsWith(".json");
-            }
-            
-            @Override
-            public String getDescription() {
-                return "JSON Files (*.json)";
-            }
-        });
+    private JPanel createOptionsPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createTitledBorder("导入选项"));
+        panel.setPreferredSize(new Dimension(200, 100));
         
-        int result = fileChooser.showOpenDialog(this.getContentPane());
-        if (result == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = fileChooser.getSelectedFile();
-            filePathLabel.setText(selectedFile.getAbsolutePath());
-            
-            try {
-                // 读取文件内容
-                String content = readFileContent(selectedFile);
-                jsonContentArea.setText(content);
-                appendResult("✅ 文件加载成功：" + selectedFile.getName());
-            } catch (IOException e) {
-                appendResult("❌ 文件读取失败：" + e.getMessage());
-            }
+        enableAfterImportCheckBox = new JCheckBox("导入后立即启用", true);
+        
+        panel.add(enableAfterImportCheckBox, BorderLayout.NORTH);
+        
+        return panel;
+    }
+    
+    /**
+     * 更新输入面板显示状态
+     */
+    private void updateInputPanel() {
+        boolean isLocalFile = localFileRadio.isSelected();
+        filePathField.setEnabled(isLocalFile);
+        browseButton.setEnabled(isLocalFile);
+        urlField.setEnabled(!isLocalFile);
+        validateButton.setEnabled(!isLocalFile);
+    }
+    
+    /**
+     * 浏览文件
+     */
+    private void browseFile() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("选择组件库JSON文件");
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("JSON文件", "json"));
+        
+        if (fileChooser.showOpenDialog(this.getContentPane()) == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            filePathField.setText(file.getAbsolutePath());
         }
     }
     
     /**
-     * 验证配置
+     * 验证URL
      */
-    private void validateConfiguration() {
-        String jsonContent = jsonContentArea.getText().trim();
-        if (jsonContent.isEmpty()) {
-            appendResult("❌ 配置内容为空");
+    private void validateUrl() {
+        String url = urlField.getText().trim();
+        if (url.isEmpty()) {
+            Messages.showWarningDialog("请输入URL", "验证失败");
             return;
         }
         
         try {
-            CustomComponentLibraryManager.ValidationResult result = 
-                CustomComponentLibraryManager.validateCustomLibraryConfig(jsonContent);
+            // 显示验证进度
+            Messages.showInfoMessage("正在验证URL...", "验证中");
             
-            if (result.isValid()) {
-                appendResult("✅ 配置验证通过");
-                if (!result.getWarnings().isEmpty()) {
-                    appendResult("⚠️ 警告信息：");
-                    for (String warning : result.getWarnings()) {
-                        appendResult("   - " + warning);
-                    }
+            // 检查URL格式
+            if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                throw new RuntimeException("URL必须以http://或https://开头");
+            }
+            
+            // 检查URL是否可访问
+            boolean accessible = HttpClient.checkUrlAccessible(url);
+            
+            if (accessible) {
+                // 尝试下载一小部分内容来验证是否为JSON
+                String sampleJson = HttpClient.downloadJsonSample(url);
+                if (sampleJson != null && sampleJson.trim().startsWith("{")) {
+                    Messages.showInfoMessage("URL验证成功！这是一个有效的JSON文件。", "验证成功");
+                } else {
+                    Messages.showWarningDialog("URL可访问，但可能不是有效的JSON文件。", "验证警告");
                 }
             } else {
-                appendResult("❌ 配置验证失败：");
-                for (String error : result.getErrors()) {
-                    appendResult("   - " + error);
-                }
+                throw new RuntimeException("URL不可访问");
             }
+            
         } catch (Exception e) {
-            appendResult("❌ 验证过程出错：" + e.getMessage());
+            Messages.showErrorDialog("URL验证失败: " + e.getMessage(), "错误");
         }
     }
     
     /**
-     * 加载自定义组件库
+     * 预览组件库
      */
-    private void loadCustomLibrary() {
-        String jsonContent = jsonContentArea.getText().trim();
-        if (jsonContent.isEmpty()) {
-            appendResult("❌ 配置内容为空");
-            return;
+    private void previewLibrary() {
+        try {
+            ComponentLibrary library = null;
+            
+            if (localFileRadio.isSelected()) {
+                library = loadLocalLibrary();
+            } else {
+                library = loadRemoteLibrary();
+            }
+            
+            if (library != null) {
+                showLibraryPreview(library);
+            }
+            
+        } catch (Exception e) {
+            Messages.showErrorDialog("预览失败: " + e.getMessage(), "错误");
+        }
+    }
+    
+    /**
+     * 加载本地组件库
+     */
+    private ComponentLibrary loadLocalLibrary() throws IOException {
+        String filePath = filePathField.getText().trim();
+        if (filePath.isEmpty()) {
+            Messages.showWarningDialog("请选择JSON文件", "提示");
+            return null;
+        }
+        
+        File file = new File(filePath);
+        if (!file.exists()) {
+            Messages.showErrorDialog("文件不存在: " + filePath, "错误");
+            return null;
+        }
+        
+        String json = new String(Files.readAllBytes(Paths.get(filePath)), StandardCharsets.UTF_8);
+        return parseComponentLibrary(json);
+    }
+    
+    /**
+     * 加载远程组件库
+     */
+    private ComponentLibrary loadRemoteLibrary() {
+        String url = urlField.getText().trim();
+        if (url.isEmpty()) {
+            Messages.showWarningDialog("请输入URL", "提示");
+            return null;
         }
         
         try {
-            // 先验证配置
-            CustomComponentLibraryManager.ValidationResult validationResult = 
-                CustomComponentLibraryManager.validateCustomLibraryConfig(jsonContent);
+            // 显示加载进度
+            Messages.showInfoMessage("正在加载远程组件库...", "加载中");
             
-            if (!validationResult.isValid()) {
-                appendResult("❌ 配置验证失败，无法加载：");
-                for (String error : validationResult.getErrors()) {
-                    appendResult("   - " + error);
-                }
+            // 使用 HttpClient 下载 JSON
+            String json = HttpClient.downloadJson(url);
+            
+            // 解析组件库
+            ComponentLibrary library = parseComponentLibrary(json);
+            
+            // 验证组件库
+            if (library.getName() == null || library.getName().trim().isEmpty()) {
+                throw new RuntimeException("组件库名称不能为空");
+            }
+            
+            if (library.getComponents() == null || library.getComponents().isEmpty()) {
+                throw new RuntimeException("组件库必须包含至少一个组件");
+            }
+            
+            Messages.showInfoMessage("远程组件库加载成功！", "成功");
+            return library;
+            
+        } catch (Exception e) {
+            Messages.showErrorDialog("远程加载失败: " + e.getMessage(), "错误");
+            return null;
+        }
+    }
+    
+    /**
+     * 解析组件库JSON
+     */
+    private ComponentLibrary parseComponentLibrary(String json) {
+        try {
+            Gson gson = new Gson();
+            ComponentLibrary library = gson.fromJson(json, ComponentLibrary.class);
+            
+            if (library == null) {
+                throw new JsonSyntaxException("解析结果为空");
+            }
+            
+            return library;
+        } catch (JsonSyntaxException e) {
+            throw new RuntimeException("JSON格式错误: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 显示组件库预览
+     */
+    private void showLibraryPreview(ComponentLibrary library) {
+        StringBuilder preview = new StringBuilder();
+        preview.append("组件库预览\n");
+        preview.append("==========\n\n");
+        preview.append("名称: ").append(library.getDisplayName()).append("\n");
+        preview.append("版本: ").append(library.getVersion()).append("\n");
+        preview.append("描述: ").append(library.getDescription()).append("\n");
+        
+        if (library.getComponents() != null) {
+            preview.append("组件数量: ").append(library.getComponents().size()).append("\n");
+            preview.append("\n前5个组件:\n");
+            for (int i = 0; i < Math.min(library.getComponents().size(), 5); i++) {
+                preview.append(i + 1).append(". ").append(library.getComponents().get(i).getName()).append("\n");
+            }
+        }
+        
+        previewArea.setText(preview.toString());
+    }
+    
+    @Override
+    protected void doOKAction() {
+        try {
+            ComponentLibrary library = null;
+            
+            if (localFileRadio.isSelected()) {
+                library = loadLocalLibrary();
+            } else {
+                library = loadRemoteLibrary();
+            }
+            
+            if (library == null) {
                 return;
             }
             
-            // 加载组件库
-            boolean success = CustomComponentLibraryManager.loadCustomLibrary(jsonContent);
+            // 设置来源信息
+            if (localFileRadio.isSelected()) {
+                library.setSource(ComponentLibrary.LibrarySource.CUSTOM_LOCAL);
+                library.setSourceUrl(filePathField.getText().trim());
+            } else {
+                library.setSource(ComponentLibrary.LibrarySource.CUSTOM_REMOTE);
+                library.setSourceUrl(urlField.getText().trim());
+            }
             
-            if (success) {
-                appendResult("✅ 自定义组件库加载成功！");
-                appendResult("📋 已加载的组件库信息：");
-                CustomComponentLibraryManager.printCustomLibrariesInfo();
-                
-                // 显示成功消息
-                Messages.showInfoMessage(
-                    "自定义组件库加载成功！\n现在可以在代码中使用这些组件了。",
-                    "加载成功"
+            // 导入组件库
+            ImportResult result = libraryManager.importLibrary(library);
+            
+            if (result.isSuccess()) {
+                Messages.showInfoMessage("组件库导入成功: " + library.getName(), "成功");
+                super.doOKAction();
+            } else if (result.isConflict()) {
+                // 处理冲突
+                int choice = Messages.showYesNoDialog(
+                    "已存在同名组件库，是否替换？\n" +
+                    "现有版本: " + result.getExistingLibrary().getVersion() + "\n" +
+                    "新版本: " + library.getVersion(),
+                    "组件库冲突",
+                    Messages.getQuestionIcon()
                 );
                 
-                // 关闭对话框
-                close(OK_EXIT_CODE);
+                if (choice == Messages.YES) {
+                    ImportResult replaceResult = libraryManager.replaceLibrary(library, result.getExistingLibrary());
+                    if (replaceResult.isSuccess()) {
+                        Messages.showInfoMessage("组件库替换成功: " + library.getName(), "成功");
+                        super.doOKAction();
+                    } else {
+                        Messages.showErrorDialog("替换失败: " + replaceResult.getMessage(), "错误");
+                    }
+                }
             } else {
-                appendResult("❌ 组件库加载失败");
+                Messages.showErrorDialog("导入失败: " + result.getMessage(), "错误");
             }
             
         } catch (Exception e) {
-            appendResult("❌ 加载过程出错：" + e.getMessage());
+            Messages.showErrorDialog("导入失败: " + e.getMessage(), "错误");
         }
-    }
-    
-    /**
-     * 添加结果信息
-     */
-    private void appendResult(String message) {
-        resultArea.append(message + "\n");
-        resultArea.setCaretPosition(resultArea.getDocument().getLength());
-    }
-    
-    /**
-     * 读取文件内容
-     */
-    private String readFileContent(File file) throws IOException {
-        try (InputStream inputStream = new java.io.FileInputStream(file)) {
-            byte[] bytes = inputStream.readAllBytes();
-            return new String(bytes, StandardCharsets.UTF_8);
-        }
-    }
-    
-    /**
-     * 获取示例JSON内容
-     */
-    private String getExampleJsonContent() {
-        return "{\n" +
-               "  \"name\": \"my-custom-library\",\n" +
-               "  \"displayName\": \"我的自定义组件库\",\n" +
-               "  \"version\": \"1.0.0\",\n" +
-               "  \"description\": \"这是一个示例自定义组件库\",\n" +
-               "  \"componentPrefix\": \"my-\",\n" +
-               "  \"documentationUrlTemplate\": \"https://example.com/docs/%s\",\n" +
-               "  \"components\": [\n" +
-               "    {\n" +
-               "      \"name\": \"my-button\",\n" +
-               "      \"description\": \"自定义按钮组件\",\n" +
-               "      \"props\": [\n" +
-               "        {\n" +
-               "          \"name\": \"type\",\n" +
-               "          \"description\": \"按钮类型\",\n" +
-               "          \"type\": \"string\",\n" +
-               "          \"options\": [\"primary\", \"secondary\", \"danger\"],\n" +
-               "          \"defaultValue\": \"primary\"\n" +
-               "        },\n" +
-               "        {\n" +
-               "          \"name\": \"size\",\n" +
-               "          \"description\": \"按钮大小\",\n" +
-               "          \"type\": \"string\",\n" +
-               "          \"options\": [\"small\", \"medium\", \"large\"],\n" +
-               "          \"defaultValue\": \"medium\"\n" +
-               "        }\n" +
-               "      ],\n" +
-               "      \"events\": [\n" +
-               "        {\n" +
-               "          \"name\": \"click\",\n" +
-               "          \"description\": \"点击事件\",\n" +
-               "          \"parameters\": \"(event: MouseEvent)\"\n" +
-               "        }\n" +
-               "      ],\n" +
-               "      \"slots\": [\n" +
-               "        {\n" +
-               "          \"name\": \"default\",\n" +
-               "          \"description\": \"按钮内容\",\n" +
-               "          \"scope\": null\n" +
-               "        }\n" +
-               "      ]\n" +
-               "    },\n" +
-               "    {\n" +
-               "      \"name\": \"my-input\",\n" +
-               "      \"description\": \"自定义输入框组件\",\n" +
-               "      \"props\": [\n" +
-               "        {\n" +
-               "          \"name\": \"placeholder\",\n" +
-               "          \"description\": \"占位符文本\",\n" +
-               "          \"type\": \"string\",\n" +
-               "          \"defaultValue\": \"\"\n" +
-               "        },\n" +
-               "        {\n" +
-               "          \"name\": \"disabled\",\n" +
-               "          \"description\": \"是否禁用\",\n" +
-               "          \"type\": \"boolean\",\n" +
-               "          \"defaultValue\": false\n" +
-               "        }\n" +
-               "      ],\n" +
-               "      \"events\": [\n" +
-               "        {\n" +
-               "          \"name\": \"input\",\n" +
-               "          \"description\": \"输入事件\",\n" +
-               "          \"parameters\": \"(value: string)\"\n" +
-               "        },\n" +
-               "        {\n" +
-               "          \"name\": \"change\",\n" +
-               "          \"description\": \"值改变事件\",\n" +
-               "          \"parameters\": \"(value: string)\"\n" +
-               "        }\n" +
-               "      ],\n" +
-               "      \"slots\": []\n" +
-               "    }\n" +
-               "  ]\n" +
-               "}";
     }
 }

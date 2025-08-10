@@ -9,7 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.chu7.vuecomponentassistant.completion.ElementPlusComponent;
+import com.chu7.vuecomponentassistant.remote.model.ComponentInfo;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -93,7 +93,7 @@ public class CustomComponentLibraryManager {
         private String documentationUrlTemplate;
         
         /** 组件列表 */
-        private List<ElementPlusComponent> components;
+        private List<ComponentInfo> components;
         
         /**
          * 默认构造函数，用于JSON序列化
@@ -206,7 +206,7 @@ public class CustomComponentLibraryManager {
          * 如果组件列表为null，则初始化为空列表
          * @return 组件列表
          */
-        public List<ElementPlusComponent> getComponents() { 
+        public List<ComponentInfo> getComponents() { 
             if (components == null) {
                 components = new ArrayList<>();
             }
@@ -217,7 +217,7 @@ public class CustomComponentLibraryManager {
          * 设置组件列表
          * @param components 组件列表
          */
-        public void setComponents(List<ElementPlusComponent> components) { 
+        public void setComponents(List<ComponentInfo> components) { 
             this.components = components; 
         }
     }
@@ -228,7 +228,7 @@ public class CustomComponentLibraryManager {
     private static Map<String, CustomLibraryConfig> customLibraries = new HashMap<>();
     
     /** 组件名称到组件的快速查找映射表 */
-    private static Map<String, Map<String, ElementPlusComponent>> componentMaps = new HashMap<>();
+    private static Map<String, Map<String, ComponentInfo>> componentMaps = new HashMap<>();
     
     /** 缓存文件名 */
     private static final String CACHE_FILE_NAME = "custom_component_libraries.json";
@@ -354,14 +354,14 @@ public class CustomComponentLibraryManager {
             config.setDocumentationUrlTemplate(getStringValue(configJson, "documentationUrlTemplate", ""));
             
             // 解析组件列表
-            List<ElementPlusComponent> components = new ArrayList<>();
+            List<ComponentInfo> components = new ArrayList<>();
             if (configJson.has("components") && configJson.get("components").isJsonArray()) {
                 JsonArray componentsArray = configJson.getAsJsonArray("components");
                 Gson gson = new Gson();
                 
                 for (JsonElement componentElement : componentsArray) {
                     if (componentElement.isJsonObject()) {
-                        ElementPlusComponent component = gson.fromJson(componentElement, ElementPlusComponent.class);
+                        ComponentInfo component = gson.fromJson(componentElement, ComponentInfo.class);
                         if (component != null && component.getName() != null) {
                             components.add(component);
                         }
@@ -374,8 +374,8 @@ public class CustomComponentLibraryManager {
             customLibraries.put(config.getName(), config);
             
             // 构建组件映射表
-            Map<String, ElementPlusComponent> componentMap = new HashMap<>();
-            for (ElementPlusComponent component : components) {
+            Map<String, ComponentInfo> componentMap = new HashMap<>();
+            for (ComponentInfo component : components) {
                 componentMap.put(component.getName(), component);
             }
             componentMaps.put(config.getName(), componentMap);
@@ -463,14 +463,14 @@ public class CustomComponentLibraryManager {
             config.setDocumentationUrlTemplate(getStringValue(configJson, "documentationUrlTemplate", ""));
             
             // 解析组件列表
-            List<ElementPlusComponent> components = new ArrayList<>();
+            List<ComponentInfo> components = new ArrayList<>();
             if (configJson.has("components") && configJson.get("components").isJsonArray()) {
                 JsonArray componentsArray = configJson.getAsJsonArray("components");
                 Gson gson = new Gson();
                 
                 for (JsonElement componentElement : componentsArray) {
                     if (componentElement.isJsonObject()) {
-                        ElementPlusComponent component = gson.fromJson(componentElement, ElementPlusComponent.class);
+                        ComponentInfo component = gson.fromJson(componentElement, ComponentInfo.class);
                         if (component != null && component.getName() != null) {
                             components.add(component);
                         }
@@ -494,8 +494,8 @@ public class CustomComponentLibraryManager {
             customLibraries.put(config.getName(), config);
             
             // 构建组件映射表
-            Map<String, ElementPlusComponent> componentMap = new HashMap<>();
-            for (ElementPlusComponent component : components) {
+            Map<String, ComponentInfo> componentMap = new HashMap<>();
+            for (ComponentInfo component : components) {
                 componentMap.put(component.getName(), component);
             }
             componentMaps.put(config.getName(), componentMap);
@@ -505,7 +505,7 @@ public class CustomComponentLibraryManager {
             
             LOG.info("成功加载自定义组件库: " + config.getDisplayName());
             LOG.info("组件数量: " + components.size());
-            for (ElementPlusComponent component : components) {
+            for (ComponentInfo component : components) {
                 LOG.info("  - " + component.getName());
             }
             
@@ -543,7 +543,7 @@ public class CustomComponentLibraryManager {
             return false;
         }
         
-        for (Map<String, ElementPlusComponent> componentMap : componentMaps.values()) {
+        for (Map<String, ComponentInfo> componentMap : componentMaps.values()) {
             if (componentMap.containsKey(componentName)) {
                 return true;
             }
@@ -562,7 +562,7 @@ public class CustomComponentLibraryManager {
             return null;
         }
         
-        for (Map.Entry<String, Map<String, ElementPlusComponent>> entry : componentMaps.entrySet()) {
+        for (Map.Entry<String, Map<String, ComponentInfo>> entry : componentMaps.entrySet()) {
             if (entry.getValue().containsKey(componentName)) {
                 return customLibraries.get(entry.getKey());
             }
@@ -576,13 +576,13 @@ public class CustomComponentLibraryManager {
      * @param componentName 组件名称
      * @return 组件对象，如果不存在则返回null
      */
-    public static ElementPlusComponent getCustomComponent(String componentName) {
+    public static ComponentInfo getCustomComponent(String componentName) {
         if (componentName == null) {
             return null;
         }
         
-        for (Map<String, ElementPlusComponent> componentMap : componentMaps.values()) {
-            ElementPlusComponent component = componentMap.get(componentName);
+        for (Map<String, ComponentInfo> componentMap : componentMaps.values()) {
+            ComponentInfo component = componentMap.get(componentName);
             if (component != null) {
                 return component;
             }
@@ -596,7 +596,7 @@ public class CustomComponentLibraryManager {
      * @param libraryName 组件库名称
      * @return 组件列表
      */
-    public static List<ElementPlusComponent> getCustomComponents(String libraryName) {
+    public static List<ComponentInfo> getCustomComponents(String libraryName) {
         CustomLibraryConfig config = customLibraries.get(libraryName);
         if (config != null) {
             return new ArrayList<>(config.getComponents());
@@ -870,7 +870,7 @@ public class CustomComponentLibraryManager {
             LOG.info("组件库: " + config.getDisplayName() + " (" + config.getName() + ")");
             LOG.info("  前缀: " + config.getComponentPrefix());
             LOG.info("  组件数量: " + config.getComponents().size());
-            for (ElementPlusComponent component : config.getComponents()) {
+            for (ComponentInfo component : config.getComponents()) {
                 LOG.info("    - " + component.getName());
             }
         }

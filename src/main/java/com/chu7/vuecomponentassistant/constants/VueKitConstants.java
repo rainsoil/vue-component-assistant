@@ -35,34 +35,19 @@ public final class VueKitConstants {
     
     // ==================== 组件库相关 ====================
     
-    /** Element Plus 组件库名称 */
-    public static final String ELEMENT_PLUS_LIBRARY = "element-plus";
+    /** 远程组件库前缀 */
+    public static final String REMOTE_LIBRARY_PREFIX = "remote-";
     
-    /** Element UI 组件库名称 */
-    public static final String ELEMENT_UI_LIBRARY = "element-ui";
+    /** 自定义组件库前缀 */
+    public static final String CUSTOM_LIBRARY_PREFIX = "custom-";
     
-    /** Ant Design Vue 组件库名称 */
-    public static final String ANT_DESIGN_VUE_LIBRARY = "ant-design-vue";
-    
-    /** Element Plus 组件前缀 */
-    public static final String ELEMENT_PLUS_PREFIX = "el-";
-    
-    /** Ant Design Vue 组件前缀 */
-    public static final String ANT_DESIGN_VUE_PREFIX = "a-";
+    /** 官方组件库前缀 */
+    public static final String OFFICIAL_LIBRARY_PREFIX = "official-";
     
     // ==================== 文件路径相关 ====================
     
     /** 组件数据文件路径前缀 */
     public static final String DATA_PATH_PREFIX = "/data/";
-    
-    /** Element Plus 组件数据文件 */
-    public static final String ELEMENT_PLUS_DATA_FILE = "/data/element-plus-components.json";
-    
-    /** Element UI 组件数据文件 */
-    public static final String ELEMENT_UI_DATA_FILE = "/data/element-ui-components.json";
-    
-    /** Ant Design Vue 组件数据文件 */
-    public static final String ANT_DESIGN_VUE_DATA_FILE = "/data/ant-design-vue-components.json";
     
     /** 自定义组件库缓存文件名 */
     public static final String CUSTOM_LIBRARY_CACHE_FILE = "custom_component_libraries.json";
@@ -168,8 +153,8 @@ public final class VueKitConstants {
     /** 插槽匹配正则 */
     public static final String SLOT_REGEX = "#([a-zA-Z][a-zA-Z0-9-]*)\\s*=";
     
-    /** Element Plus 组件匹配正则 */
-    public static final String ELEMENT_PLUS_REGEX = "el-[a-zA-Z-]+";
+    /** 远程组件库组件匹配正则 */
+    public static final String REMOTE_COMPONENT_REGEX = "[a-zA-Z][a-zA-Z0-9-]*";
     
     // ==================== 图标路径 ====================
     

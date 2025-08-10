@@ -106,7 +106,7 @@ public class VueComponentAssistantSettingsConfigurable implements Configurable {
         // 创建头部面板，使用FlowLayout自动换行
         JPanel componentLibraryHeaderPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         componentLibraryHeaderPanel.add(new JBLabel("管理所有组件库："));
-        componentLibraryHeaderPanel.add(new JBLabel("Element Plus、Element UI、Ant Design Vue、自定义组件库"));
+        componentLibraryHeaderPanel.add(new JBLabel("远程组件库、官方组件库、自定义组件库"));
         componentLibraryHeaderPanel.add(manageComponentLibrariesButton);
         
         // 创建内容面板
@@ -160,9 +160,9 @@ public class VueComponentAssistantSettingsConfigurable implements Configurable {
             info.append("<b>📦 已加载的组件库：</b><br>");
             
             // 内置组件库
-            info.append("• Element Plus (内置)<br>");
-            info.append("• Element UI (内置)<br>");
-            info.append("• Ant Design Vue (内置)<br>");
+            info.append("• 远程组件库 (官方市场)<br>");
+            info.append("• 自定义组件库 (本地/远程)<br>");
+            info.append("• 官方组件库 (官方维护)<br>");
             
             // 自定义组件库
             if (!customLibraries.isEmpty()) {

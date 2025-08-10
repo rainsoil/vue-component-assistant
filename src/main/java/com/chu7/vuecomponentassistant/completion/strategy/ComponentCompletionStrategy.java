@@ -2,8 +2,7 @@ package com.chu7.vuecomponentassistant.completion.strategy;
 
 import com.chu7.vuecomponentassistant.completion.CompletionContext;
 import com.chu7.vuecomponentassistant.completion.ComponentProvider;
-import com.chu7.vuecomponentassistant.completion.ElementPlusComponent;
-import com.chu7.vuecomponentassistant.completion.ElementPlusIcons;
+import com.chu7.vuecomponentassistant.remote.model.ComponentInfo;
 import com.chu7.vuecomponentassistant.settings.PluginSettings;
 import com.chu7.vuecomponentassistant.utils.CustomComponentLibraryManager;
 import com.chu7.vuecomponentassistant.utils.VueKitLogger;
@@ -88,7 +87,7 @@ public class ComponentCompletionStrategy implements CompletionStrategy {
                                      @NotNull CompletionResultSet result) {
         
         String prefix = context.getPrefix();
-        List<ElementPlusComponent> components;
+        List<ComponentInfo> components;
         
         // 根据前缀过滤组件
         if (prefix != null && !prefix.isEmpty()) {
@@ -102,7 +101,7 @@ public class ComponentCompletionStrategy implements CompletionStrategy {
         int addedCount = 0;
         int maxComponents = VueKitConstants.MAX_COMPLETION_RESULTS;
         
-        for (ElementPlusComponent component : components) {
+        for (ComponentInfo component : components) {
             if (addedCount >= maxComponents) {
                 VueKitLogger.debug(LOG, "达到最大组件数量限制: " + maxComponents);
                 break;
@@ -145,7 +144,7 @@ public class ComponentCompletionStrategy implements CompletionStrategy {
             String prefix = context.getPrefix();
             
             for (CustomComponentLibraryManager.CustomLibraryConfig config : customLibraries) {
-                for (ElementPlusComponent component : config.getComponents()) {
+                for (ComponentInfo component : config.getComponents()) {
                     // 前缀过滤
                     if (prefix != null && !prefix.isEmpty()) {
                         if (!component.getName().toLowerCase().contains(prefix.toLowerCase())) {
@@ -177,9 +176,9 @@ public class ComponentCompletionStrategy implements CompletionStrategy {
     /**
      * 创建标准组件的补全元素
      */
-    @NotNull
-    private LookupElementBuilder createComponentLookupElement(@NotNull ElementPlusComponent component,
-                                                            @NotNull ComponentProvider componentProvider) {
+        @NotNull
+    private LookupElementBuilder createComponentLookupElement(@NotNull ComponentInfo component,
+                                                          @NotNull ComponentProvider componentProvider) {
         
         String componentName = component.getName();
         String description = component.getDescription();
@@ -191,7 +190,7 @@ public class ComponentCompletionStrategy implements CompletionStrategy {
         return LookupElementBuilder.create(componentName)
                 .withTypeText(VueKitConstants.COMPONENT_TYPE_TEXT, true)
                 .withTailText("  " + description + " (" + libraryName + ")", true)
-                .withIcon(ElementPlusIcons.COMPONENT_ICON)
+                .withIcon(null)
                 .withBoldness(true)
                 .withInsertHandler((insertionContext, item) -> {
                     // 自定义插入处理器 - 插入完整标签并定位光标
@@ -217,9 +216,9 @@ public class ComponentCompletionStrategy implements CompletionStrategy {
     /**
      * 创建自定义组件的补全元素
      */
-    @NotNull
-    private LookupElementBuilder createCustomComponentLookupElement(@NotNull ElementPlusComponent component,
-                                                                  @NotNull CustomComponentLibraryManager.CustomLibraryConfig config) {
+        @NotNull
+    private LookupElementBuilder createCustomComponentLookupElement(@NotNull ComponentInfo component,
+                                                                @NotNull CustomComponentLibraryManager.CustomLibraryConfig config) {
         
         String componentName = component.getName();
         String description = component.getDescription();
@@ -236,7 +235,7 @@ public class ComponentCompletionStrategy implements CompletionStrategy {
         return LookupElementBuilder.create(finalComponentName)
                 .withTypeText("自定义组件", true)
                 .withTailText("  " + description + " (" + libraryName + ")", true)
-                .withIcon(ElementPlusIcons.COMPONENT_ICON)
+                .withIcon(null)
                 .withInsertHandler((insertionContext, item) -> {
                     try {
                         insertionContext.getDocument().replaceString(

@@ -10,11 +10,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.xml.XmlTag;
-import com.chu7.vuecomponentassistant.completion.ElementPlusComponent;
+
 import com.chu7.vuecomponentassistant.completion.ComponentProvider;
-import com.chu7.vuecomponentassistant.completion.ElementPlusProp;
-import com.chu7.vuecomponentassistant.completion.ElementPlusEvent;
-import com.chu7.vuecomponentassistant.completion.ElementPlusSlot;
+import com.chu7.vuecomponentassistant.remote.model.ComponentInfo;
+
 import com.chu7.vuecomponentassistant.documentation.DocumentationStyleGenerator;
 import com.chu7.vuecomponentassistant.ui.ComponentDocumentationDialog;
 import com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector;
@@ -24,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Element Plus 文档查看动作
+ * Vue Component 文档查看动作
  * 
  * 功能说明：
  * - 右键菜单动作，用于查看组件的详细文档
@@ -34,7 +33,7 @@ import java.util.List;
  * @author VueKit Team
  * @version 1.0.0
  */
-public class ElementPlusDocumentationAction extends AnAction {
+public class ComponentDocumentationAction extends AnAction {
 
     /** 组件数据提供者 */
     private ComponentProvider componentProvider;
@@ -42,7 +41,7 @@ public class ElementPlusDocumentationAction extends AnAction {
     /**
      * 构造函数
      */
-    public ElementPlusDocumentationAction() {
+    public ComponentDocumentationAction() {
         // 组件提供者将在 actionPerformed 中根据项目动态创建
     }
 
@@ -109,7 +108,7 @@ public class ElementPlusDocumentationAction extends AnAction {
         }
 
         // 获取组件信息
-        ElementPlusComponent component = componentProvider.getComponent(componentName);
+        ComponentInfo component = componentProvider.getComponent(componentName);
         if (component == null) {
             Messages.showErrorDialog("找不到组件信息: " + componentName, "错误");
             return;
@@ -213,7 +212,7 @@ public class ElementPlusDocumentationAction extends AnAction {
      * @param component 组件信息
      * @return 格式化的文档内容
      */
-    private String generateDocumentation(ElementPlusComponent component) {
+    private String generateDocumentation(ComponentInfo component) {
         return DocumentationStyleGenerator.generateHtmlDocumentation(component);
     }
 
@@ -230,4 +229,4 @@ public class ElementPlusDocumentationAction extends AnAction {
         );
         dialog.show();
     }
-}
+} 

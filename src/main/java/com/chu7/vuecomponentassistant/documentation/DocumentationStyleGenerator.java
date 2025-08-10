@@ -1,9 +1,6 @@
 package com.chu7.vuecomponentassistant.documentation;
 
-import com.chu7.vuecomponentassistant.completion.ElementPlusComponent;
-import com.chu7.vuecomponentassistant.completion.ElementPlusProp;
-import com.chu7.vuecomponentassistant.completion.ElementPlusEvent;
-import com.chu7.vuecomponentassistant.completion.ElementPlusSlot;
+import com.chu7.vuecomponentassistant.remote.model.ComponentInfo;
 
 import java.util.List;
 
@@ -26,7 +23,7 @@ public class DocumentationStyleGenerator {
      * @param component 组件信息
      * @return HTML 格式的文档内容
      */
-    public static String generateHtmlDocumentation(ElementPlusComponent component) {
+    public static String generateHtmlDocumentation(ComponentInfo component) {
         StringBuilder html = new StringBuilder();
         
         // 添加现代化的 Element Plus 风格 CSS 样式
@@ -78,7 +75,7 @@ public class DocumentationStyleGenerator {
         }
 
         // 属性列表
-        List<ElementPlusProp> props = component.getProps();
+        List<ComponentInfo.ComponentProp> props = component.getProps();
         if (props != null && !props.isEmpty()) {
             html.append("<div class='ep-section'>");
             html.append("<div class='ep-section-title'>🔧 属性 (Attributes)</div>");
@@ -91,13 +88,13 @@ public class DocumentationStyleGenerator {
             html.append("<th>默认值</th>");
             html.append("</tr></thead>");
             html.append("<tbody>");
-            for (ElementPlusProp prop : props) {
+            for (ComponentInfo.ComponentProp prop : props) {
                 html.append("<tr>");
                 html.append("<td><span class='ep-name'>").append(prop.getName()).append("</span></td>");
                 html.append("<td>").append(prop.getDescription() != null ? prop.getDescription() : "").append("</td>");
                 html.append("<td>").append(prop.getType() != null ? prop.getType() : "—").append("</td>");
-                html.append("<td>").append(prop.getOptions() != null ? String.join(" / ", prop.getOptions()) : "—").append("</td>");
-                html.append("<td>").append(prop.getDefaultValue() != null ? prop.getDefaultValueAsString() : "—").append("</td>");
+                html.append("<td>").append("—").append("</td>");
+                html.append("<td>").append(prop.getDefaultValue() != null ? prop.getDefaultValue() : "—").append("</td>");
                 html.append("</tr>");
             }
             html.append("</tbody></table>");
@@ -105,7 +102,7 @@ public class DocumentationStyleGenerator {
         }
 
         // 事件列表
-        List<ElementPlusEvent> events = component.getEvents();
+        List<ComponentInfo.ComponentEvent> events = component.getEvents();
         if (events != null && !events.isEmpty()) {
             html.append("<div class='ep-section'>");
             html.append("<div class='ep-section-title'>🎯 事件 (Events)</div>");
@@ -116,7 +113,7 @@ public class DocumentationStyleGenerator {
             html.append("<th>回调参数</th>");
             html.append("</tr></thead>");
             html.append("<tbody>");
-            for (ElementPlusEvent event : events) {
+            for (ComponentInfo.ComponentEvent event : events) {
                 html.append("<tr>");
                 html.append("<td><span class='ep-name'>@").append(event.getName()).append("</span></td>");
                 html.append("<td>").append(event.getDescription() != null ? event.getDescription() : "").append("</td>");
@@ -128,7 +125,7 @@ public class DocumentationStyleGenerator {
         }
 
         // 插槽列表
-        List<ElementPlusSlot> slots = component.getSlots();
+        List<ComponentInfo.ComponentSlot> slots = component.getSlots();
         if (slots != null && !slots.isEmpty()) {
             html.append("<div class='ep-section'>");
             html.append("<div class='ep-section-title'>🔌 插槽 (Slots)</div>");
@@ -139,7 +136,7 @@ public class DocumentationStyleGenerator {
             html.append("<th>作用域</th>");
             html.append("</tr></thead>");
             html.append("<tbody>");
-            for (ElementPlusSlot slot : slots) {
+            for (ComponentInfo.ComponentSlot slot : slots) {
                 html.append("<tr>");
                 html.append("<td><span class='ep-name'>#").append(slot.getName()).append("</span></td>");
                 html.append("<td>").append(slot.getDescription() != null ? slot.getDescription() : "").append("</td>");
@@ -183,7 +180,7 @@ public class DocumentationStyleGenerator {
      * @param component 组件信息
      * @return 表格格式的文档内容
      */
-    public static String generateTextDocumentation(ElementPlusComponent component) {
+    public static String generateTextDocumentation(ComponentInfo component) {
         StringBuilder text = new StringBuilder();
         
         // 添加编码测试信息
@@ -202,7 +199,7 @@ public class DocumentationStyleGenerator {
         }
 
         // 属性表格
-        List<ElementPlusProp> props = component.getProps();
+        List<ComponentInfo.ComponentProp> props = component.getProps();
         if (props != null && !props.isEmpty()) {
             text.append("🔧 属性 (Attributes)\n");
             text.append("-".repeat(80)).append("\n");
@@ -213,12 +210,12 @@ public class DocumentationStyleGenerator {
             text.append("-".repeat(80)).append("\n");
             
             // 表格内容
-            for (ElementPlusProp prop : props) {
+            for (ComponentInfo.ComponentProp prop : props) {
                 String name = prop.getName() != null ? prop.getName() : "";
                 String desc = prop.getDescription() != null ? prop.getDescription() : "";
                 String type = prop.getType() != null ? prop.getType() : "—";
-                String options = prop.getOptions() != null ? String.join(" / ", prop.getOptions()) : "—";
-                String defaultValue = prop.getDefaultValue() != null ? prop.getDefaultValueAsString() : "—";
+                String options = "—"; // ComponentProp没有getOptions方法
+                String defaultValue = prop.getDefaultValue() != null ? prop.getDefaultValue() : "—";
                 
                 // 截断过长的描述
                 if (desc.length() > 23) {
@@ -235,7 +232,7 @@ public class DocumentationStyleGenerator {
         }
 
         // 事件表格
-        List<ElementPlusEvent> events = component.getEvents();
+        List<ComponentInfo.ComponentEvent> events = component.getEvents();
         if (events != null && !events.isEmpty()) {
             text.append("🎯 事件 (Events)\n");
             text.append("-".repeat(80)).append("\n");
@@ -246,7 +243,7 @@ public class DocumentationStyleGenerator {
             text.append("-".repeat(80)).append("\n");
             
             // 表格内容
-            for (ElementPlusEvent event : events) {
+            for (ComponentInfo.ComponentEvent event : events) {
                 String name = "@" + (event.getName() != null ? event.getName() : "");
                 String desc = event.getDescription() != null ? event.getDescription() : "";
                 String params = event.getParameters() != null ? event.getParameters() : "—";
@@ -266,7 +263,7 @@ public class DocumentationStyleGenerator {
         }
 
         // 插槽表格
-        List<ElementPlusSlot> slots = component.getSlots();
+        List<ComponentInfo.ComponentSlot> slots = component.getSlots();
         if (slots != null && !slots.isEmpty()) {
             text.append("🔌 插槽 (Slots)\n");
             text.append("-".repeat(80)).append("\n");
@@ -277,7 +274,7 @@ public class DocumentationStyleGenerator {
             text.append("-".repeat(80)).append("\n");
             
             // 表格内容
-            for (ElementPlusSlot slot : slots) {
+            for (ComponentInfo.ComponentSlot slot : slots) {
                 String name = "#" + (slot.getName() != null ? slot.getName() : "");
                 String desc = slot.getDescription() != null ? slot.getDescription() : "";
                 String scope = slot.getScope() != null ? slot.getScope() : "—";
