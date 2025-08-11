@@ -1,6 +1,5 @@
 package com.chu7.vuecomponentassistant.remote.model;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -12,9 +11,9 @@ public class ComponentLibrary {
     private String displayName;     // 显示名称
     private String description;     // 描述
     private String version;         // 版本
-    private LibrarySource source;   // 来源类型
+    private String source;   // 来源类型（字符串形式，用于JSON反序列化）
     private String sourceUrl;       // 远程URL（如果适用）
-    private LocalDateTime lastUpdated; // 最后更新时间
+    private String lastUpdated; // 最后更新时间
     private List<ComponentInfo> components; // 组件列表
 
     public enum LibrarySource {
@@ -43,9 +42,22 @@ public class ComponentLibrary {
         this.displayName = displayName;
         this.description = description;
         this.version = version;
+        this.source = source != null ? source.name() : null;
+        this.sourceUrl = sourceUrl;
+        this.lastUpdated = java.time.LocalDateTime.now().toString();
+    }
+    
+    // 添加一个接受字符串source的构造函数
+    public ComponentLibrary(String id, String name, String displayName, String description, 
+                          String version, String source, String sourceUrl) {
+        this.id = id;
+        this.name = name;
+        this.displayName = displayName;
+        this.description = description;
+        this.version = version;
         this.source = source;
         this.sourceUrl = sourceUrl;
-        this.lastUpdated = LocalDateTime.now();
+        this.lastUpdated = java.time.LocalDateTime.now().toString();
     }
 
     // Getter和Setter方法
@@ -89,12 +101,24 @@ public class ComponentLibrary {
         this.version = version;
     }
 
-    public LibrarySource getSource() {
+    public String getSource() {
         return source;
     }
 
-    public void setSource(LibrarySource source) {
+    public void setSource(String source) {
         this.source = source;
+    }
+    
+    // 提供枚举类型的getter方法，用于向后兼容
+    public LibrarySource getSourceAsEnum() {
+        if (source == null) {
+            return null;
+        }
+        try {
+            return LibrarySource.valueOf(source.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     public String getSourceUrl() {
@@ -105,11 +129,11 @@ public class ComponentLibrary {
         this.sourceUrl = sourceUrl;
     }
 
-    public LocalDateTime getLastUpdated() {
+    public String getLastUpdated() {
         return lastUpdated;
     }
 
-    public void setLastUpdated(LocalDateTime lastUpdated) {
+    public void setLastUpdated(String lastUpdated) {
         this.lastUpdated = lastUpdated;
     }
 

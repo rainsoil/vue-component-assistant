@@ -264,7 +264,7 @@ public class ComponentLibraryManagementDialog extends DialogWrapper {
         
         // 重新加载按钮仅对远程自定义组件库启用
         reloadButton.setEnabled(hasSelection && 
-            selectedLibrary.getSource() == ComponentLibrary.LibrarySource.CUSTOM_REMOTE);
+                            "CUSTOM_REMOTE".equals(selectedLibrary.getSource()));
     }
     
     /**
@@ -283,7 +283,7 @@ public class ComponentLibraryManagementDialog extends DialogWrapper {
         details.append("名称: ").append(library.getDisplayName()).append("\n");
         details.append("ID: ").append(library.getId()).append("\n");
         details.append("版本: ").append(library.getVersion()).append("\n");
-        details.append("来源: ").append(library.getSource().getDisplayName()).append("\n");
+        details.append("来源: ").append(library.getSourceAsEnum() != null ? library.getSourceAsEnum().getDisplayName() : library.getSource()).append("\n");
         details.append("描述: ").append(library.getDescription()).append("\n");
         details.append("最后更新: ").append(library.getLastUpdated()).append("\n");
         
@@ -335,7 +335,7 @@ public class ComponentLibraryManagementDialog extends DialogWrapper {
             return;
         }
         
-        if (library.getSource() != ComponentLibrary.LibrarySource.CUSTOM_REMOTE) {
+                    if (!"CUSTOM_REMOTE".equals(library.getSource())) {
             Messages.showWarningDialog("只能重新加载远程自定义组件库", "操作限制");
             return;
         }
@@ -483,21 +483,18 @@ public class ComponentLibraryManagementDialog extends DialogWrapper {
                 String displayText = String.format("%s %s [%s]", 
                     library.getDisplayName(), 
                     library.getVersion(),
-                    library.getSource().getDisplayName()
+                    library.getSourceAsEnum() != null ? library.getSourceAsEnum().getDisplayName() : library.getSource()
                 );
                 setText(displayText);
                 
                 // 根据来源设置不同的图标
-                switch (library.getSource()) {
-                    case OFFICIAL:
-                        setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/component.svg")));
-                        break;
-                    case CUSTOM_LOCAL:
-                        setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/property.svg")));
-                        break;
-                    case CUSTOM_REMOTE:
-                        setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/event.svg")));
-                        break;
+                String source = library.getSource();
+                if ("OFFICIAL".equals(source)) {
+                    setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/component.svg")));
+                } else if ("CUSTOM_LOCAL".equals(source)) {
+                    setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/property.svg")));
+                } else if ("CUSTOM_REMOTE".equals(source)) {
+                    setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/event.svg")));
                 }
             }
             

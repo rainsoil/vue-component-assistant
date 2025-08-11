@@ -1,6 +1,7 @@
 package com.chu7.vuecomponentassistant.completion;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 
@@ -51,7 +52,14 @@ public class CompletionCache {
         private final String libraryType;
         
         public CacheKey(PsiFile file, PsiElement element, String prefix, String libraryType) {
-            this.filePath = file.getVirtualFile().getPath();
+            // 安全地获取文件路径，处理 VirtualFile 为 null 的情况
+            VirtualFile virtualFile = file.getVirtualFile();
+            if (virtualFile != null) {
+                this.filePath = virtualFile.getPath();
+            } else {
+                // 如果 VirtualFile 为 null，使用文件名作为备选方案
+                this.filePath = file.getName() + "_" + System.identityHashCode(file);
+            }
             this.offset = element.getTextOffset();
             this.prefix = prefix;
             this.libraryType = libraryType;

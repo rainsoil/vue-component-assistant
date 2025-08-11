@@ -1,6 +1,5 @@
 package com.chu7.vuecomponentassistant.remote.model;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -20,7 +19,7 @@ public class OfficialLibrary {
     private int downloadCount;
     private double rating;
     private List<String> tags;
-    private LocalDateTime lastUpdated;
+    private String lastUpdated;
 
     // 构造函数
     public OfficialLibrary() {}
@@ -38,7 +37,7 @@ public class OfficialLibrary {
         this.author = author;
         this.homepage = homepage;
         this.downloadUrl = downloadUrl;
-        this.lastUpdated = LocalDateTime.now();
+        this.lastUpdated = java.time.LocalDateTime.now().toString();
     }
 
     // Getter和Setter方法
@@ -146,11 +145,11 @@ public class OfficialLibrary {
         this.tags = tags;
     }
 
-    public LocalDateTime getLastUpdated() {
+    public String getLastUpdated() {
         return lastUpdated;
     }
 
-    public void setLastUpdated(LocalDateTime lastUpdated) {
+    public void setLastUpdated(String lastUpdated) {
         this.lastUpdated = lastUpdated;
     }
 

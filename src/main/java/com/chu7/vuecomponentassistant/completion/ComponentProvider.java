@@ -3,6 +3,8 @@ package com.chu7.vuecomponentassistant.completion;
 import com.chu7.vuecomponentassistant.utils.CustomComponentLibraryManager;
 import com.chu7.vuecomponentassistant.utils.VueKitLogger;
 import com.chu7.vuecomponentassistant.remote.model.ComponentInfo;
+import com.chu7.vuecomponentassistant.remote.model.ComponentLibrary;
+import com.chu7.vuecomponentassistant.remote.ComponentLibraryManager;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
@@ -63,9 +65,94 @@ public class ComponentProvider {
     private void loadComponents() {
         long startTime = System.currentTimeMillis();
 
+        // 首先尝试从本地缓存的组件库加载
+        if (loadFromLocalCache()) {
+            VueKitLogger.debug(LOG, "从本地缓存加载组件库成功");
+            return;
+        }
+
+        // 如果本地缓存没有，则从内置资源文件加载
+        VueKitLogger.debug(LOG, "本地缓存未找到，从内置资源文件加载");
+        loadFromBuiltinResources();
+        
+        VueKitLogger.debug(LOG, "=== 组件数据加载完成 ===");
+    }
+
+    /**
+     * 根据组件库类型获取对应的组件库ID
+     */
+    private String getLibraryIdByType(ComponentLibraryDetector.LibraryType libraryType) {
+        switch (libraryType) {
+            case ELEMENT_UI:
+                return "element-ui";
+            case ELEMENT_PLUS:
+                return "element-plus";
+            case ANT_DESIGN_VUE:
+                return "ant-design-vue";
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * 从本地缓存的组件库加载组件数据
+     */
+    private boolean loadFromLocalCache() {
         try {
+            System.out.println("=== 尝试从本地缓存加载组件库 ===");
+            System.out.println("检测到的组件库类型: " + libraryType.getDisplayName());
+            
+            ComponentLibraryManager libraryManager = new ComponentLibraryManager();
+            
+            // 根据检测到的组件库类型查找对应的本地组件库
+            String libraryId = getLibraryIdByType(libraryType);
+            System.out.println("计算出的组件库ID: " + libraryId);
+            
+            if (libraryId == null) {
+                System.out.println("无法确定组件库ID，返回 false");
+                VueKitLogger.debug(LOG, "无法确定组件库ID: " + libraryType.getDisplayName());
+                return false;
+            }
+            
+            // 使用正确的方法名：getLibraryById
+            ComponentLibrary library = libraryManager.getLibraryById(libraryId);
+            if (library == null) {
+                System.out.println("本地缓存中未找到组件库: " + libraryId);
+                VueKitLogger.debug(LOG, "本地缓存中未找到组件库: " + libraryId);
+                return false;
+            }
+            
+            System.out.println("找到本地组件库: " + library.getName() + ", 组件数量: " + library.getComponents().size());
+            VueKitLogger.debug(LOG, "找到本地组件库: " + library.getName() + ", 组件数量: " + library.getComponents().size());
+            
+            // 加载组件数据
+            for (ComponentInfo component : library.getComponents()) {
+                componentsMap.put(component.getName(), component);
+                componentsList.add(component);
+            }
+            
+            System.out.println("成功加载 " + componentsList.size() + " 个组件到内存");
+            VueKitLogger.logLibraryDetection(LOG, libraryType.getDisplayName(), library.getComponents().size());
+            return true;
+            
+        } catch (Exception e) {
+            System.out.println("从本地缓存加载组件库失败: " + e.getMessage());
+            VueKitLogger.error(LOG, "从本地缓存加载组件库失败: " + e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
+     * 从内置资源文件加载组件数据
+     */
+    private void loadFromBuiltinResources() {
+        try {
+            System.out.println("=== 从内置资源文件加载组件数据 ===");
+            System.out.println("数据文件路径: " + dataPath);
+            
             InputStream inputStream = getClass().getResourceAsStream(dataPath);
             if (inputStream == null) {
+                System.out.println("找不到内置资源文件: " + dataPath);
                 VueKitLogger.error(LOG, "Cannot find components data file: " + dataPath);
                 return;
             }
@@ -96,12 +183,11 @@ public class ComponentProvider {
             }
 
             VueKitLogger.logLibraryDetection(LOG, libraryType.getDisplayName(), components.size());
-
-            // 记录性能日志
-            long duration = System.currentTimeMillis() - startTime;
-            VueKitLogger.performance(LOG, "组件数据加载", duration);
+            
+            System.out.println("从内置资源文件成功加载 " + components.size() + " 个组件");
 
         } catch (IOException e) {
+            System.out.println("从内置资源文件加载失败: " + e.getMessage());
             VueKitLogger.error(LOG, "Failed to load " + libraryType.getDisplayName() + " components data", e);
         }
     }

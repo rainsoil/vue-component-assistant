@@ -31,27 +31,17 @@ public class OfficialLibraryManager {
     }
     
     /**
-     * 异步获取官方组件库列表
+     * 异步获取官方组件库列表（实时刷新，不使用缓存）
      */
     public CompletableFuture<List<OfficialLibrary>> fetchOfficialLibraries() {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                LOG.info("开始获取官方组件库列表");
+                LOG.info("开始获取官方组件库列表（实时刷新）");
                 
-                // 先尝试从缓存加载
-                List<OfficialLibrary> cachedLibraries = cacheManager.loadOfficialLibraries();
-                if (!cachedLibraries.isEmpty()) {
-                    LOG.info("从缓存加载官方组件库列表，数量: " + cachedLibraries.size());
-                    return cachedLibraries;
-                }
-                
-                // 从远程获取
+                // 直接从远程获取，不使用缓存
                 String registryUrl = getOfficialRegistryUrl();
                 String json = HttpClient.downloadJson(registryUrl);
                 List<OfficialLibrary> libraries = parseOfficialLibrariesJson(json);
-                
-                // 保存到缓存
-                cacheManager.saveOfficialLibraries(libraries);
                 
                 LOG.info("官方组件库列表获取完成，数量: " + libraries.size());
                 return libraries;
@@ -83,7 +73,7 @@ public class OfficialLibraryManager {
                 ComponentLibrary library = remoteManager.downloadLibrary(officialLibrary.getDownloadUrl()).get();
                 
                 // 设置官方来源信息
-                library.setSource(ComponentLibrary.LibrarySource.OFFICIAL);
+                library.setSource("OFFICIAL");
                 library.setId(officialLibrary.getId());
                 library.setName(officialLibrary.getName());
                 library.setDisplayName(officialLibrary.getDisplayName());
@@ -184,7 +174,7 @@ public class OfficialLibraryManager {
     public boolean isOfficialLibraryInstalled(String libraryId) {
         try {
             ComponentLibrary library = cacheManager.loadLibrary(libraryId);
-            return library != null && library.getSource() == ComponentLibrary.LibrarySource.OFFICIAL;
+            return library != null && "OFFICIAL".equals(library.getSource());
         } catch (VueKitException e) {
             LOG.warn("检查官方组件库安装状态失败: " + libraryId, e);
             return false;

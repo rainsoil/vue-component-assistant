@@ -10,6 +10,9 @@ public class ComponentInfo {
     private String displayName;     // 显示名称
     private String description;     // 组件描述
     private String tag;             // 组件标签
+    private String version;         // 组件版本
+    private String example;         // 使用示例
+    private String docUrl;          // 文档URL
     private List<ComponentProp> props;      // 组件属性
     private List<ComponentEvent> events;    // 组件事件
     private List<ComponentSlot> slots;      // 组件插槽
@@ -90,6 +93,30 @@ public class ComponentInfo {
         this.documentation = documentation;
     }
 
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public String getExample() {
+        return example;
+    }
+
+    public void setExample(String example) {
+        this.example = example;
+    }
+
+    public String getDocUrl() {
+        return docUrl;
+    }
+
+    public void setDocUrl(String docUrl) {
+        this.docUrl = docUrl;
+    }
+
     @Override
     public String toString() {
         return "ComponentInfo{" +
@@ -108,6 +135,7 @@ public class ComponentInfo {
         private String description;
         private String defaultValue;
         private boolean required;
+        private List<String> options;
 
         public ComponentProp() {}
 
@@ -130,6 +158,9 @@ public class ComponentInfo {
         public void setDefaultValue(String defaultValue) { this.defaultValue = defaultValue; }
         public boolean isRequired() { return required; }
         public void setRequired(boolean required) { this.required = required; }
+        
+        public List<String> getOptions() { return options; }
+        public void setOptions(List<String> options) { this.options = options; }
     }
 
     /**

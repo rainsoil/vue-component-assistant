@@ -89,7 +89,7 @@ public class OfficialLibraryMarketDialog extends DialogWrapper {
         searchButton.addActionListener(e -> performSearch());
         
         refreshButton = new JButton("🔄 刷新");
-        refreshButton.addActionListener(e -> loadOfficialLibraries());
+        refreshButton.addActionListener(e -> refreshOfficialLibraries());
         
         panel.add(new JLabel("搜索: "));
         panel.add(searchField);
@@ -161,14 +161,42 @@ public class OfficialLibraryMarketDialog extends DialogWrapper {
     }
     
     /**
-     * 加载官方组件库列表
+     * 覆盖默认按钮，只保留下载按钮
+     */
+    @Override
+    protected Action[] createActions() {
+        // 返回空数组，不显示任何默认按钮
+        return new Action[0];
+    }
+    
+    /**
+     * 加载官方组件库列表（实时刷新，不使用缓存）
      */
     private void loadOfficialLibraries() {
         try {
-            List<OfficialLibrary> libraries = libraryManager.getOfficialManager().fetchOfficialLibraries().get();
+            // 直接调用刷新方法，不使用缓存
+            List<OfficialLibrary> libraries = libraryManager.getOfficialManager().refreshOfficialLibraries().get();
             updateLibraryList(libraries);
         } catch (Exception e) {
             Messages.showErrorDialog("加载官方组件库列表失败: " + e.getMessage(), "错误");
+        }
+    }
+    
+    /**
+     * 刷新官方组件库列表（强制从远程获取最新数据）
+     */
+    private void refreshOfficialLibraries() {
+        try {
+            // 显示刷新提示
+            Messages.showInfoMessage("正在刷新官方组件库列表...", "刷新中");
+            
+            // 调用真正的刷新方法，清除缓存并获取最新数据
+            List<OfficialLibrary> libraries = libraryManager.getOfficialManager().refreshOfficialLibraries().get();
+            updateLibraryList(libraries);
+            
+            Messages.showInfoMessage("官方组件库列表刷新完成！", "刷新成功");
+        } catch (Exception e) {
+            Messages.showErrorDialog("刷新官方组件库列表失败: " + e.getMessage(), "错误");
         }
     }
     
@@ -252,14 +280,19 @@ public class OfficialLibraryMarketDialog extends DialogWrapper {
         
         if (result == Messages.YES) {
             try {
-                // 显示下载进度
-                Messages.showInfoMessage("正在下载组件库 '" + library.getDisplayName() + "'...", "下载中");
+                // 更新下载按钮状态，显示下载中
+                downloadButton.setText("⏳ 下载中...");
+                downloadButton.setEnabled(false);
+                
+                // 在详情区域显示下载状态
+                detailArea.setText("正在下载组件库 '" + library.getDisplayName() + "'...\n\n请稍候，下载完成后会自动关闭窗口。");
                 
                 // 执行异步下载
                 libraryManager.getOfficialManager().downloadOfficialLibrary(library.getId())
                     .thenAccept(downloadedLibrary -> {
                         // 在EDT中更新UI
                         SwingUtilities.invokeLater(() -> {
+                            // 显示下载成功提示
                             Messages.showInfoMessage(
                                 "组件库 '" + library.getDisplayName() + "' 下载成功！\n" +
                                 "已添加到组件库列表，现在可以使用了。",
@@ -271,8 +304,16 @@ public class OfficialLibraryMarketDialog extends DialogWrapper {
                         });
                     })
                     .exceptionally(throwable -> {
-                        // 在EDT中显示错误
+                        // 在EDT中更新UI
                         SwingUtilities.invokeLater(() -> {
+                            // 恢复下载按钮状态
+                            downloadButton.setText("📥 下载");
+                            downloadButton.setEnabled(true);
+                            
+                            // 显示下载失败信息
+                            detailArea.setText("下载失败: " + throwable.getMessage() + "\n\n请重试或检查网络连接。");
+                            
+                            // 显示错误对话框
                             Messages.showErrorDialog(
                                 "下载失败: " + throwable.getMessage(),
                                 "下载错误"
@@ -282,6 +323,13 @@ public class OfficialLibraryMarketDialog extends DialogWrapper {
                     });
                     
             } catch (Exception e) {
+                // 恢复下载按钮状态
+                downloadButton.setText("📥 下载");
+                downloadButton.setEnabled(true);
+                
+                // 显示错误信息
+                detailArea.setText("下载失败: " + e.getMessage() + "\n\n请重试或检查网络连接。");
+                
                 Messages.showErrorDialog("下载失败: " + e.getMessage(), "错误");
             }
         }

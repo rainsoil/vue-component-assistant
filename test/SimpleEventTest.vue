@@ -1,12 +1,8 @@
 <template>
     <div>
 
-
-        <el-table data="[]" border="false" @sort-change="handleSort-change">
-            <template #default>
-                <!-- 自定义列内容 -->
-            </template>
-        </el-table>
+        <el-table data="[]" border="false" height=""
+         @so></el-table>
     </div>
 </template>
 

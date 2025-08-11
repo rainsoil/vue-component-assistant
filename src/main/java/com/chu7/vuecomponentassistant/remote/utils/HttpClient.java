@@ -69,8 +69,55 @@ public class HttpClient {
                 response.append(line);
             }
             
-            LOG.info("成功下载JSON内容，URL: " + url + ", 长度: " + response.length());
-            return response.toString();
+            String jsonContent = response.toString();
+            
+            // 记录下载的内容用于调试
+            LOG.debug("下载的原始内容长度: " + jsonContent.length());
+            if (jsonContent.length() > 0) {
+                LOG.debug("下载的原始内容前100字符: " + jsonContent.substring(0, Math.min(100, jsonContent.length())));
+                LOG.debug("下载的原始内容后100字符: " + jsonContent.substring(Math.max(0, jsonContent.length() - 100)));
+            }
+            
+            // 尝试检测和修复编码问题
+            if (jsonContent.contains("\\u") || jsonContent.contains("\\x")) {
+                LOG.debug("检测到可能的编码问题，尝试修复...");
+                try {
+                    // 尝试解码Unicode转义序列
+                    jsonContent = java.net.URLDecoder.decode(jsonContent, StandardCharsets.UTF_8.name());
+                    LOG.debug("Unicode解码后的内容长度: " + jsonContent.length());
+                } catch (Exception e) {
+                    LOG.debug("Unicode解码失败: " + e.getMessage());
+                }
+            }
+            
+            // 检查内容完整性
+            if (jsonContent.length() > 0) {
+                String trimmed = jsonContent.trim();
+                if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) {
+                    LOG.warn("JSON内容可能不完整，开头字符: " + trimmed.substring(0, Math.min(10, trimmed.length())));
+                }
+                if (!trimmed.endsWith("}") && !trimmed.endsWith("]")) {
+                    LOG.warn("JSON内容可能被截断，末尾字符: " + trimmed.substring(Math.max(0, trimmed.length() - 10)));
+                }
+                
+                // 检查括号匹配
+                int openBraces = 0, closeBraces = 0;
+                int openBrackets = 0, closeBrackets = 0;
+                for (char c : trimmed.toCharArray()) {
+                    if (c == '{') openBraces++;
+                    else if (c == '}') closeBraces++;
+                    else if (c == '[') openBrackets++;
+                    else if (c == ']') closeBrackets++;
+                }
+                
+                if (openBraces != closeBraces || openBrackets != closeBrackets) {
+                    LOG.warn("JSON括号不匹配: {=" + openBraces + ", }=" + closeBraces + 
+                            ", [=" + openBrackets + ", ]=" + closeBrackets);
+                }
+            }
+            
+            LOG.info("成功下载JSON内容，URL: " + url + ", 长度: " + jsonContent.length());
+            return jsonContent;
             
         } catch (IOException e) {
             LOG.error("下载JSON失败: " + url, e);

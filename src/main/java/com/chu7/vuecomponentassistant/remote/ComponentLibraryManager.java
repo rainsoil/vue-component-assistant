@@ -193,15 +193,15 @@ public class ComponentLibraryManager {
             List<ComponentLibrary> allLibraries = getAllLibraries();
             
             long officialCount = allLibraries.stream()
-                .filter(lib -> lib.getSource() == ComponentLibrary.LibrarySource.OFFICIAL)
+                .filter(lib -> "OFFICIAL".equals(lib.getSource()))
                 .count();
             
             long customLocalCount = allLibraries.stream()
-                .filter(lib -> lib.getSource() == ComponentLibrary.LibrarySource.CUSTOM_LOCAL)
+                .filter(lib -> "CUSTOM_LOCAL".equals(lib.getSource()))
                 .count();
             
             long customRemoteCount = allLibraries.stream()
-                .filter(lib -> lib.getSource() == ComponentLibrary.LibrarySource.CUSTOM_REMOTE)
+                .filter(lib -> "CUSTOM_REMOTE".equals(lib.getSource()))
                 .count();
             
             int totalComponents = allLibraries.stream()
@@ -231,7 +231,7 @@ public class ComponentLibraryManager {
                 return ImportResult.error("未找到组件库: " + libraryId);
             }
             
-            if (library.getSource() != ComponentLibrary.LibrarySource.CUSTOM_REMOTE) {
+            if (!"CUSTOM_REMOTE".equals(library.getSource())) {
                 return ImportResult.error("只能重新加载远程自定义组件库");
             }
             

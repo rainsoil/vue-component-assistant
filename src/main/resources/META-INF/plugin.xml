@@ -45,15 +45,15 @@
     <depends>com.intellij.modules.vcs</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <!-- 注册远程组件补全贡献者 -->
+        <!-- 注册Vue代码补全贡献者 -->
         <completion.contributor 
             language="Vue" 
-            implementationClass="com.chu7.vuecomponentassistant.completion.RemoteComponentCompletionProvider"/>
+            implementationClass="com.chu7.vuecomponentassistant.completion.VueCompletionContributor"/>
         
-        <!-- 注册HTML补全贡献者 -->
+        <!-- 注册HTML代码补全贡献者 -->
         <completion.contributor 
             language="HTML" 
-            implementationClass="com.chu7.vuecomponentassistant.completion.RemoteComponentCompletionProvider"/>
+            implementationClass="com.chu7.vuecomponentassistant.completion.VueCompletionContributor"/>
         
         <!-- 注册XML文档提供者 -->
         <lang.documentationProvider language="XML"
