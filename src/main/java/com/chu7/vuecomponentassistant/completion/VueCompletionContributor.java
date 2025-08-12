@@ -2,6 +2,7 @@ package com.chu7.vuecomponentassistant.completion;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.StandardPatterns;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,9 +19,14 @@ import org.jetbrains.annotations.NotNull;
 public class VueCompletionContributor extends CompletionContributor {
 
     public VueCompletionContributor() {
-        // 注册Vue和HTML文件补全
+        // 注册Vue和HTML文件补全 - 使用通用模式
         extend(CompletionType.BASIC, 
                PlatformPatterns.psiElement().inside(PlatformPatterns.psiFile()),
+               new UnifiedCompletionProvider());
+        
+        // 专门为Vue文件注册提供者
+        extend(CompletionType.BASIC,
+               PlatformPatterns.psiElement().inFile(PlatformPatterns.psiFile().withName(StandardPatterns.string().endsWith(".vue"))),
                new UnifiedCompletionProvider());
     }
 }
