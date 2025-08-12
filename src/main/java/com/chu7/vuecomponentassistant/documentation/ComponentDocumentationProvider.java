@@ -6,8 +6,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlTag;
-import com.chu7.vuecomponentassistant.remote.model.ComponentInfo;
-import com.chu7.vuecomponentassistant.completion.ComponentProvider;
+import com.chu7.vuecomponentassistant.completion2.ElementPlusComponent;
+import com.chu7.vuecomponentassistant.completion2.ComponentProvider;
 import com.chu7.vuecomponentassistant.settings.PluginSettings;
 import com.chu7.vuecomponentassistant.utils.VueKitLogger;
 import com.chu7.vuecomponentassistant.constants.VueKitConstants;
@@ -95,7 +95,7 @@ public class ComponentDocumentationProvider extends AbstractDocumentationProvide
         VueKitLogger.debug(LOG, "检测到 " + componentProvider.getLibraryDisplayName() + " 组件: " + componentName);
 
         // 获取组件详细信息
-        ComponentInfo component = componentProvider.getComponent(componentName);
+        ElementPlusComponent component = componentProvider.getComponent(componentName);
         if (component == null) {
             VueKitLogger.warn(LOG, "找不到组件信息: " + componentName);
             return generateTestDocumentation(element);
@@ -180,7 +180,7 @@ public class ComponentDocumentationProvider extends AbstractDocumentationProvide
      * @param component 组件信息
      * @return 格式化的 HTML 文档内容
      */
-    private String generateComponentDocumentation(ComponentInfo component) {
+    private String generateComponentDocumentation(ElementPlusComponent component) {
         return DocumentationStyleGenerator.generateHtmlDocumentation(component);
     }
 } 

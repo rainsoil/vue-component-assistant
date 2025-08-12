@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.chu7.vuecomponentassistant.ui.CustomLibraryUploadDialog;
 import com.chu7.vuecomponentassistant.utils.CustomComponentLibraryManager;
-import com.chu7.vuecomponentassistant.completion.ComponentProvider;
+import com.chu7.vuecomponentassistant.completion2.ComponentProvider;
 import com.chu7.vuecomponentassistant.remote.model.ComponentInfo;
 import com.chu7.vuecomponentassistant.remote.ComponentLibraryManager;
 import com.chu7.vuecomponentassistant.remote.model.ComponentLibrary;

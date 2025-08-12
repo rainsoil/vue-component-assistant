@@ -63,8 +63,6 @@ public class ComponentProvider {
      * 加载组件数据
      */
     private void loadComponents() {
-        long startTime = System.currentTimeMillis();
-
         // 首先尝试从本地缓存的组件库加载
         if (loadFromLocalCache()) {
             VueKitLogger.debug(LOG, "从本地缓存加载组件库成功");
@@ -74,8 +72,6 @@ public class ComponentProvider {
         // 如果本地缓存没有，则从内置资源文件加载
         VueKitLogger.debug(LOG, "本地缓存未找到，从内置资源文件加载");
         loadFromBuiltinResources();
-
-        VueKitLogger.debug(LOG, "=== 组件数据加载完成 ===");
     }
 
     /**
@@ -99,12 +95,10 @@ public class ComponentProvider {
      */
     private void loadFromBuiltinResources() {
         try {
-            System.out.println("=== 从内置资源文件加载组件数据 ===");
-            System.out.println("数据文件路径: " + dataPath);
+            VueKitLogger.debug(LOG, "从内置资源文件加载组件数据: " + dataPath);
 
             InputStream inputStream = getClass().getResourceAsStream(dataPath);
             if (inputStream == null) {
-                System.out.println("找不到内置资源文件: " + dataPath);
                 VueKitLogger.error(LOG, "Cannot find components data file: " + dataPath);
                 return;
             }
@@ -113,16 +107,6 @@ public class ComponentProvider {
             byte[] bytes = inputStream.readAllBytes();
             String jsonContent = new String(bytes, StandardCharsets.UTF_8);
             inputStream.close();
-
-            // 添加编码调试信息
-            VueKitLogger.debug(LOG, "=== 组件数据加载信息 ===");
-            VueKitLogger.debug(LOG, "组件库类型: " + libraryType.getDisplayName());
-            VueKitLogger.debug(LOG, "数据文件路径: " + dataPath);
-            VueKitLogger.debug(LOG, "文件大小: " + bytes.length + " 字节");
-            VueKitLogger.debug(LOG, "内容长度: " + jsonContent.length() + " 字符");
-            VueKitLogger.debug(LOG, "内容前200字符: " + jsonContent.substring(0, Math.min(200, jsonContent.length())));
-            VueKitLogger.debug(LOG, "是否包含中文字符: " + jsonContent.contains("按钮"));
-            VueKitLogger.debug(LOG, "是否包含emoji: " + jsonContent.contains("📦"));
 
             Gson gson = new Gson();
             Type listType = new TypeToken<List<ElementPlusComponent>>() {
@@ -135,11 +119,9 @@ public class ComponentProvider {
             }
 
             VueKitLogger.logLibraryDetection(LOG, libraryType.getDisplayName(), components.size());
-
-            System.out.println("从内置资源文件成功加载 " + components.size() + " 个组件");
+            VueKitLogger.debug(LOG, "从内置资源文件成功加载 " + components.size() + " 个组件");
 
         } catch (IOException e) {
-            System.out.println("从内置资源文件加载失败: " + e.getMessage());
             VueKitLogger.error(LOG, "Failed to load " + libraryType.getDisplayName() + " components data", e);
         }
     }
@@ -149,17 +131,13 @@ public class ComponentProvider {
      */
     private boolean loadFromLocalCache() {
         try {
-            System.out.println("=== 尝试从本地缓存加载组件库 ===");
-            System.out.println("检测到的组件库类型: " + libraryType.getDisplayName());
+            VueKitLogger.debug(LOG, "尝试从本地缓存加载组件库: " + libraryType.getDisplayName());
 
             ComponentLibraryManager libraryManager = new ComponentLibraryManager();
 
             // 根据检测到的组件库类型查找对应的本地组件库
             String libraryId = getLibraryIdByType(libraryType);
-            System.out.println("计算出的组件库ID: " + libraryId);
-
             if (libraryId == null) {
-                System.out.println("无法确定组件库ID，返回 false");
                 VueKitLogger.debug(LOG, "无法确定组件库ID: " + libraryType.getDisplayName());
                 return false;
             }
@@ -167,12 +145,10 @@ public class ComponentProvider {
             // 使用正确的方法名：getLibraryById
             ComponentLibrary library = libraryManager.getLibraryById(libraryId);
             if (library == null) {
-                System.out.println("本地缓存中未找到组件库: " + libraryId);
                 VueKitLogger.debug(LOG, "本地缓存中未找到组件库: " + libraryId);
                 return false;
             }
 
-            System.out.println("找到本地组件库: " + library.getName() + ", 组件数量: " + library.getComponents().size());
             VueKitLogger.debug(LOG, "找到本地组件库: " + library.getName() + ", 组件数量: " + library.getComponents().size());
 
             // 加载组件数据
@@ -183,12 +159,10 @@ public class ComponentProvider {
                 componentsList.add(elementPlusComponent);
             }
 
-            System.out.println("成功加载 " + componentsList.size() + " 个组件到内存");
             VueKitLogger.logLibraryDetection(LOG, libraryType.getDisplayName(), library.getComponents().size());
             return true;
 
         } catch (Exception e) {
-            System.out.println("从本地缓存加载组件库失败: " + e.getMessage());
             VueKitLogger.error(LOG, "从本地缓存加载组件库失败: " + e.getMessage(), e);
             return false;
         }
@@ -247,13 +221,7 @@ public class ComponentProvider {
         allComponents.addAll(componentsList);
 
         // 添加自定义组件库的组件
-        List<CustomComponentLibraryManager.CustomLibraryConfig> customLibraries =
-                CustomComponentLibraryManager.getAllCustomLibraries();
-        for (CustomComponentLibraryManager.CustomLibraryConfig config : customLibraries) {
-            for (ComponentInfo componentInfo : config.getComponents()) {
-                allComponents.add(convertToElementPlusComponent(componentInfo));
-            }
-        }
+        addCustomComponents(allComponents);
 
         return allComponents;
     }
@@ -278,15 +246,12 @@ public class ComponentProvider {
         }
 
         // 从自定义组件库查找
-        List<CustomComponentLibraryManager.CustomLibraryConfig> customLibraries =
-                CustomComponentLibraryManager.getAllCustomLibraries();
-        for (CustomComponentLibraryManager.CustomLibraryConfig config : customLibraries) {
-            for (ComponentInfo componentInfo : config.getComponents()) {
-                ElementPlusComponent component = convertToElementPlusComponent(componentInfo);
-                if (component.getName() != null &&
-                        component.getName().toLowerCase().startsWith(lowerPrefix)) {
-                    matchingComponents.add(component);
-                }
+        List<ElementPlusComponent> customComponents = new ArrayList<>();
+        addCustomComponents(customComponents);
+        for (ElementPlusComponent component : customComponents) {
+            if (component.getName() != null &&
+                    component.getName().toLowerCase().startsWith(lowerPrefix)) {
+                matchingComponents.add(component);
             }
         }
 
@@ -318,13 +283,7 @@ public class ComponentProvider {
         allComponents.addAll(componentsList);
 
         // 添加自定义组件库的组件
-        List<CustomComponentLibraryManager.CustomLibraryConfig> customLibraries =
-                CustomComponentLibraryManager.getAllCustomLibraries();
-        for (CustomComponentLibraryManager.CustomLibraryConfig config : customLibraries) {
-            for (ComponentInfo componentInfo : config.getComponents()) {
-                allComponents.add(convertToElementPlusComponent(componentInfo));
-            }
-        }
+        addCustomComponents(allComponents);
 
         if (prefix == null || prefix.isEmpty()) {
             return allComponents;
@@ -333,6 +292,19 @@ public class ComponentProvider {
         return allComponents.stream()
                 .filter(component -> component.getName().toLowerCase().contains(prefix.toLowerCase()))
                 .collect(java.util.stream.Collectors.toList());
+    }
+
+    /**
+     * 添加自定义组件到列表中
+     */
+    private void addCustomComponents(List<ElementPlusComponent> allComponents) {
+        List<CustomComponentLibraryManager.CustomLibraryConfig> customLibraries =
+                CustomComponentLibraryManager.getAllCustomLibraries();
+        for (CustomComponentLibraryManager.CustomLibraryConfig config : customLibraries) {
+            for (ComponentInfo componentInfo : config.getComponents()) {
+                allComponents.add(convertToElementPlusComponent(componentInfo));
+            }
+        }
     }
 
     /**

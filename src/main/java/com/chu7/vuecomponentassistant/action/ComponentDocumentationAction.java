@@ -11,8 +11,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.xml.XmlTag;
 
-import com.chu7.vuecomponentassistant.completion.ComponentProvider;
-import com.chu7.vuecomponentassistant.remote.model.ComponentInfo;
+import com.chu7.vuecomponentassistant.completion2.ComponentProvider;
+import com.chu7.vuecomponentassistant.completion2.ElementPlusComponent;
 
 import com.chu7.vuecomponentassistant.documentation.DocumentationStyleGenerator;
 import com.chu7.vuecomponentassistant.ui.ComponentDocumentationDialog;
@@ -108,7 +108,7 @@ public class ComponentDocumentationAction extends AnAction {
         }
 
         // 获取组件信息
-        ComponentInfo component = componentProvider.getComponent(componentName);
+        ElementPlusComponent component = componentProvider.getComponent(componentName);
         if (component == null) {
             Messages.showErrorDialog("找不到组件信息: " + componentName, "错误");
             return;
@@ -212,7 +212,7 @@ public class ComponentDocumentationAction extends AnAction {
      * @param component 组件信息
      * @return 格式化的文档内容
      */
-    private String generateDocumentation(ComponentInfo component) {
+    private String generateDocumentation(ElementPlusComponent component) {
         return DocumentationStyleGenerator.generateHtmlDocumentation(component);
     }
 

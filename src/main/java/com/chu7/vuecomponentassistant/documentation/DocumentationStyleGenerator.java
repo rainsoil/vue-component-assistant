@@ -1,7 +1,12 @@
 package com.chu7.vuecomponentassistant.documentation;
 
 import com.chu7.vuecomponentassistant.remote.model.ComponentInfo;
+import com.chu7.vuecomponentassistant.completion2.ElementPlusComponent;
+import com.chu7.vuecomponentassistant.completion2.ElementPlusProp;
+import com.chu7.vuecomponentassistant.completion2.ElementPlusEvent;
+import com.chu7.vuecomponentassistant.completion2.ElementPlusSlot;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -307,5 +312,59 @@ public class DocumentationStyleGenerator {
            .append(component.getName().substring(3)).append(".html\n");
 
         return text.toString();
+    }
+
+    /**
+     * 生成 HTML 格式的组件文档（用于悬浮提示）- ElementPlusComponent 重载
+     * 
+     * @param component ElementPlusComponent 组件信息
+     * @return HTML 格式的文档内容
+     */
+    public static String generateHtmlDocumentation(ElementPlusComponent component) {
+        // 将 ElementPlusComponent 转换为 ComponentInfo 格式
+        ComponentInfo componentInfo = new ComponentInfo();
+        componentInfo.setName(component.getName());
+        componentInfo.setDescription(component.getDescription());
+        
+        // 转换属性
+        if (component.getProps() != null) {
+            List<ComponentInfo.ComponentProp> props = new ArrayList<>();
+            for (ElementPlusProp prop : component.getProps()) {
+                ComponentInfo.ComponentProp componentProp = new ComponentInfo.ComponentProp();
+                componentProp.setName(prop.getName());
+                componentProp.setType(prop.getType());
+                componentProp.setDescription(prop.getDescription());
+                componentProp.setDefaultValue(prop.getDefaultValueAsString());
+                props.add(componentProp);
+            }
+            componentInfo.setProps(props);
+        }
+        
+        // 转换事件
+        if (component.getEvents() != null) {
+            List<ComponentInfo.ComponentEvent> events = new ArrayList<>();
+            for (ElementPlusEvent event : component.getEvents()) {
+                ComponentInfo.ComponentEvent componentEvent = new ComponentInfo.ComponentEvent();
+                componentEvent.setName(event.getName());
+                componentEvent.setDescription(event.getDescription());
+                events.add(componentEvent);
+            }
+            componentInfo.setEvents(events);
+        }
+        
+        // 转换插槽
+        if (component.getSlots() != null) {
+            List<ComponentInfo.ComponentSlot> slots = new ArrayList<>();
+            for (ElementPlusSlot slot : component.getSlots()) {
+                ComponentInfo.ComponentSlot componentSlot = new ComponentInfo.ComponentSlot();
+                componentSlot.setName(slot.getName());
+                componentSlot.setDescription(slot.getDescription());
+                slots.add(componentSlot);
+            }
+            componentInfo.setSlots(slots);
+        }
+        
+        // 调用原有的方法
+        return generateHtmlDocumentation(componentInfo);
     }
 }
