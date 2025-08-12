@@ -48,12 +48,12 @@
         <!-- 注册Vue代码补全贡献者 -->
         <completion.contributor 
             language="Vue" 
-            implementationClass="com.chu7.vuecomponentassistant.completion.VueCompletionContributor"/>
+            implementationClass="com.chu7.vuecomponentassistant.completion2.ElementPlusCompletionContributor"/>
         
         <!-- 注册HTML代码补全贡献者 -->
         <completion.contributor 
             language="HTML" 
-            implementationClass="com.chu7.vuecomponentassistant.completion.VueCompletionContributor"/>
+            implementationClass="com.chu7.vuecomponentassistant.completion2.ElementPlusCompletionContributor"/>
         
         <!-- 注册XML文档提供者 -->
         <lang.documentationProvider language="XML"
