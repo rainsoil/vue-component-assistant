@@ -15,6 +15,9 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * 属性补全策略
  * 
@@ -89,38 +92,42 @@ public class AttributeCompletionStrategy implements CompletionStrategy {
         VueKitLogger.performanceWithThreshold(LOG, "属性补全", duration, VueKitConstants.COMPLETION_THRESHOLD_MS);
     }
     
-    /**
+        /**
      * 添加组件特定属性
      */
     private void addComponentAttributes(@NotNull ComponentInfo component,
-                                      @Nullable String prefix,
-                                      @NotNull CompletionResultSet result) {
+                                       @Nullable String prefix,
+                                       @NotNull CompletionResultSet result) {
         
         VueKitLogger.debug(LOG, "组件 " + component.getName() + " 有 " + component.getProps().size() + " 个属性");
         
         int addedCount = 0;
         
         for (ComponentInfo.ComponentProp prop : component.getProps()) {
+            String propName = prop.getName();
+            String propType = prop.getType();
+            String propDefaultValue = prop.getDefaultValue();
+            
             // 前缀过滤
             if (prefix != null && !prefix.isEmpty()) {
-                String propName = prop.getName().toLowerCase();
+                String propNameLower = propName.toLowerCase();
                 String prefixLower = prefix.toLowerCase();
                 
-                if (!propName.contains(prefixLower)) {
-                    VueKitLogger.debug(LOG, "属性过滤: " + prop.getName() + " 不匹配前缀 " + prefix);
+                if (!propNameLower.contains(prefixLower)) {
+                    VueKitLogger.debug(LOG, "属性过滤: " + propName + " 不匹配前缀 " + prefix);
                     continue;
                 }
             }
             
             try {
-                LookupElementBuilder propElement = createAttributeLookupElement(prop, component);
+                LookupElementBuilder propElement = createAttributeLookupElement(propName, propType, propDefaultValue, component.getName());
                 result.addElement(propElement);
                 addedCount++;
                 
-                VueKitLogger.debug(LOG, "添加属性: " + prop.getName());
+                VueKitLogger.debug(LOG, "添加属性: " + propName + " (默认值: " + propDefaultValue + ")");
                 
             } catch (Exception e) {
-                VueKitLogger.logAndIgnore(LOG, "创建属性补全元素失败: " + prop.getName(), e);
+                VueKitLogger.logAndIgnore(LOG, "创建属性补全元素失败: " + propName, e);
             }
         }
         
@@ -146,14 +153,17 @@ public class AttributeCompletionStrategy implements CompletionStrategy {
         for (String attr : commonAttributes) {
             // 前缀过滤
             if (prefix != null && !prefix.isEmpty()) {
-                if (!attr.toLowerCase().contains(prefix.toLowerCase())) {
+                String attrLower = attr.toLowerCase();
+                String prefixLower = prefix.toLowerCase();
+                
+                if (!attrLower.contains(prefixLower)) {
                     continue;
                 }
             }
             
             try {
-                LookupElementBuilder element = createCommonAttributeLookupElement(attr);
-                result.addElement(element);
+                LookupElementBuilder attrElement = createCommonAttributeLookupElement(attr);
+                result.addElement(attrElement);
                 addedCount++;
                 
             } catch (Exception e) {
@@ -167,162 +177,64 @@ public class AttributeCompletionStrategy implements CompletionStrategy {
     /**
      * 创建属性补全元素
      */
-    @NotNull
-    private LookupElementBuilder createAttributeLookupElement(@NotNull ComponentInfo.ComponentProp prop,
-                                                            @NotNull ComponentInfo component) {
+    private LookupElementBuilder createAttributeLookupElement(String propName, String propType, String defaultValue, String componentName) {
+        String displayText = propName;
         
-        String propName = prop.getName();
-        String propType = prop.getType();
-        String propDescription = prop.getDescription();
-        String defaultValue = prop.getDefaultValue();
-        boolean required = prop.isRequired();
+        // 使用组件属性的真实默认值，如果没有则使用"defaultValue"
+        String actualDefaultValue = (defaultValue != null && !defaultValue.isEmpty()) ? defaultValue : "defaultValue";
+        String insertText = propName + "=\"" + actualDefaultValue + "\"";
         
-        // 构建尾部文本（类型和描述）
-        StringBuilder tailText = new StringBuilder();
+        // 构建描述信息
+        StringBuilder description = new StringBuilder();
+        description.append("属性: ").append(propName);
+        
         if (propType != null && !propType.isEmpty()) {
-            tailText.append(" : ").append(propType);
+            description.append(" (类型: ").append(propType).append(")");
         }
-        if (propDescription != null && !propDescription.isEmpty()) {
-            tailText.append(" - ").append(propDescription);
-        }
-        if (required) {
-            tailText.append(" (必需)");
-        }
+        
         if (defaultValue != null && !defaultValue.isEmpty()) {
-            tailText.append(" [默认: ").append(defaultValue).append("]");
+            description.append(" (默认值: ").append(defaultValue).append(")");
         }
         
-        // 构建插入文本
-        String insertText = propName + "=\"\"";
+        description.append(" - ").append(componentName).append(" 组件");
         
-        return LookupElementBuilder.create(propName)
-                .withTypeText(VueKitConstants.PROPERTY_TYPE_TEXT, true)
-                .withTailText(tailText.toString(), true)
-                .withIcon(null)
-                .withBoldness(required) // 必需属性加粗显示
-                .withInsertHandler((insertionContext, item) -> {
-                    try {
-                        // 插入属性名和等号引号
-                        insertionContext.getDocument().replaceString(
-                            insertionContext.getStartOffset(),
-                            insertionContext.getTailOffset(),
-                            insertText
-                        );
-                        
-                        // 将光标定位到引号内
-                        int newOffset = insertionContext.getStartOffset() + propName.length() + 2; // +2 for '="'
-                        insertionContext.getEditor().getCaretModel().moveToOffset(newOffset);
-                        
-                    } catch (Exception e) {
-                        VueKitLogger.logAndIgnore(LOG, "插入属性失败: " + propName, e);
-                    }
+        return LookupElementBuilder.create(displayText)
+                .withInsertHandler((context, item) -> {
+                    // 插入属性后，将光标定位到引号内
+                    context.getDocument().insertString(context.getTailOffset(), "=\"" + actualDefaultValue + "\"");
+                    context.getEditor().getCaretModel().moveToOffset(context.getTailOffset() + 1);
                 })
-                .withLookupString(propName)
-                .withLookupString(propName.toLowerCase());
+                .withTypeText(description.toString())
+                .withIcon(null);
     }
     
     /**
      * 创建通用属性补全元素
      */
-    @NotNull
-    private LookupElementBuilder createCommonAttributeLookupElement(@NotNull String attributeName) {
+    private LookupElementBuilder createCommonAttributeLookupElement(String attr) {
+        String displayText = attr;
+        String insertText = attr + "=\"defaultValue\"";
         
-        String description = getCommonAttributeDescription(attributeName);
-        String insertText = getCommonAttributeInsertText(attributeName);
+        String description = "Vue " + (attr.startsWith("v-") ? "指令" : "属性") + ": " + attr;
         
-        return LookupElementBuilder.create(attributeName)
-                .withTypeText("Vue属性", true)
-                .withTailText("  " + description, true)
-                .withIcon(null)
-                .withInsertHandler((insertionContext, item) -> {
-                    try {
-                        insertionContext.getDocument().replaceString(
-                            insertionContext.getStartOffset(),
-                            insertionContext.getTailOffset(),
-                            insertText
-                        );
-                        
-                        // 对于需要值的属性，将光标定位到引号内
-                        if (insertText.contains("=\"\"")) {
-                            int newOffset = insertionContext.getStartOffset() + attributeName.length() + 2;
-                            insertionContext.getEditor().getCaretModel().moveToOffset(newOffset);
-                        }
-                        
-                    } catch (Exception e) {
-                        VueKitLogger.logAndIgnore(LOG, "插入通用属性失败: " + attributeName, e);
-                    }
+        return LookupElementBuilder.create(displayText)
+                .withInsertHandler((context, item) -> {
+                    // 所有属性都插入默认值
+                    context.getDocument().insertString(context.getTailOffset(), "=\"defaultValue\"");
+                    context.getEditor().getCaretModel().moveToOffset(context.getTailOffset() + 1);
                 })
-                .withLookupString(attributeName)
-                .withLookupString(attributeName.toLowerCase());
-    }
-    
-    /**
-     * 获取通用属性的描述
-     */
-    @NotNull
-    private String getCommonAttributeDescription(@NotNull String attributeName) {
-        switch (attributeName) {
-            case "key": return "Vue列表渲染的唯一标识";
-            case "ref": return "元素或组件的引用";
-            case "is": return "动态组件";
-            case "v-if": return "条件渲染";
-            case "v-else": return "v-if的else分支";
-            case "v-else-if": return "v-if的else-if分支";
-            case "v-show": return "条件显示（CSS display）";
-            case "v-for": return "列表渲染";
-            case "v-model": return "双向数据绑定";
-            case "v-bind": return "属性绑定";
-            case "v-on": return "事件监听";
-            case "class": return "CSS类名";
-            case "style": return "内联样式";
-            case "id": return "元素ID";
-            default: return "Vue属性";
-        }
-    }
-    
-    /**
-     * 获取通用属性的插入文本
-     */
-    @NotNull
-    private String getCommonAttributeInsertText(@NotNull String attributeName) {
-        switch (attributeName) {
-            case "v-if":
-            case "v-else-if":
-            case "v-show":
-            case "v-for":
-            case "v-model":
-                return attributeName + "=\"\"";
-            case "v-bind":
-                return ":=\"\"";
-            case "v-on":
-                return "@=\"\"";
-            case "key":
-            case "ref":
-            case "is":
-            case "class":
-            case "style":
-            case "id":
-                return attributeName + "=\"\"";
-            default:
-                return attributeName + "=\"\"";
-        }
+                .withTypeText(description)
+                .withIcon(null);
     }
     
     @Override
     public int getPriority() {
-        return 80; // 属性补全具有较高优先级
+        return 100; // 属性补全优先级
     }
     
-    @NotNull
     @Override
     public String getStrategyName() {
-        return "属性补全策略";
-    }
-    
-    @NotNull
-    @Override
-    public String getDescription() {
-        return "提供Vue组件属性的智能补全，包括组件特定属性和通用Vue属性";
+        return "AttributeCompletionStrategy";
     }
     
     @Override

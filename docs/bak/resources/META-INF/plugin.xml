@@ -1,0 +1,105 @@
+<idea-plugin>
+    <id>com.chu7.vuekit</id>
+    <name>VueKit(Vue开发工具包)</name>
+    <version>1.0.2</version>
+    <vendor email="luyanan0718@163.com" url="https://github.com/rainsoil/vuekit">luyanan</vendor>
+
+    <description>
+        <![CDATA[
+            VueKit (Vue Development Toolkit)</h3>
+            <p>A comprehensive IntelliJ IDEA plugin for Vue.js developers, providing intelligent component completion, documentation, and advanced development assistance features.</p>
+    <h4>Main Features:</h4>
+    <ul>
+        <li><b>Smart Component Completion</b> - Supports major UI component libraries including Element Plus, Element UI, and Ant Design Vue</li>
+        <li><b>Intelligent Property Suggestions</b> - Provides smart suggestions for attributes, events, and slots based on component type</li>
+        <li><b>Real-time Documentation Display</b> - Displays detailed component documentation and usage examples on hover or selection</li>
+        <li><b>Multi-library Support</b> - Automatically detects component libraries used in projects, supports manual configuration</li>
+        <li><b>Custom Component Libraries</b> - Supports importing and managing custom component libraries</li>
+        <li><b>Right-click Documentation</b> - Quickly access detailed component/attribute/event documentation via right-click menu</li>
+    </ul>
+
+    <h4>Supported Component Libraries:</h4>
+    <ul>
+        <li>Element Plus (Latest Version)</li>
+        <li>Element UI (Classic Version)</li>
+        <li>Ant Design Vue</li>
+        <li>Custom Component Libraries</li>
+    </ul>
+
+    <h4>Use Cases:</h4>
+    <ul>
+        <li>Vue.js project development</li>
+        <li>Component library documentation lookup</li>
+        <li>Code completion and suggestions</li>
+        <li>Development efficiency enhancement</li>
+    </ul>
+
+            ]]>
+    </description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.xml</depends>
+    <depends>com.intellij.modules.vcs</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- 注册Element Plus补全贡献者 -->
+        <completion.contributor 
+            language="Vue" 
+            implementationClass="com.chu7.vuecomponentassistant.completion.ElementPlusCompletionContributor"/>
+        
+        <!-- 注册HTML补全贡献者 -->
+        <completion.contributor 
+            language="HTML" 
+            implementationClass="com.chu7.vuecomponentassistant.completion.ElementPlusCompletionContributor"/>
+        
+<!--        &lt;!&ndash; 注册Element Plus文档提供者 &ndash;&gt;-->
+<!--        <lang.documentation.provider -->
+<!--            language="Vue" -->
+<!--            implementationClass="com.chu7.vuecomponentassistant.documentation.ElementPlusDocumentationProvider"/>-->
+<!--        -->
+<!--        &lt;!&ndash; 注册HTML文档提供者 &ndash;&gt;-->
+<!--        <lang.documentation.provider -->
+<!--            language="HTML" -->
+<!--            implementationClass="com.chu7.vuecomponentassistant.documentation.ElementPlusDocumentationProvider"/>-->
+        
+        <!-- 注册XML文档提供者 -->
+        <lang.documentationProvider language="XML"
+            implementationClass="com.chu7.vuecomponentassistant.documentation.ElementPlusDocumentationProvider"/>
+
+<!--        &lt;!&ndash; 注册JavaScript文档提供者 &ndash;&gt;-->
+<!--        <lang.documentation.provider-->
+<!--            language="JavaScript"-->
+<!--            implementationClass="com.chu7.vuecomponentassistant.documentation.ElementPlusDocumentationProvider"/>-->
+
+<!--        &lt;!&ndash; 注册TypeScript文档提供者 &ndash;&gt;-->
+<!--        <lang.documentation.provider-->
+<!--            language="XML"-->
+<!--            implementationClass="com.chu7.vuecomponentassistant.documentation.ElementPlusDocumentationProvider"/>-->
+        
+        <!-- 注册设置页面 -->
+        <applicationConfigurable 
+            parentId="tools" 
+            instance="com.chu7.vuecomponentassistant.settings.VueComponentAssistantSettingsConfigurable"
+            id="com.chu7.vuecomponentassistant.settings.VueComponentAssistantSettingsConfigurable"
+            displayName="Vue Kit"/>
+        
+        <!-- 注册设置服务 -->
+        <applicationService 
+            serviceImplementation="com.chu7.vuecomponentassistant.settings.PluginSettings"/>
+    </extensions>
+
+    <actions>
+        <!-- 注册Element Plus文档动作 -->
+        <action id="ElementPlus.Documentation" 
+                class="com.chu7.vuecomponentassistant.action.ElementPlusDocumentationAction" 
+                text="📚 查看组件文档" 
+                description="查看当前组件的详细文档信息">
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+        </action>
+        
+
+    </actions>
+
+
+    <idea-version since-build="231.0" until-build="241.*"/>
+</idea-plugin>

@@ -1,7 +1,10 @@
 package com.chu7.vuecomponentassistant.completion.strategy;
 
 import com.chu7.vuecomponentassistant.completion.*;
+import com.chu7.vuecomponentassistant.utils.VueKitLogger;
+import com.chu7.vuecomponentassistant.constants.VueKitConstants;
 import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -24,23 +27,29 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class CompletionStrategyManager {
     
+    private static final Logger LOG = VueKitLogger.getLogger(CompletionStrategyManager.class);
+    
     // 单例实例
     private static volatile CompletionStrategyManager instance;
     
     // 策略注册表
     private final Map<CompletionContext.CompletionType, List<CompletionStrategy>> strategies;
     
+    // 策略统计信息
+    private final Map<String, StrategyStats> strategyStats;
+    
     // 已排序的策略缓存
     private final Map<CompletionContext.CompletionType, List<CompletionStrategy>> sortedStrategiesCache;
     
     private CompletionStrategyManager() {
         this.strategies = new ConcurrentHashMap<>();
+        this.strategyStats = new ConcurrentHashMap<>();
         this.sortedStrategiesCache = new ConcurrentHashMap<>();
         
         // 注册默认策略
         registerDefaultStrategies();
         
-        System.out.println("=== 补全策略管理器初始化完成 ===");
+        VueKitLogger.info(LOG, "补全策略管理器初始化完成");
     }
     
     /**
@@ -61,10 +70,16 @@ public class CompletionStrategyManager {
      * 注册默认策略
      */
     private void registerDefaultStrategies() {
+        // 注册组件补全策略
+        registerStrategy(new ComponentCompletionStrategy());
+        
+        // 注册属性补全策略
+        registerStrategy(new AttributeCompletionStrategy());
+        
         // 注册事件补全策略
         registerStrategy(new EventCompletionStrategy());
         
-        System.out.println("✅ 默认策略注册完成");
+        VueKitLogger.debug(LOG, "默认策略注册完成");
     }
     
     /**
@@ -77,10 +92,10 @@ public class CompletionStrategyManager {
         
         strategies.computeIfAbsent(type, k -> new ArrayList<>()).add(strategy);
         
-        // 清除缓存，确保下次获取时重新排序
+        // 清除缓存，强制重新排序
         sortedStrategiesCache.remove(type);
         
-        System.out.println("✅ 注册策略: " + strategy.getStrategyName() + " -> " + type);
+        VueKitLogger.debug(LOG, "注册策略: " + strategy.getStrategyName() + " -> " + type);
     }
     
     /**
@@ -100,79 +115,122 @@ public class CompletionStrategyManager {
                                 @NotNull ComponentProvider componentProvider,
                                 @NotNull CompletionResultSet result) {
         
+        long startTime = System.currentTimeMillis();
         CompletionContext.CompletionType type = context.getType();
         
-        System.out.println("=== 执行补全策略 ===");
-        System.out.println("补全类型: " + type);
-        System.out.println("当前组件: " + context.getCurrentComponent());
-        System.out.println("前缀: " + context.getPrefix());
+        VueKitLogger.debug(LOG, "执行补全，类型: " + type + ", 前缀: " + context.getPrefix());
         
-        // 获取该类型的所有策略
-        List<CompletionStrategy> typeStrategies = getStrategiesForType(type);
+        // 获取适用的策略
+        List<CompletionStrategy> applicableStrategies = getApplicableStrategies(type);
         
-        if (typeStrategies.isEmpty()) {
-            System.out.println("❌ 没有找到类型 " + type + " 的策略");
+        if (applicableStrategies.isEmpty()) {
+            VueKitLogger.debug(LOG, "没有找到适用的策略: " + type);
             return;
         }
         
-        System.out.println("✅ 找到 " + typeStrategies.size() + " 个策略");
-        
-        // 按优先级排序并执行策略
-        for (CompletionStrategy strategy : typeStrategies) {
-            if (!strategy.isEnabled()) {
-                System.out.println("⏭️ 策略已禁用: " + strategy.getStrategyName());
-                continue;
-            }
-            
-            if (strategy.canHandle(context, project, file, element)) {
-                System.out.println("🔄 执行策略: " + strategy.getStrategyName());
-                try {
+        // 执行策略
+        for (CompletionStrategy strategy : applicableStrategies) {
+            try {
+                if (strategy.canHandle(context, project, file, element)) {
+                    long strategyStartTime = System.currentTimeMillis();
+                    
                     strategy.complete(context, project, file, element, componentProvider, result);
-                    System.out.println("✅ 策略执行成功: " + strategy.getStrategyName());
-                } catch (Exception e) {
-                    System.out.println("❌ 策略执行失败: " + strategy.getStrategyName() + ", 错误: " + e.getMessage());
+                    
+                    long strategyDuration = System.currentTimeMillis() - strategyStartTime;
+                    updateStrategyStats(strategy.getStrategyName(), strategyDuration);
+                    
+                    VueKitLogger.debug(LOG, "策略执行完成: " + strategy.getStrategyName() + 
+                                   " (耗时: " + strategyDuration + "ms)");
                 }
-            } else {
-                System.out.println("⏭️ 策略无法处理: " + strategy.getStrategyName());
+            } catch (Exception e) {
+                VueKitLogger.logAndIgnore(LOG, "策略执行失败: " + strategy.getStrategyName(), e);
             }
         }
         
-        System.out.println("=== 补全策略执行完成 ===");
+        long totalDuration = System.currentTimeMillis() - startTime;
+        VueKitLogger.performanceWithThreshold(LOG, "补全执行", totalDuration, VueKitConstants.COMPLETION_THRESHOLD_MS);
     }
     
     /**
-     * 获取指定类型的所有策略
+     * 获取适用的策略
      */
     @NotNull
-    private List<CompletionStrategy> getStrategiesForType(@NotNull CompletionContext.CompletionType type) {
+    private List<CompletionStrategy> getApplicableStrategies(@NotNull CompletionContext.CompletionType type) {
         return sortedStrategiesCache.computeIfAbsent(type, k -> {
-            List<CompletionStrategy> typeStrategies = strategies.getOrDefault(type, new ArrayList<>());
-            
-            // 按优先级排序（数值越大优先级越高）
-            typeStrategies.sort((s1, s2) -> Integer.compare(s2.getPriority(), s1.getPriority()));
-            
-            System.out.println("策略排序完成，类型: " + type + ", 数量: " + typeStrategies.size());
-            for (CompletionStrategy strategy : typeStrategies) {
-                System.out.println("  - " + strategy.getStrategyName() + " (优先级: " + strategy.getPriority() + ")");
+            List<CompletionStrategy> typeStrategies = strategies.get(type);
+            if (typeStrategies == null) {
+                return new ArrayList<>();
             }
             
-            return typeStrategies;
+            // 按优先级排序
+            typeStrategies.sort((s1, s2) -> {
+                int priority1 = s1.getPriority();
+                int priority2 = s2.getPriority();
+                return Integer.compare(priority2, priority1); // 降序排列
+            });
+            
+            return new ArrayList<>(typeStrategies);
         });
     }
     
     /**
-     * 获取所有已注册的策略
+     * 更新策略统计信息
      */
-    @NotNull
-    public Map<CompletionContext.CompletionType, List<CompletionStrategy>> getAllStrategies() {
-        return new HashMap<>(strategies);
+    private void updateStrategyStats(String strategyName, long duration) {
+        strategyStats.compute(strategyName, (k, v) -> {
+            if (v == null) {
+                return new StrategyStats(strategyName, 1, duration, duration, duration);
+            } else {
+                v.incrementCount();
+                v.updateDuration(duration);
+                return v;
+            }
+        });
     }
     
     /**
-     * 清除策略缓存
+     * 获取策略统计信息
      */
-    public void clearCache() {
-        sortedStrategiesCache.clear();
-        System.out.println("✅ 策略缓存已清除");
+    public Map<String, StrategyStats> getStrategyStats() {
+        return new HashMap<>(strategyStats);
+    }
+    
+    /**
+     * 策略统计信息
+     */
+    public static class StrategyStats {
+        private final String strategyName;
+        private int executionCount;
+        private long totalDuration;
+        private long minDuration;
+        private long maxDuration;
+        
+        public StrategyStats(String strategyName, int executionCount, long totalDuration, 
+                           long minDuration, long maxDuration) {
+            this.strategyName = strategyName;
+            this.executionCount = executionCount;
+            this.totalDuration = totalDuration;
+            this.minDuration = minDuration;
+            this.maxDuration = maxDuration;
+        }
+        
+        public void incrementCount() {
+            executionCount++;
+        }
+        
+        public void updateDuration(long duration) {
+            totalDuration += duration;
+            minDuration = Math.min(minDuration, duration);
+            maxDuration = Math.max(maxDuration, duration);
+        }
+        
+        public String getStrategyName() { return strategyName; }
+        public int getExecutionCount() { return executionCount; }
+        public long getTotalDuration() { return totalDuration; }
+        public long getMinDuration() { return minDuration; }
+        public long getMaxDuration() { return maxDuration; }
+        public double getAverageDuration() { 
+            return executionCount > 0 ? (double) totalDuration / executionCount : 0; 
+        }
     }
 }

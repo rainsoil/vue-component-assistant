@@ -2,7 +2,8 @@ package com.chu7.vuecomponentassistant.completion.strategy;
 
 import com.chu7.vuecomponentassistant.completion.CompletionContext;
 import com.chu7.vuecomponentassistant.completion.ComponentProvider;
-import com.chu7.vuecomponentassistant.remote.model.ComponentInfo;
+import com.chu7.vuecomponentassistant.completion.ElementPlusComponent;
+import com.chu7.vuecomponentassistant.completion.ElementPlusIcons;
 import com.chu7.vuecomponentassistant.settings.PluginSettings;
 import com.chu7.vuecomponentassistant.utils.CustomComponentLibraryManager;
 import com.chu7.vuecomponentassistant.utils.VueKitLogger;
@@ -87,7 +88,7 @@ public class ComponentCompletionStrategy implements CompletionStrategy {
                                      @NotNull CompletionResultSet result) {
         
         String prefix = context.getPrefix();
-        List<ComponentInfo> components;
+        List<ElementPlusComponent> components;
         
         // 根据前缀过滤组件
         if (prefix != null && !prefix.isEmpty()) {
@@ -101,7 +102,7 @@ public class ComponentCompletionStrategy implements CompletionStrategy {
         int addedCount = 0;
         int maxComponents = VueKitConstants.MAX_COMPLETION_RESULTS;
         
-        for (ComponentInfo component : components) {
+        for (ElementPlusComponent component : components) {
             if (addedCount >= maxComponents) {
                 VueKitLogger.debug(LOG, "达到最大组件数量限制: " + maxComponents);
                 break;
@@ -144,7 +145,7 @@ public class ComponentCompletionStrategy implements CompletionStrategy {
             String prefix = context.getPrefix();
             
             for (CustomComponentLibraryManager.CustomLibraryConfig config : customLibraries) {
-                for (ComponentInfo component : config.getComponents()) {
+                for (ElementPlusComponent component : config.getComponents()) {
                     // 前缀过滤
                     if (prefix != null && !prefix.isEmpty()) {
                         if (!component.getName().toLowerCase().contains(prefix.toLowerCase())) {
@@ -176,42 +177,25 @@ public class ComponentCompletionStrategy implements CompletionStrategy {
     /**
      * 创建标准组件的补全元素
      */
-        @NotNull
-    private LookupElementBuilder createComponentLookupElement(@NotNull ComponentInfo component,
-                                                          @NotNull ComponentProvider componentProvider) {
+    @NotNull
+    private LookupElementBuilder createComponentLookupElement(@NotNull ElementPlusComponent component,
+                                                            @NotNull ComponentProvider componentProvider) {
         
         String componentName = component.getName();
         String description = component.getDescription();
         String libraryName = componentProvider.getLibraryDisplayName();
         
+        // 构建插入文本 - 创建完整的组件标签
+        String insertText = String.format("<%s></%s>", componentName, componentName);
+        
         return LookupElementBuilder.create(componentName)
                 .withTypeText(VueKitConstants.COMPONENT_TYPE_TEXT, true)
                 .withTailText("  " + description + " (" + libraryName + ")", true)
-                .withIcon(null)
+                .withIcon(ElementPlusIcons.COMPONENT_ICON)
                 .withBoldness(true)
                 .withInsertHandler((insertionContext, item) -> {
-                    // 智能插入处理器 - 根据上下文决定插入内容
+                    // 自定义插入处理器 - 插入完整标签并定位光标
                     try {
-                        String currentText = insertionContext.getDocument().getText();
-                        int startOffset = insertionContext.getStartOffset();
-                        int endOffset = insertionContext.getTailOffset();
-                        
-                        // 检查是否已经输入了 < 符号
-                        boolean hasOpeningTag = false;
-                        if (startOffset > 0) {
-                            String beforeText = currentText.substring(0, startOffset);
-                            hasOpeningTag = beforeText.endsWith("<");
-                        }
-                        
-                        String insertText;
-                        if (hasOpeningTag) {
-                            // 如果已经有 < 符号，只插入组件名和结束标签
-                            insertText = componentName + "></" + componentName + ">";
-                        } else {
-                            // 如果没有 < 符号，插入完整的标签
-                            insertText = "<" + componentName + "></" + componentName + ">";
-                        }
-                        
                         insertionContext.getDocument().replaceString(
                             insertionContext.getStartOffset(),
                             insertionContext.getTailOffset(),
@@ -219,7 +203,7 @@ public class ComponentCompletionStrategy implements CompletionStrategy {
                         );
                         
                         // 将光标定位到开始标签和结束标签之间
-                        int newOffset = insertionContext.getStartOffset() + componentName.length() + (hasOpeningTag ? 2 : 3); // +2 for '>' and '>', +3 for '<', '>' and '>'
+                        int newOffset = insertionContext.getStartOffset() + componentName.length() + 2; // +2 for '<' and '>'
                         insertionContext.getEditor().getCaretModel().moveToOffset(newOffset);
                         
                     } catch (Exception e) {
@@ -233,9 +217,9 @@ public class ComponentCompletionStrategy implements CompletionStrategy {
     /**
      * 创建自定义组件的补全元素
      */
-        @NotNull
-    private LookupElementBuilder createCustomComponentLookupElement(@NotNull ComponentInfo component,
-                                                                @NotNull CustomComponentLibraryManager.CustomLibraryConfig config) {
+    @NotNull
+    private LookupElementBuilder createCustomComponentLookupElement(@NotNull ElementPlusComponent component,
+                                                                  @NotNull CustomComponentLibraryManager.CustomLibraryConfig config) {
         
         String componentName = component.getName();
         String description = component.getDescription();
@@ -247,38 +231,21 @@ public class ComponentCompletionStrategy implements CompletionStrategy {
             ? prefix + componentName 
             : componentName;
         
+        String insertText = String.format("<%s></%s>", finalComponentName, finalComponentName);
+        
         return LookupElementBuilder.create(finalComponentName)
                 .withTypeText("自定义组件", true)
                 .withTailText("  " + description + " (" + libraryName + ")", true)
-                .withIcon(null)
+                .withIcon(ElementPlusIcons.COMPONENT_ICON)
                 .withInsertHandler((insertionContext, item) -> {
                     try {
-                        String currentText = insertionContext.getDocument().getText();
-                        int startOffset = insertionContext.getStartOffset();
-                        
-                        // 检查是否已经输入了 < 符号
-                        boolean hasOpeningTag = false;
-                        if (startOffset > 0) {
-                            String beforeText = currentText.substring(0, startOffset);
-                            hasOpeningTag = beforeText.endsWith("<");
-                        }
-                        
-                        String insertText;
-                        if (hasOpeningTag) {
-                            // 如果已经有 < 符号，只插入组件名和结束标签
-                            insertText = finalComponentName + "></" + finalComponentName + ">";
-                        } else {
-                            // 如果没有 < 符号，插入完整的标签
-                            insertText = "<" + finalComponentName + "></" + finalComponentName + ">";
-                        }
-                        
                         insertionContext.getDocument().replaceString(
                             insertionContext.getStartOffset(),
                             insertionContext.getTailOffset(),
                             insertText
                         );
                         
-                        int newOffset = insertionContext.getStartOffset() + finalComponentName.length() + (hasOpeningTag ? 2 : 3);
+                        int newOffset = insertionContext.getStartOffset() + finalComponentName.length() + 2;
                         insertionContext.getEditor().getCaretModel().moveToOffset(newOffset);
                         
                     } catch (Exception e) {

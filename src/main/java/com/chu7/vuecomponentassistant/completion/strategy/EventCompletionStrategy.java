@@ -82,6 +82,7 @@ public class EventCompletionStrategy implements CompletionStrategy {
             }
 
             System.out.println("✅ 找到事件数量: " + events.size());
+            System.out.println("事件列表: " + events.stream().map(ComponentInfo.ComponentEvent::getName).collect(Collectors.joining(", ")));
 
             // 限制事件数量，避免性能问题
             List<ComponentInfo.ComponentEvent> limitedEvents = events.stream()
@@ -136,14 +137,19 @@ public class EventCompletionStrategy implements CompletionStrategy {
         // 生成事件处理函数名：handle + 首字母大写的函数名
         String handlerName = "handle" + event.getName().substring(0, 1).toUpperCase() + event.getName().substring(1);
 
-        // 创建简化的事件补全选项，避免复杂的InsertHandler
+        // 创建事件补全选项，包含InsertHandler
         return LookupElementBuilder.create(event.getName())
                 .withPresentableText(event.getName())
                 .withTypeText("VueKit Event")
                 .withTailText(" - " + (event.getDescription() != null ? event.getDescription() : "事件补全"))
-                .withBoldness(true);
-
-
+                .withBoldness(true)
+                .withInsertHandler((context, item) -> {
+                    // 插入事件处理函数
+                    Editor editor = context.getEditor();
+                    int offset = context.getTailOffset();
+                    editor.getDocument().insertString(offset, "=\"" + handlerName + "\"");
+                    editor.getCaretModel().moveToOffset(offset + 1);
+                });
 
     }
 
