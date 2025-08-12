@@ -34,8 +34,7 @@ public class UnifiedCompletionProvider extends CompletionProvider<CompletionPara
      */
     private ComponentProvider componentProvider;
 
-    // 简单的组件标签模式
-    private static final Pattern COMPONENT_PATTERN = Pattern.compile("<([a-zA-Z][a-zA-Z0-9-]*)\\b");
+
 
     public UnifiedCompletionProvider() {
         // 构造函数
@@ -77,22 +76,22 @@ public class UnifiedCompletionProvider extends CompletionProvider<CompletionPara
         System.out.println("当前文本: '" + currentText + "'");
         System.out.println("清理后文本: '" + cleanCurrentText + "'");
         System.out.println("光标前文本: '" + beforeText.substring(Math.max(0, beforeText.length() - 50)) + "'");
+        System.out.println("光标前文本长度: " + beforeText.length());
+        System.out.println("光标位置: " + offset);
 
-        // 1. 检查是否在事件位置 (@开头)
-        if (cleanCurrentText.startsWith("@") || beforeText.endsWith("@")) {
+        // 1. 检查是否在事件位置 (@开头) - 优先级最高
+        if (cleanCurrentText.startsWith("@")) {
+            System.out.println("✅ 检测到事件补全场景: @开头");
+            System.out.println("当前文本长度: " + cleanCurrentText.length());
+            System.out.println("事件前缀: '" + cleanCurrentText.substring(1) + "'");
             handleEventCompletion(beforeText, cleanCurrentText, result);
             return;
         }
         
         // 2. 检查是否在卡槽位置 (#开头，支持sl前缀)
-        if (cleanCurrentText.startsWith("#") || beforeText.endsWith("#")) {
+        if (cleanCurrentText.startsWith("#")) {
+            System.out.println("✅ 检测到卡槽补全场景: #开头");
             handleSlotCompletion(beforeText, cleanCurrentText, result);
-            return;
-        }
-
-        // 2. 检查是否在属性位置 (空格后，没有@和#)
-        if (isInAttributePosition(beforeText, cleanCurrentText)) {
-            handleAttributeCompletion(beforeText, cleanCurrentText, result);
             return;
         }
 
@@ -102,6 +101,10 @@ public class UnifiedCompletionProvider extends CompletionProvider<CompletionPara
             return;
         }
 
+        // 4. 默认处理属性补全 (空格后，没有@和#)
+        System.out.println("✅ 检测到属性补全场景");
+        handleAttributeCompletion(beforeText, cleanCurrentText, result);
+
         System.out.println("未匹配到任何补全场景");
     }
 
@@ -110,15 +113,6 @@ public class UnifiedCompletionProvider extends CompletionProvider<CompletionPara
      */
     private void handleEventCompletion(String beforeText, String currentText, CompletionResultSet result) {
         System.out.println("=== 处理事件补全 ===");
-        
-        // 获取当前组件
-        String componentName = getCurrentComponent(beforeText);
-        if (componentName == null) {
-            System.out.println("❌ 找不到当前组件");
-            return;
-        }
-        
-        System.out.println("当前组件: " + componentName);
         
         // 获取事件前缀
         final String eventPrefix;
@@ -130,19 +124,26 @@ public class UnifiedCompletionProvider extends CompletionProvider<CompletionPara
         
         System.out.println("事件前缀: '" + eventPrefix + "'");
         
-        // 获取组件事件
-        List<ComponentInfo.ComponentEvent> events = componentProvider.getComponentEvents(componentName);
-        if (events == null || events.isEmpty()) {
-            System.out.println("❌ 组件没有事件");
+        // 获取所有可用的事件（不依赖特定组件）
+        List<ComponentInfo.ComponentEvent> allEvents = getAllAvailableEvents();
+        if (allEvents.isEmpty()) {
+            System.out.println("❌ 没有找到可用事件");
             return;
         }
         
-        System.out.println("找到事件数量: " + events.size());
+        System.out.println("找到事件数量: " + allEvents.size());
         
         // 过滤事件
-        List<ComponentInfo.ComponentEvent> filteredEvents = events.stream()
-                .filter(event -> eventPrefix.isEmpty() || 
-                        event.getName().toLowerCase().startsWith(eventPrefix.toLowerCase()))
+        System.out.println("开始过滤事件，前缀: '" + eventPrefix + "'");
+        List<ComponentInfo.ComponentEvent> filteredEvents = allEvents.stream()
+                .filter(event -> {
+                    boolean matches = eventPrefix.isEmpty() || 
+                            event.getName().toLowerCase().startsWith(eventPrefix.toLowerCase());
+                    if (eventPrefix.length() > 0) {
+                        System.out.println("检查事件: " + event.getName() + " 匹配 " + eventPrefix + " = " + matches);
+                    }
+                    return matches;
+                })
                 .limit(20)
                 .collect(Collectors.toList());
         
@@ -158,10 +159,6 @@ public class UnifiedCompletionProvider extends CompletionProvider<CompletionPara
                         // 自动插入 ="handleEventName"
                         Editor editor = insertContext.getEditor();
                         int offset = insertContext.getTailOffset();
-                        
-                        // 生成事件处理函数名：handle + 首字母大写的函数名
-                        String eventName = event.getName();
-                        String handlerName = "handle" + eventName.substring(0, 1).toUpperCase() + eventName.substring(1);
                         
                         // 根据事件类型插入不同的处理函数
                         String eventHandler = generateEventHandler(event);
@@ -182,33 +179,14 @@ public class UnifiedCompletionProvider extends CompletionProvider<CompletionPara
         // 强制显示补全提示
         System.out.println("=== 尝试强制显示补全提示 ===");
         
-        // 延迟一下，确保UI有时间更新
+        // 使用兼容的方式强制刷新
         try {
-            Thread.sleep(200);
-            System.out.println("✅ 延迟200ms完成");
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            System.out.println("❌ 延迟被中断");
-        }
-        
-        // 再次强制刷新
-        result.stopHere();
-        System.out.println("✅ 二次强制刷新完成");
-        
-        // 尝试使用反射强制刷新UI
-        try {
-            System.out.println("=== 尝试反射强制刷新UI ===");
-            var refreshMethod = result.getClass().getDeclaredMethod("refresh");
-            if (refreshMethod != null) {
-                refreshMethod.setAccessible(true);
-                refreshMethod.invoke(result);
-                System.out.println("✅ 反射刷新方法调用成功");
-            } else {
-                System.out.println("❌ 找不到refresh方法");
-            }
+            // 调用 stopHere() 来确保补全结果被处理
+            result.stopHere();
+            System.out.println("✅ 强制刷新完成");
         } catch (Exception e) {
-            System.out.println("❌ 反射刷新失败: " + e.getMessage());
-            e.printStackTrace();
+            System.out.println("❌ 强制刷新失败: " + e.getMessage());
+            // 不打印堆栈跟踪，避免日志污染
         }
         
         System.out.println("=== 事件补全强制显示完成 ===");
@@ -219,15 +197,6 @@ public class UnifiedCompletionProvider extends CompletionProvider<CompletionPara
      */
     private void handleAttributeCompletion(String beforeText, String currentText, CompletionResultSet result) {
         System.out.println("=== 处理属性补全 ===");
-        
-        // 获取当前组件
-        String componentName = getCurrentComponent(beforeText);
-        if (componentName == null) {
-            System.out.println("❌ 找不到当前组件");
-            return;
-        }
-        
-        System.out.println("当前组件: " + componentName);
         
         // 获取属性前缀
         final String attributePrefix;
@@ -245,17 +214,17 @@ public class UnifiedCompletionProvider extends CompletionProvider<CompletionPara
         
         System.out.println("属性前缀: '" + attributePrefix + "'");
         
-        // 获取组件属性
-        List<ComponentInfo.ComponentProp> props = componentProvider.getComponentProps(componentName);
-        if (props == null || props.isEmpty()) {
-            System.out.println("❌ 组件没有属性");
+        // 获取所有可用的属性（不依赖特定组件）
+        List<ComponentInfo.ComponentProp> allProps = getAllAvailableProps();
+        if (allProps.isEmpty()) {
+            System.out.println("❌ 没有找到可用属性");
             return;
         }
         
-        System.out.println("找到属性数量: " + props.size());
+        System.out.println("找到属性数量: " + allProps.size());
         
         // 过滤属性
-        List<ComponentInfo.ComponentProp> filteredProps = props.stream()
+        List<ComponentInfo.ComponentProp> filteredProps = allProps.stream()
                 .filter(prop -> attributePrefix.isEmpty() || 
                         prop.getName().toLowerCase().startsWith(attributePrefix.toLowerCase()))
                 .limit(20)
@@ -293,33 +262,14 @@ public class UnifiedCompletionProvider extends CompletionProvider<CompletionPara
         // 强制显示补全提示
         System.out.println("=== 尝试强制显示补全提示 ===");
         
-        // 延迟一下，确保UI有时间更新
+        // 使用兼容的方式强制刷新
         try {
-            Thread.sleep(200);
-            System.out.println("✅ 延迟200ms完成");
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            System.out.println("❌ 延迟被中断");
-        }
-        
-        // 再次强制刷新
-        result.stopHere();
-        System.out.println("✅ 二次强制刷新完成");
-        
-        // 尝试使用反射强制刷新UI
-        try {
-            System.out.println("=== 尝试反射强制刷新UI ===");
-            var refreshMethod = result.getClass().getDeclaredMethod("refresh");
-            if (refreshMethod != null) {
-                refreshMethod.setAccessible(true);
-                refreshMethod.invoke(result);
-                System.out.println("✅ 反射刷新方法调用成功");
-            } else {
-                System.out.println("❌ 找不到refresh方法");
-            }
+            // 调用 stopHere() 来确保补全结果被处理
+            result.stopHere();
+            System.out.println("✅ 强制刷新完成");
         } catch (Exception e) {
-            System.out.println("❌ 反射刷新失败: " + e.getMessage());
-            e.printStackTrace();
+            System.out.println("❌ 强制刷新失败: " + e.getMessage());
+            // 不打印堆栈跟踪，避免日志污染
         }
         
         System.out.println("=== 属性补全强制显示完成 ===");
@@ -373,15 +323,6 @@ public class UnifiedCompletionProvider extends CompletionProvider<CompletionPara
     private void handleSlotCompletion(String beforeText, String currentText, CompletionResultSet result) {
         System.out.println("=== 处理卡槽补全 ===");
         
-        // 获取当前组件
-        String componentName = getCurrentComponent(beforeText);
-        if (componentName == null) {
-            System.out.println("❌ 找不到当前组件");
-            return;
-        }
-        
-        System.out.println("当前组件: " + componentName);
-        
         // 获取卡槽前缀
         final String slotPrefix;
         if (currentText.startsWith("#")) {
@@ -392,17 +333,17 @@ public class UnifiedCompletionProvider extends CompletionProvider<CompletionPara
         
         System.out.println("卡槽前缀: '" + slotPrefix + "'");
         
-        // 获取组件卡槽
-        List<ComponentInfo.ComponentSlot> slots = componentProvider.getComponentSlots(componentName);
-        if (slots == null || slots.isEmpty()) {
-            System.out.println("❌ 组件没有卡槽");
+        // 获取所有可用的卡槽（不依赖特定组件）
+        List<ComponentInfo.ComponentSlot> allSlots = getAllAvailableSlots();
+        if (allSlots.isEmpty()) {
+            System.out.println("❌ 没有找到可用卡槽");
             return;
         }
         
-        System.out.println("找到卡槽数量: " + slots.size());
+        System.out.println("找到卡槽数量: " + allSlots.size());
         
         // 过滤卡槽 - 支持sl前缀匹配
-        List<ComponentInfo.ComponentSlot> filteredSlots = slots.stream()
+        List<ComponentInfo.ComponentSlot> filteredSlots = allSlots.stream()
                 .filter(slot -> {
                     String slotName = slot.getName();
                     // 如果前缀是sl，则显示所有卡槽（特殊快捷方式）
@@ -448,87 +389,17 @@ public class UnifiedCompletionProvider extends CompletionProvider<CompletionPara
         // 强制显示补全提示
         System.out.println("=== 尝试强制显示补全提示 ===");
         
-        // 延迟一下，确保UI有时间更新
+        // 使用兼容的方式强制刷新
         try {
-            Thread.sleep(200);
-            System.out.println("✅ 延迟200ms完成");
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            System.out.println("❌ 延迟被中断");
-        }
-        
-        // 再次强制刷新
-        result.stopHere();
-        System.out.println("✅ 二次强制刷新完成");
-        
-        // 尝试使用反射强制刷新UI
-        try {
-            System.out.println("=== 尝试反射强制刷新UI ===");
-            var refreshMethod = result.getClass().getDeclaredMethod("refresh");
-            if (refreshMethod != null) {
-                refreshMethod.setAccessible(true);
-                refreshMethod.invoke(result);
-                System.out.println("✅ 反射刷新方法调用成功");
-            } else {
-                System.out.println("❌ 找不到refresh方法");
-            }
+            // 调用 stopHere() 来确保补全结果被处理
+            result.stopHere();
+            System.out.println("✅ 强制刷新完成");
         } catch (Exception e) {
-            System.out.println("❌ 反射刷新失败: " + e.getMessage());
-            e.printStackTrace();
+            System.out.println("❌ 强制刷新失败: " + e.getMessage());
+            // 不打印堆栈跟踪，避免日志污染
         }
         
         System.out.println("=== 卡槽补全强制显示完成 ===");
-    }
-
-    /**
-     * 检查是否在属性位置
-     */
-    private boolean isInAttributePosition(String beforeText, String currentText) {
-        // 检查是否包含组件标签
-        if (!beforeText.contains("<")) {
-            return false;
-        }
-        
-        // 检查是否在空格后
-        if (!beforeText.contains(" ")) {
-            return false;
-        }
-        
-        // 检查是否已经包含@或#
-        if (beforeText.contains("@") || beforeText.contains("#")) {
-            return false;
-        }
-        
-        // 检查当前输入是否为属性名格式
-        return currentText.matches("[a-zA-Z][a-zA-Z0-9-]*") || currentText.isEmpty();
-    }
-
-    /**
-     * 获取当前组件
-     */
-    private String getCurrentComponent(String beforeText) {
-        Matcher matcher = COMPONENT_PATTERN.matcher(beforeText);
-        String lastComponent = null;
-        
-        while (matcher.find()) {
-            lastComponent = matcher.group(1);
-        }
-        
-        if (lastComponent != null) {
-            // 支持各种组件前缀
-            if (lastComponent.startsWith("el-") || lastComponent.startsWith("a-") || 
-                lastComponent.startsWith("ant-") || lastComponent.startsWith("my-") ||
-                lastComponent.startsWith("custom-")) {
-                System.out.println("✅ 检测到组件: " + lastComponent);
-                return lastComponent;
-            }
-            
-            System.out.println("✅ 检测到可能的组件: " + lastComponent);
-            return lastComponent;
-        }
-        
-        System.out.println("❌ 未找到组件");
-        return null;
     }
 
     /**
@@ -562,6 +433,126 @@ public class UnifiedCompletionProvider extends CompletionProvider<CompletionPara
             default:
                 return "\"\""; // 默认值
         }
+    }
+
+    /**
+     * 获取所有可用的事件
+     */
+    private List<ComponentInfo.ComponentEvent> getAllAvailableEvents() {
+        List<ComponentInfo.ComponentEvent> allEvents = new ArrayList<>();
+        
+        // 从所有可用的组件库中获取事件
+        if (componentProvider != null) {
+            // 获取所有组件
+            List<ComponentInfo> allComponents = componentProvider.getAllComponents();
+            
+            // 收集所有组件的事件
+            for (ComponentInfo component : allComponents) {
+                List<ComponentInfo.ComponentEvent> componentEvents = componentProvider.getComponentEvents(component.getName());
+                if (componentEvents != null) {
+                    allEvents.addAll(componentEvents);
+                }
+            }
+        }
+        
+        // 如果没有找到事件，返回一些常用的事件
+        if (allEvents.isEmpty()) {
+            allEvents.add(new ComponentInfo.ComponentEvent("click", "点击事件", ""));
+            allEvents.add(new ComponentInfo.ComponentEvent("change", "值改变事件", "$event"));
+            allEvents.add(new ComponentInfo.ComponentEvent("input", "输入事件", "value"));
+            allEvents.add(new ComponentInfo.ComponentEvent("blur", "失去焦点事件", ""));
+            allEvents.add(new ComponentInfo.ComponentEvent("focus", "获得焦点事件", ""));
+            allEvents.add(new ComponentInfo.ComponentEvent("submit", "提交事件", ""));
+            allEvents.add(new ComponentInfo.ComponentEvent("scroll", "滚动事件", ""));
+            allEvents.add(new ComponentInfo.ComponentEvent("resize", "尺寸改变事件", ""));
+            allEvents.add(new ComponentInfo.ComponentEvent("error", "错误事件", ""));
+            allEvents.add(new ComponentInfo.ComponentEvent("load", "加载完成事件", ""));
+            // 添加更多常用事件，包括以cu开头的事件
+            allEvents.add(new ComponentInfo.ComponentEvent("current-change", "当前行改变事件", "$event"));
+            allEvents.add(new ComponentInfo.ComponentEvent("current-row-change", "当前行改变事件", "$event"));
+            allEvents.add(new ComponentInfo.ComponentEvent("custom-event", "自定义事件", ""));
+            allEvents.add(new ComponentInfo.ComponentEvent("cut", "剪切事件", ""));
+            allEvents.add(new ComponentInfo.ComponentEvent("copy", "复制事件", ""));
+            allEvents.add(new ComponentInfo.ComponentEvent("contextmenu", "右键菜单事件", "$event"));
+            allEvents.add(new ComponentInfo.ComponentEvent("close", "关闭事件", ""));
+            allEvents.add(new ComponentInfo.ComponentEvent("cancel", "取消事件", ""));
+            allEvents.add(new ComponentInfo.ComponentEvent("confirm", "确认事件", ""));
+            allEvents.add(new ComponentInfo.ComponentEvent("complete", "完成事件", ""));
+        }
+        
+        return allEvents;
+    }
+
+    /**
+     * 获取所有可用的属性
+     */
+    private List<ComponentInfo.ComponentProp> getAllAvailableProps() {
+        List<ComponentInfo.ComponentProp> allProps = new ArrayList<>();
+        
+        // 从所有可用的组件库中获取属性
+        if (componentProvider != null) {
+            // 获取所有组件
+            List<ComponentInfo> allComponents = componentProvider.getAllComponents();
+            
+            // 收集所有组件的属性
+            for (ComponentInfo component : allComponents) {
+                List<ComponentInfo.ComponentProp> componentProps = componentProvider.getComponentProps(component.getName());
+                if (componentProps != null) {
+                    allProps.addAll(componentProps);
+                }
+            }
+        }
+        
+        // 如果没有找到属性，返回一些常用的属性
+        if (allProps.isEmpty()) {
+            allProps.add(new ComponentInfo.ComponentProp("id", "String", "唯一标识符", "", false));
+            allProps.add(new ComponentInfo.ComponentProp("class", "String", "CSS类名", "", false));
+            allProps.add(new ComponentInfo.ComponentProp("style", "String", "内联样式", "", false));
+            allProps.add(new ComponentInfo.ComponentProp("disabled", "Boolean", "是否禁用", "false", false));
+            allProps.add(new ComponentInfo.ComponentProp("readonly", "Boolean", "是否只读", "false", false));
+            allProps.add(new ComponentInfo.ComponentProp("placeholder", "String", "占位符文本", "", false));
+            allProps.add(new ComponentInfo.ComponentProp("value", "String", "当前值", "", false));
+            allProps.add(new ComponentInfo.ComponentProp("size", "String", "尺寸大小", "default", false));
+            allProps.add(new ComponentInfo.ComponentProp("type", "String", "类型", "text", false));
+            allProps.add(new ComponentInfo.ComponentProp("name", "String", "名称", "", false));
+        }
+        
+        return allProps;
+    }
+
+    /**
+     * 获取所有可用的卡槽
+     */
+    private List<ComponentInfo.ComponentSlot> getAllAvailableSlots() {
+        List<ComponentInfo.ComponentSlot> allSlots = new ArrayList<>();
+        
+        // 从所有可用的组件库中获取卡槽
+        if (componentProvider != null) {
+            // 获取所有组件
+            List<ComponentInfo> allComponents = componentProvider.getAllComponents();
+            
+            // 收集所有组件的卡槽
+            for (ComponentInfo component : allComponents) {
+                List<ComponentInfo.ComponentSlot> componentSlots = componentProvider.getComponentSlots(component.getName());
+                if (componentSlots != null) {
+                    allSlots.addAll(componentSlots);
+                }
+            }
+        }
+        
+        // 如果没有找到卡槽，返回一些常用的卡槽
+        if (allSlots.isEmpty()) {
+            allSlots.add(new ComponentInfo.ComponentSlot("default", "默认卡槽", ""));
+            allSlots.add(new ComponentInfo.ComponentSlot("header", "头部卡槽", ""));
+            allSlots.add(new ComponentInfo.ComponentSlot("footer", "底部卡槽", ""));
+            allSlots.add(new ComponentInfo.ComponentSlot("content", "内容卡槽", ""));
+            allSlots.add(new ComponentInfo.ComponentSlot("title", "标题卡槽", ""));
+            allSlots.add(new ComponentInfo.ComponentSlot("description", "描述卡槽", ""));
+            allSlots.add(new ComponentInfo.ComponentSlot("extra", "额外内容卡槽", ""));
+            allSlots.add(new ComponentInfo.ComponentSlot("action", "操作卡槽", ""));
+        }
+        
+        return allSlots;
     }
 
     /**

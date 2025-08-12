@@ -1,30 +1,19 @@
 <template>
   <div>
-    <!-- 测试属性补全 -->
-    <el-table data="[]" border="false">
-        
+    <!-- 测试1: 基础事件补全 -->
+    <el-table data="[]" height="""" @sort-change="handleSort-change($event)">
+      <!-- 这里应该能触发事件补全 -->
     </el-table>
     
-    <!-- 测试事件补全 -->
-    <el-button @click></el-button>
-    
-    <!-- 测试更多属性 -->
-    <el-input placeholder></el-input>
-    
-    <!-- 测试卡槽补全 - sl前缀显示所有卡槽 -->
-    <el-table>
-      <template #sl></template>
+    <!-- 测试2: 带属性的事件补全 -->
+    <el-table data="[]" @cu>
+      <!-- 这里应该也能触发事件补全 -->
     </el-table>
     
-    <!-- 测试卡槽补全 - 直接输入#显示所有卡槽 -->
-    <el-card>
-      <template #></template>
-    </el-card>
-    
-    <!-- 测试卡槽补全 - 输入特定前缀 -->
-    <el-dialog>
-      <template #header></template>
-    </el-dialog>
+    <!-- 测试3: 多个属性后的事件补全 -->
+    <el-table data="[]" border="false" @change>
+      <!-- 这里应该也能触发事件补全 -->
+    </el-table>
   </div>
 </template>
 

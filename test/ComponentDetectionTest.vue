@@ -1,60 +1,48 @@
 <template>
-  <div class="component-detection-test">
-    <h2>🔧 组件库检测测试</h2>
+  <div>
+    <!-- 测试1: 基础组件检测 -->
+    <el-table @c>
+      <!-- 这里应该能检测到 el-table 组件 -->
+    </el-table>
     
-    <div class="test-info">
-      <h3>🎯 测试说明</h3>
-      <p>此文件用于测试插件是否正确检测到 Element UI 组件库。</p>
-      <p>package.json 中配置的是 element-ui，所以应该显示 Element UI 的组件。</p>
-    </div>
+    <!-- 测试2: 带属性的组件检测 -->
+    <el-table data="[]" @cu>
+      <!-- 这里应该也能检测到 el-table 组件 -->
+    </el-table>
     
-    <div class="component-test">
-      <h3>🧪 组件测试</h3>
-      
-      <!-- 测试 Element UI 组件 -->
-      <div class="test-section">
-        <h4>Element UI 组件</h4>
-        <el-button type="primary">Element UI 按钮 - 鼠标悬停查看文档</el-button>
-        <el-input placeholder="Element UI 输入框"></el-input>
-      </div>
-      
-      <!-- 测试补全功能 -->
-      <div class="test-section">
-        <h4>补全功能测试</h4>
-        <p>在下面的位置输入 &lt;el- 应该提示 Element UI 组件：</p>
-        <div class="completion-test">
-          <!-- 在这里输入 <el- 测试组件补全 -->
-        </div>
-      </div>
-    </div>
+    <!-- 测试3: 多个属性后的组件检测 -->
+    <el-table data="[]" border="false" height="" @change>
+      <!-- 这里应该也能检测到 el-table 组件 -->
+    </el-table>
     
-    <div class="debug-info">
-      <h3>🐛 调试信息</h3>
-      <p>如果插件仍然显示 Element Plus 组件，请检查：</p>
-      <ul>
-        <li>package.json 是否正确配置了 element-ui</li>
-        <li>ComponentLibraryDetector 是否正确检测到组件库</li>
-        <li>ComponentProvider 是否正确加载了 Element UI 数据</li>
-        <li>ElementPlusTestCompletionProvider 是否正确使用了动态检测</li>
-      </ul>
-    </div>
+    <!-- 测试4: 有问题的场景 -->
+    <el-table data="[]" border="false" height="""" @cu>
+      <!-- 这里应该也能检测到 el-table 组件 -->
+    </el-table>
+    
+    <!-- 测试5: 其他组件 -->
+    <el-button @click>
+      <!-- 这里应该能检测到 el-button 组件 -->
+    </el-button>
+    
+    <el-input @input>
+      <!-- 这里应该能检测到 el-input 组件 -->
+    </el-input>
   </div>
 </template>
 
 <script>
 export default {
   name: 'ComponentDetectionTest',
-  data() {
-    return {
-      testData: {
-        message: 'Element UI 检测测试',
-        components: ['el-button', 'el-input']
-      }
-    }
-  },
   methods: {
     handleClick() {
-      console.log('Element UI 按钮点击事件');
+      console.log('按钮被点击');
+    },
+    handleInput(value) {
+      console.log('输入值:', value);
+    },
+    handleChange(value) {
+      console.log('值改变:', value);
     }
   }
 }
