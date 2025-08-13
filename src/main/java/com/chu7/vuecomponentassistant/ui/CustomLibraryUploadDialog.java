@@ -279,63 +279,75 @@ public class CustomLibraryUploadDialog extends DialogWrapper {
         }
     }
     
-    /**
-     * 加载本地组件库
-     */
-    private ComponentLibrary loadLocalLibrary() throws IOException {
-        String filePath = filePathField.getText().trim();
-        if (filePath.isEmpty()) {
-            Messages.showWarningDialog("请选择JSON文件", "提示");
-            return null;
-        }
-        
-        File file = new File(filePath);
-        if (!file.exists()) {
-            Messages.showErrorDialog("文件不存在: " + filePath, "错误");
-            return null;
-        }
-        
-        String json = new String(Files.readAllBytes(Paths.get(filePath)), StandardCharsets.UTF_8);
-        return parseComponentLibrary(json);
-    }
+         /**
+      * 加载本地组件库
+      */
+     private ComponentLibrary loadLocalLibrary() throws IOException {
+         String filePath = filePathField.getText().trim();
+         if (filePath.isEmpty()) {
+             SwingUtilities.invokeLater(() -> {
+                 Messages.showWarningDialog("请选择JSON文件", "提示");
+             });
+             return null;
+         }
+         
+         File file = new File(filePath);
+         if (!file.exists()) {
+             SwingUtilities.invokeLater(() -> {
+                 Messages.showErrorDialog("文件不存在: " + filePath, "错误");
+             });
+             return null;
+         }
+         
+         String json = new String(Files.readAllBytes(Paths.get(filePath)), StandardCharsets.UTF_8);
+         return parseComponentLibrary(json);
+     }
     
-    /**
-     * 加载远程组件库
-     */
-    private ComponentLibrary loadRemoteLibrary() {
-        String url = urlField.getText().trim();
-        if (url.isEmpty()) {
-            Messages.showWarningDialog("请输入URL", "提示");
-            return null;
-        }
-        
-        try {
-            // 显示加载进度
-            Messages.showInfoMessage("正在加载远程组件库...", "加载中");
-            
-            // 使用 HttpClient 下载 JSON
-            String json = HttpClient.downloadJson(url);
-            
-            // 解析组件库
-            ComponentLibrary library = parseComponentLibrary(json);
-            
-            // 验证组件库
-            if (library.getName() == null || library.getName().trim().isEmpty()) {
-                throw new RuntimeException("组件库名称不能为空");
-            }
-            
-            if (library.getComponents() == null || library.getComponents().isEmpty()) {
-                throw new RuntimeException("组件库必须包含至少一个组件");
-            }
-            
-            Messages.showInfoMessage("远程组件库加载成功！", "成功");
-            return library;
-            
-        } catch (Exception e) {
-            Messages.showErrorDialog("远程加载失败: " + e.getMessage(), "错误");
-            return null;
-        }
-    }
+         /**
+      * 加载远程组件库
+      */
+     private ComponentLibrary loadRemoteLibrary() {
+         String url = urlField.getText().trim();
+         if (url.isEmpty()) {
+             SwingUtilities.invokeLater(() -> {
+                 Messages.showWarningDialog("请输入URL", "提示");
+             });
+             return null;
+         }
+         
+         try {
+             // 显示加载进度
+             SwingUtilities.invokeLater(() -> {
+                 Messages.showInfoMessage("正在加载远程组件库...", "加载中");
+             });
+             
+             // 使用 HttpClient 下载 JSON
+             String json = HttpClient.downloadJson(url);
+             
+             // 解析组件库
+             ComponentLibrary library = parseComponentLibrary(json);
+             
+             // 验证组件库
+             if (library.getName() == null || library.getName().trim().isEmpty()) {
+                 throw new RuntimeException("组件库名称不能为空");
+             }
+             
+             if (library.getComponents() == null || library.getComponents().isEmpty()) {
+                 throw new RuntimeException("组件库必须包含至少一个组件");
+             }
+             
+             SwingUtilities.invokeLater(() -> {
+                 Messages.showInfoMessage("远程组件库加载成功！", "成功");
+             });
+             return library;
+             
+         } catch (Exception e) {
+             SwingUtilities.invokeLater(() -> {
+                 Messages.showErrorDialog("远程加载失败: " + e.getMessage(), "错误");
+             });
+             return null;
+         }
+     }
     
     /**
      * 解析组件库JSON
@@ -379,59 +391,120 @@ public class CustomLibraryUploadDialog extends DialogWrapper {
     
     @Override
     protected void doOKAction() {
-        try {
-            ComponentLibrary library = null;
-            
-            if (localFileRadio.isSelected()) {
-                library = loadLocalLibrary();
-            } else {
-                library = loadRemoteLibrary();
-            }
-            
-            if (library == null) {
-                return;
-            }
-            
-            // 设置来源信息
-            if (localFileRadio.isSelected()) {
-                library.setSource("CUSTOM_LOCAL");
-                library.setSourceUrl(filePathField.getText().trim());
-            } else {
-                library.setSource("CUSTOM_REMOTE");
-                library.setSourceUrl(urlField.getText().trim());
-            }
-            
-            // 导入组件库
-            ImportResult result = libraryManager.importLibrary(library);
-            
-            if (result.isSuccess()) {
-                Messages.showInfoMessage("组件库导入成功: " + library.getName(), "成功");
-                super.doOKAction();
-            } else if (result.isConflict()) {
-                // 处理冲突
-                int choice = Messages.showYesNoDialog(
-                    "已存在同名组件库，是否替换？\n" +
-                    "现有版本: " + result.getExistingLibrary().getVersion() + "\n" +
-                    "新版本: " + library.getVersion(),
-                    "组件库冲突",
-                    Messages.getQuestionIcon()
-                );
+        // 禁用OK按钮，显示加载状态
+        getOKAction().setEnabled(false);
+        setTitle("📁 导入自定义组件库 - 加载中...");
+        
+        // 在预览区域显示加载状态
+        previewArea.setText("正在导入组件库...\n\n请稍候，导入完成后会自动关闭窗口。");
+        
+        // 在后台线程中执行导入操作
+        new Thread(() -> {
+            try {
+                final ComponentLibrary library;
                 
-                if (choice == Messages.YES) {
-                    ImportResult replaceResult = libraryManager.replaceLibrary(library, result.getExistingLibrary());
-                    if (replaceResult.isSuccess()) {
-                        Messages.showInfoMessage("组件库替换成功: " + library.getName(), "成功");
-                        super.doOKAction();
-                    } else {
-                        Messages.showErrorDialog("替换失败: " + replaceResult.getMessage(), "错误");
-                    }
+                if (localFileRadio.isSelected()) {
+                    library = loadLocalLibrary();
+                } else {
+                    library = loadRemoteLibrary();
                 }
-            } else {
-                Messages.showErrorDialog("导入失败: " + result.getMessage(), "错误");
+                
+                if (library == null) {
+                    SwingUtilities.invokeLater(() -> {
+                        getOKAction().setEnabled(true);
+                        setTitle("📁 导入自定义组件库");
+                        previewArea.setText("导入失败：无法加载组件库");
+                    });
+                    return;
+                }
+                
+                // 设置来源信息
+                if (localFileRadio.isSelected()) {
+                    library.setSource("CUSTOM_LOCAL");
+                    library.setSourceUrl(filePathField.getText().trim());
+                } else {
+                    library.setSource("CUSTOM_REMOTE");
+                    library.setSourceUrl(urlField.getText().trim());
+                }
+                
+                // 导入组件库
+                final ImportResult result = libraryManager.importLibrary(library);
+                
+                                 SwingUtilities.invokeLater(() -> {
+                     if (result.isSuccess()) {
+                         // 在EDT线程中关闭对话框
+                         close(OK_EXIT_CODE);
+                         // 在EDT线程中显示成功消息
+                         SwingUtilities.invokeLater(() -> {
+                             Messages.showInfoMessage("组件库导入成功: " + library.getName(), "成功");
+                         });
+                     } else if (result.isConflict()) {
+                         // 处理冲突
+                         int choice = Messages.showYesNoDialog(
+                             "已存在同名组件库，是否替换？\n" +
+                             "现有版本: " + result.getExistingLibrary().getVersion() + "\n" +
+                             "新版本: " + library.getVersion(),
+                             "组件库冲突",
+                             Messages.getQuestionIcon()
+                         );
+                         
+                         if (choice == Messages.YES) {
+                             // 在后台线程中执行替换操作
+                             new Thread(() -> {
+                                 try {
+                                     ImportResult replaceResult = libraryManager.replaceLibrary(library, result.getExistingLibrary());
+                                     SwingUtilities.invokeLater(() -> {
+                                         if (replaceResult.isSuccess()) {
+                                             // 在EDT线程中关闭对话框
+                                             close(OK_EXIT_CODE);
+                                             // 在EDT线程中显示成功消息
+                                             SwingUtilities.invokeLater(() -> {
+                                                 Messages.showInfoMessage("组件库替换成功: " + library.getName(), "成功");
+                                             });
+                                         } else {
+                                             getOKAction().setEnabled(true);
+                                             setTitle("📁 导入自定义组件库");
+                                             previewArea.setText("替换失败: " + replaceResult.getMessage());
+                                             SwingUtilities.invokeLater(() -> {
+                                                 Messages.showErrorDialog("替换失败: " + replaceResult.getMessage(), "错误");
+                                             });
+                                         }
+                                     });
+                                 } catch (Exception e) {
+                                     SwingUtilities.invokeLater(() -> {
+                                         getOKAction().setEnabled(true);
+                                         setTitle("📁 导入自定义组件库");
+                                         previewArea.setText("替换失败: " + e.getMessage());
+                                         SwingUtilities.invokeLater(() -> {
+                                             Messages.showErrorDialog("替换失败: " + e.getMessage(), "错误");
+                                         });
+                                     });
+                                 }
+                             }).start();
+                         } else {
+                             // 用户取消替换，恢复按钮状态
+                             getOKAction().setEnabled(true);
+                             setTitle("📁 导入自定义组件库");
+                             previewArea.setText("用户取消了组件库替换操作");
+                         }
+                     } else {
+                         getOKAction().setEnabled(true);
+                         setTitle("📁 导入自定义组件库");
+                         previewArea.setText("导入失败: " + result.getMessage());
+                         SwingUtilities.invokeLater(() -> {
+                             Messages.showErrorDialog("导入失败: " + result.getMessage(), "错误");
+                         });
+                     }
+                 });
+                
+            } catch (Exception e) {
+                SwingUtilities.invokeLater(() -> {
+                    getOKAction().setEnabled(true);
+                    setTitle("📁 导入自定义组件库");
+                    previewArea.setText("导入失败: " + e.getMessage());
+                    Messages.showErrorDialog("导入失败: " + e.getMessage(), "错误");
+                });
             }
-            
-        } catch (Exception e) {
-            Messages.showErrorDialog("导入失败: " + e.getMessage(), "错误");
-        }
+        }).start();
     }
 }

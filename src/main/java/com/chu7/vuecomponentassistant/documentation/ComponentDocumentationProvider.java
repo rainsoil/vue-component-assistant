@@ -1,5 +1,6 @@
 package com.chu7.vuecomponentassistant.documentation;
 
+import com.chu7.vuecomponentassistant.completion2.ComponentProviderManager;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -29,9 +30,6 @@ import java.util.List;
 public class ComponentDocumentationProvider extends AbstractDocumentationProvider {
 
     private static final Logger LOG = VueKitLogger.getLogger(ComponentDocumentationProvider.class);
-
-    /** 组件数据提供者，用于获取组件详细信息 */
-    private ComponentProvider componentProvider;
 
     /**
      * 构造函数
@@ -72,10 +70,8 @@ public class ComponentDocumentationProvider extends AbstractDocumentationProvide
             return generateTestDocumentation(element);
         }
 
-        // 根据项目动态创建组件提供者
-        if (componentProvider == null) {
-            componentProvider = new ComponentProvider(project);
-        }
+        // 每次都获取最新的组件提供者实例
+        ComponentProvider componentProvider = ComponentProviderManager.getProvider(project);
         
         // 尝试从不同元素类型中提取组件名称
         String componentName = extractComponentName(element);

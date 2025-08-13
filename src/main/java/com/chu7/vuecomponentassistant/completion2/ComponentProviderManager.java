@@ -29,7 +29,20 @@ public class ComponentProviderManager {
      * 获取或创建项目的 ComponentProvider
      */
     public static ComponentProvider getProvider(Project project) {
-        return providers.computeIfAbsent(project, ComponentProvider::new);
+        ComponentProvider provider = providers.get(project);
+        if (provider == null) {
+            // 直接创建新的 ComponentProvider 实例，不通过 computeIfAbsent 避免递归
+            provider = new ComponentProvider(project);
+            // 注意：ComponentProvider 构造函数中会调用 registerProvider，所以这里不需要再次注册
+        }
+        return provider;
+    }
+    
+    /**
+     * 检查项目是否已注册 ComponentProvider
+     */
+    public static boolean isProviderRegistered(Project project) {
+        return providers.containsKey(project);
     }
     
     /**

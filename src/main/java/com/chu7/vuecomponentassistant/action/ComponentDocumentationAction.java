@@ -1,5 +1,6 @@
 package com.chu7.vuecomponentassistant.action;
 
+import com.chu7.vuecomponentassistant.completion2.ComponentProviderManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -35,9 +36,6 @@ import java.util.List;
  */
 public class ComponentDocumentationAction extends AnAction {
 
-    /** 组件数据提供者 */
-    private ComponentProvider componentProvider;
-
     /**
      * 构造函数
      */
@@ -66,10 +64,8 @@ public class ComponentDocumentationAction extends AnAction {
             return;
         }
 
-        // 根据项目动态创建组件提供者
-        if (componentProvider == null) {
-            componentProvider = new ComponentProvider(project);
-        }
+        // 每次都获取最新的组件提供者实例
+        ComponentProvider componentProvider = ComponentProviderManager.getProvider(project);
 
         // 获取当前编辑器
         Editor editor = e.getData(CommonDataKeys.EDITOR);

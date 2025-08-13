@@ -58,8 +58,10 @@ public class ComponentProvider {
         loadComponents();
         VueKitLogger.debug(LOG, "=== ComponentProvider 初始化完成 ===");
         
-        // 注册到 ComponentProviderManager
-        ComponentProviderManager.registerProvider(project, this);
+        // 注册到 ComponentProviderManager（避免重复注册）
+        if (!ComponentProviderManager.isProviderRegistered(project)) {
+            ComponentProviderManager.registerProvider(project, this);
+        }
     }
 
     /**
@@ -341,12 +343,22 @@ public class ComponentProvider {
      * 添加自定义组件到列表中
      */
     private void addCustomComponents(List<ElementPlusComponent> allComponents) {
-        List<CustomComponentLibraryManager.CustomLibraryConfig> customLibraries =
-                CustomComponentLibraryManager.getAllCustomLibraries();
-        for (CustomComponentLibraryManager.CustomLibraryConfig config : customLibraries) {
-            for (ComponentInfo componentInfo : config.getComponents()) {
-                allComponents.add(convertToElementPlusComponent(componentInfo));
+        try {
+            // 每次都重新从缓存文件加载最新的自定义组件库数据
+            // 这样可以确保获取到最新的组件信息
+            List<CustomComponentLibraryManager.CustomLibraryConfig> customLibraries =
+                    CustomComponentLibraryManager.getAllCustomLibraries();
+            
+            VueKitLogger.debug(LOG, "加载自定义组件库，数量: " + customLibraries.size());
+            
+            for (CustomComponentLibraryManager.CustomLibraryConfig config : customLibraries) {
+                VueKitLogger.debug(LOG, "处理自定义组件库: " + config.getDisplayName() + ", 组件数量: " + config.getComponents().size());
+                for (ComponentInfo componentInfo : config.getComponents()) {
+                    allComponents.add(convertToElementPlusComponent(componentInfo));
+                }
             }
+        } catch (Exception e) {
+            VueKitLogger.error(LOG, "加载自定义组件库失败: " + e.getMessage(), e);
         }
     }
 

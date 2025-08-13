@@ -284,24 +284,28 @@ public class OfficialLibraryMarketDialog extends DialogWrapper {
                 downloadButton.setText("⏳ 下载中...");
                 downloadButton.setEnabled(false);
                 
+                // 更新对话框标题，显示下载状态
+                setTitle("🌐 官方组件库市场 - 下载中...");
+                
                 // 在详情区域显示下载状态
                 detailArea.setText("正在下载组件库 '" + library.getDisplayName() + "'...\n\n请稍候，下载完成后会自动关闭窗口。");
                 
                 // 执行异步下载
                 libraryManager.getOfficialManager().downloadOfficialLibrary(library.getId())
                     .thenAccept(downloadedLibrary -> {
-                        // 在EDT中更新UI
-                        SwingUtilities.invokeLater(() -> {
-                            // 显示下载成功提示
-                            Messages.showInfoMessage(
-                                "组件库 '" + library.getDisplayName() + "' 下载成功！\n" +
-                                "已添加到组件库列表，现在可以使用了。",
-                                "下载成功"
-                            );
-                            
-                            // 关闭对话框
-                            doOKAction();
-                        });
+                                                 // 在EDT中更新UI
+                         SwingUtilities.invokeLater(() -> {
+                             // 在EDT线程中关闭对话框
+                             close(OK_EXIT_CODE);
+                             // 在EDT线程中显示成功消息
+                             SwingUtilities.invokeLater(() -> {
+                                 Messages.showInfoMessage(
+                                     "组件库 '" + library.getDisplayName() + "' 下载成功！\n" +
+                                     "已添加到组件库列表，现在可以使用了。",
+                                     "下载成功"
+                                 );
+                             });
+                         });
                     })
                     .exceptionally(throwable -> {
                         // 在EDT中更新UI
@@ -310,14 +314,19 @@ public class OfficialLibraryMarketDialog extends DialogWrapper {
                             downloadButton.setText("📥 下载");
                             downloadButton.setEnabled(true);
                             
+                            // 恢复对话框标题
+                            setTitle("🌐 官方组件库市场 - VueKit");
+                            
                             // 显示下载失败信息
                             detailArea.setText("下载失败: " + throwable.getMessage() + "\n\n请重试或检查网络连接。");
                             
-                            // 显示错误对话框
-                            Messages.showErrorDialog(
-                                "下载失败: " + throwable.getMessage(),
-                                "下载错误"
-                            );
+                                                         // 显示错误对话框
+                             SwingUtilities.invokeLater(() -> {
+                                 Messages.showErrorDialog(
+                                     "下载失败: " + throwable.getMessage(),
+                                     "下载错误"
+                                 );
+                             });
                         });
                         return null;
                     });
@@ -327,10 +336,15 @@ public class OfficialLibraryMarketDialog extends DialogWrapper {
                 downloadButton.setText("📥 下载");
                 downloadButton.setEnabled(true);
                 
+                // 恢复对话框标题
+                setTitle("🌐 官方组件库市场 - VueKit");
+                
                 // 显示错误信息
                 detailArea.setText("下载失败: " + e.getMessage() + "\n\n请重试或检查网络连接。");
                 
-                Messages.showErrorDialog("下载失败: " + e.getMessage(), "错误");
+                                 SwingUtilities.invokeLater(() -> {
+                     Messages.showErrorDialog("下载失败: " + e.getMessage(), "错误");
+                 });
             }
         }
     }

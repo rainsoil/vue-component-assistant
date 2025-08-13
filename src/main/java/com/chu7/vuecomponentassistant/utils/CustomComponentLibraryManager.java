@@ -394,7 +394,22 @@ public class CustomComponentLibraryManager {
      * @return 自定义组件库配置列表
      */
     public static List<CustomLibraryConfig> getAllCustomLibraries() {
+        // 确保从缓存文件重新加载最新数据
+        reloadFromCache();
         return new ArrayList<>(customLibraries.values());
+    }
+    
+    /**
+     * 强制从缓存文件重新加载数据
+     * 用于确保获取最新的组件库信息
+     */
+    public static void reloadFromCache() {
+        try {
+            LOG.debug("强制重新加载自定义组件库缓存数据");
+            loadFromCache();
+        } catch (Exception e) {
+            LOG.error("重新加载缓存数据失败: " + e.getMessage(), e);
+        }
     }
     
     /**
@@ -502,6 +517,17 @@ public class CustomComponentLibraryManager {
             
             // 保存到缓存文件
             saveToCache();
+            
+            // 强制重新加载缓存数据，确保内存中的数据是最新的
+            reloadFromCache();
+            
+            // 通知所有 ComponentProvider 重新加载组件数据
+            try {
+                com.chu7.vuecomponentassistant.completion2.ComponentProviderManager.notifyAllProvidersReload();
+                LOG.info("已通知所有 ComponentProvider 重新加载数据");
+            } catch (Exception e) {
+                LOG.warn("通知 ComponentProvider 重新加载失败: " + e.getMessage());
+            }
             
             LOG.info("成功加载自定义组件库: " + config.getDisplayName());
             LOG.info("组件数量: " + components.size());

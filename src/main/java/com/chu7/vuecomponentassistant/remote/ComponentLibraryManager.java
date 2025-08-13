@@ -68,6 +68,14 @@ public class ComponentLibraryManager {
             cacheManager.saveLibrary(library);
             existingLibraries.put(normalizedName, library);
             
+            // 通知所有 ComponentProvider 重新加载组件数据
+            try {
+                com.chu7.vuecomponentassistant.completion2.ComponentProviderManager.notifyAllProvidersReload();
+                LOG.info("已通知所有 ComponentProvider 重新加载数据");
+            } catch (Exception e) {
+                LOG.warn("通知 ComponentProvider 重新加载失败: " + e.getMessage());
+            }
+            
             LOG.info("成功导入组件库: " + library.getName());
             return ImportResult.success("组件库导入成功", library);
             
@@ -91,6 +99,14 @@ public class ComponentLibraryManager {
             // 保存新组件库
             cacheManager.saveLibrary(newLibrary);
             existingLibraries.put(normalizedName, newLibrary);
+            
+            // 通知所有 ComponentProvider 重新加载组件数据
+            try {
+                com.chu7.vuecomponentassistant.completion2.ComponentProviderManager.notifyAllProvidersReload();
+                LOG.info("已通知所有 ComponentProvider 重新加载数据");
+            } catch (Exception e) {
+                LOG.warn("通知 ComponentProvider 重新加载失败: " + e.getMessage());
+            }
             
             LOG.info("成功替换组件库: " + existingLibrary.getName() + " -> " + newLibrary.getName());
             return ImportResult.success("组件库替换成功", newLibrary, ImportResult.ImportType.REPLACE);

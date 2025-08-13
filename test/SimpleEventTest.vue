@@ -1,10 +1,12 @@
 <template>
     <div>
 
-        <el-table data="[]"></el-table>
-
-        <el-table ></el-table>
-
+        <el-input></el-input>
+        <el-table data="[]">
+            <template #default>
+                <!-- 自定义列内容 -->
+            </template>
+        </el-table>
     </div>
 </template>
 
