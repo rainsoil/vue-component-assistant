@@ -11,6 +11,7 @@ import com.chu7.vuecomponentassistant.remote.model.ComponentLibrary;
 import com.chu7.vuecomponentassistant.remote.model.ImportResult;
 import com.chu7.vuecomponentassistant.utils.ComponentLibraryTemplateGenerator;
 import com.chu7.vuecomponentassistant.ui.OfficialLibraryMarketDialog;
+import com.chu7.vuecomponentassistant.completion2.ComponentProviderManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -460,6 +461,9 @@ public class ComponentLibraryManagementDialog extends DialogWrapper {
                 if (removed) {
                     Messages.showInfoMessage("组件库删除成功: " + library.getName(), "成功");
                     loadLibraryList();
+                    
+                    // 通知所有 ComponentProvider 重新加载组件数据
+                    ComponentProviderManager.notifyAllProvidersReload();
                 } else {
                     Messages.showErrorDialog("删除失败", "错误");
                 }

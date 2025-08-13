@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.Messages;
 import com.chu7.vuecomponentassistant.ui.CustomLibraryUploadDialog;
 import com.chu7.vuecomponentassistant.utils.CustomComponentLibraryManager;
 import com.chu7.vuecomponentassistant.completion2.ComponentProvider;
+import com.chu7.vuecomponentassistant.completion2.ComponentProviderManager;
 import com.chu7.vuecomponentassistant.remote.model.ComponentInfo;
 import com.chu7.vuecomponentassistant.remote.ComponentLibraryManager;
 import com.chu7.vuecomponentassistant.remote.model.ComponentLibrary;
@@ -311,6 +312,9 @@ public class CustomLibraryManagementAction extends AnAction {
                             "自定义组件库 \"" + config.getDisplayName() + "\" 已成功删除。",
                             "删除成功"
                     );
+                    
+                    // 通知所有 ComponentProvider 重新加载组件数据
+                    ComponentProviderManager.notifyAllProvidersReload();
                 } else {
                     Messages.showErrorDialog(
                             "删除自定义组件库失败。",

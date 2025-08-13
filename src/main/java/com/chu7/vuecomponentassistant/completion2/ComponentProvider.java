@@ -57,6 +57,9 @@ public class ComponentProvider {
 
         loadComponents();
         VueKitLogger.debug(LOG, "=== ComponentProvider 初始化完成 ===");
+        
+        // 注册到 ComponentProviderManager
+        ComponentProviderManager.registerProvider(project, this);
     }
 
     /**
@@ -223,6 +226,9 @@ public class ComponentProvider {
         // 添加自定义组件库的组件
         addCustomComponents(allComponents);
 
+        // 添加从官方组件库市场下载的组件库
+        addDownloadedOfficialComponents(allComponents);
+
         return allComponents;
     }
 
@@ -255,6 +261,16 @@ public class ComponentProvider {
             }
         }
 
+        // 从下载的官方组件库查找
+        List<ElementPlusComponent> downloadedComponents = new ArrayList<>();
+        addDownloadedOfficialComponents(downloadedComponents);
+        for (ElementPlusComponent component : downloadedComponents) {
+            if (component.getName() != null &&
+                    component.getName().toLowerCase().startsWith(lowerPrefix)) {
+                matchingComponents.add(component);
+            }
+        }
+
         return matchingComponents;
     }
 
@@ -270,7 +286,31 @@ public class ComponentProvider {
 
         // 从自定义组件库查找
         ComponentInfo componentInfo = CustomComponentLibraryManager.getCustomComponent(componentName);
-        return componentInfo != null ? convertToElementPlusComponent(componentInfo) : null;
+        if (componentInfo != null) {
+            return convertToElementPlusComponent(componentInfo);
+        }
+
+        // 从下载的官方组件库查找
+        try {
+            // 每次都重新创建 ComponentLibraryManager 实例，确保获取最新数据
+            ComponentLibraryManager libraryManager = new ComponentLibraryManager();
+            List<ComponentLibrary> allLibraries = libraryManager.getAllLibraries();
+            
+            for (ComponentLibrary library : allLibraries) {
+                // 只处理从官方组件库市场下载的组件库
+                if ("OFFICIAL".equals(library.getSource()) && library.getComponents() != null) {
+                    for (ComponentInfo info : library.getComponents()) {
+                        if (componentName.equals(info.getName())) {
+                            return convertToElementPlusComponent(info);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            VueKitLogger.error(LOG, "从下载的官方组件库查找组件失败: " + e.getMessage(), e);
+        }
+
+        return null;
     }
 
     /**
@@ -284,6 +324,9 @@ public class ComponentProvider {
 
         // 添加自定义组件库的组件
         addCustomComponents(allComponents);
+
+        // 添加从官方组件库市场下载的组件库
+        addDownloadedOfficialComponents(allComponents);
 
         if (prefix == null || prefix.isEmpty()) {
             return allComponents;
@@ -305,6 +348,45 @@ public class ComponentProvider {
                 allComponents.add(convertToElementPlusComponent(componentInfo));
             }
         }
+    }
+
+    /**
+     * 添加从官方组件库市场下载的组件库
+     */
+    private void addDownloadedOfficialComponents(List<ElementPlusComponent> allComponents) {
+        try {
+            // 每次都重新创建 ComponentLibraryManager 实例，确保获取最新数据
+            ComponentLibraryManager libraryManager = new ComponentLibraryManager();
+            List<ComponentLibrary> allLibraries = libraryManager.getAllLibraries();
+            
+            for (ComponentLibrary library : allLibraries) {
+                // 只处理从官方组件库市场下载的组件库
+                if ("OFFICIAL".equals(library.getSource()) && library.getComponents() != null) {
+                    for (ComponentInfo componentInfo : library.getComponents()) {
+                        allComponents.add(convertToElementPlusComponent(componentInfo));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            VueKitLogger.error(LOG, "加载下载的官方组件库失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 重新加载组件数据
+     * 当组件库发生变化时（添加、删除、更新）调用此方法
+     */
+    public void reloadComponents() {
+        VueKitLogger.debug(LOG, "=== 重新加载组件数据 ===");
+        
+        // 清空现有数据
+        componentsMap.clear();
+        componentsList.clear();
+        
+        // 重新加载组件数据
+        loadComponents();
+        
+        VueKitLogger.debug(LOG, "=== 组件数据重新加载完成 ===");
     }
 
     /**

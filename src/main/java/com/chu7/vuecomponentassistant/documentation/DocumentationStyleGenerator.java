@@ -83,23 +83,22 @@ public class DocumentationStyleGenerator {
         List<ComponentInfo.ComponentProp> props = component.getProps();
         if (props != null && !props.isEmpty()) {
             html.append("<div class='ep-section'>");
-            html.append("<div class='ep-section-title'>🔧 属性 (Attributes)</div>");
+            html.append("<div class='ep-section-title'>属性提示:</div>");
+            html.append("<div style='font-weight: 600; margin: 8px 0; color: #409EFF;'>Attributes</div>");
             html.append("<table class='ep-table'>");
             html.append("<thead><tr>");
-            html.append("<th>参数</th>");
+            html.append("<th>属性名</th>");
             html.append("<th>说明</th>");
             html.append("<th>类型</th>");
-            html.append("<th>可选值</th>");
-            html.append("<th>默认值</th>");
+            html.append("<th>Default</th>");
             html.append("</tr></thead>");
             html.append("<tbody>");
             for (ComponentInfo.ComponentProp prop : props) {
                 html.append("<tr>");
                 html.append("<td><span class='ep-name'>").append(prop.getName()).append("</span></td>");
                 html.append("<td>").append(prop.getDescription() != null ? prop.getDescription() : "").append("</td>");
-                html.append("<td>").append(prop.getType() != null ? prop.getType() : "—").append("</td>");
-                html.append("<td>").append("—").append("</td>");
-                html.append("<td>").append(prop.getDefaultValue() != null ? prop.getDefaultValue() : "—").append("</td>");
+                html.append("<td>").append(prop.getType() != null ? prop.getType() : "").append("</td>");
+                html.append("<td>").append(prop.getDefaultValue() != null ? prop.getDefaultValue() : "").append("</td>");
                 html.append("</tr>");
             }
             html.append("</tbody></table>");
@@ -110,19 +109,20 @@ public class DocumentationStyleGenerator {
         List<ComponentInfo.ComponentEvent> events = component.getEvents();
         if (events != null && !events.isEmpty()) {
             html.append("<div class='ep-section'>");
-            html.append("<div class='ep-section-title'>🎯 事件 (Events)</div>");
+            html.append("<div class='ep-section-title'>事件提示</div>");
+            html.append("<div style='font-weight: 600; margin: 8px 0; color: #409EFF;'>Events</div>");
             html.append("<table class='ep-table'>");
             html.append("<thead><tr>");
-            html.append("<th>事件名称</th>");
+            html.append("<th>事件名</th>");
             html.append("<th>说明</th>");
-            html.append("<th>回调参数</th>");
+            html.append("<th>类型</th>");
             html.append("</tr></thead>");
             html.append("<tbody>");
             for (ComponentInfo.ComponentEvent event : events) {
                 html.append("<tr>");
                 html.append("<td><span class='ep-name'>@").append(event.getName()).append("</span></td>");
                 html.append("<td>").append(event.getDescription() != null ? event.getDescription() : "").append("</td>");
-                html.append("<td>").append(event.getParameters() != null ? event.getParameters() : "—").append("</td>");
+                html.append("<td>").append(event.getParameters() != null ? event.getParameters() : "Function").append("</td>");
                 html.append("</tr>");
             }
             html.append("</tbody></table>");
@@ -133,19 +133,20 @@ public class DocumentationStyleGenerator {
         List<ComponentInfo.ComponentSlot> slots = component.getSlots();
         if (slots != null && !slots.isEmpty()) {
             html.append("<div class='ep-section'>");
-            html.append("<div class='ep-section-title'>🔌 插槽 (Slots)</div>");
+            html.append("<div class='ep-section-title'>卡槽提示</div>");
+            html.append("<div style='font-weight: 600; margin: 8px 0; color: #409EFF;'>Slots</div>");
             html.append("<table class='ep-table'>");
             html.append("<thead><tr>");
             html.append("<th>插槽名</th>");
             html.append("<th>说明</th>");
-            html.append("<th>作用域</th>");
+            html.append("<th>子标签</th>");
             html.append("</tr></thead>");
             html.append("<tbody>");
             for (ComponentInfo.ComponentSlot slot : slots) {
                 html.append("<tr>");
                 html.append("<td><span class='ep-name'>#").append(slot.getName()).append("</span></td>");
                 html.append("<td>").append(slot.getDescription() != null ? slot.getDescription() : "").append("</td>");
-                html.append("<td>").append(slot.getScope() != null ? slot.getScope() : "—").append("</td>");
+                html.append("<td>").append(slot.getScope() != null ? slot.getScope() : "").append("</td>");
                 html.append("</tr>");
             }
             html.append("</tbody></table>");
@@ -206,32 +207,29 @@ public class DocumentationStyleGenerator {
         // 属性表格
         List<ComponentInfo.ComponentProp> props = component.getProps();
         if (props != null && !props.isEmpty()) {
-            text.append("🔧 属性 (Attributes)\n");
+            text.append("属性提示:\n");
+            text.append("Attributes\n");
             text.append("-".repeat(80)).append("\n");
             
             // 表头
-            text.append(String.format("%-15s %-25s %-12s %-20s %-12s\n", 
-                "参数", "说明", "类型", "可选值", "默认值"));
+            text.append(String.format("%-15s %-25s %-12s %-12s\n", 
+                "属性名", "说明", "类型", "Default"));
             text.append("-".repeat(80)).append("\n");
             
             // 表格内容
             for (ComponentInfo.ComponentProp prop : props) {
                 String name = prop.getName() != null ? prop.getName() : "";
                 String desc = prop.getDescription() != null ? prop.getDescription() : "";
-                String type = prop.getType() != null ? prop.getType() : "—";
-                String options = "—"; // ComponentProp没有getOptions方法
-                String defaultValue = prop.getDefaultValue() != null ? prop.getDefaultValue() : "—";
+                String type = prop.getType() != null ? prop.getType() : "";
+                String defaultValue = prop.getDefaultValue() != null ? prop.getDefaultValue() : "";
                 
                 // 截断过长的描述
                 if (desc.length() > 23) {
                     desc = desc.substring(0, 20) + "...";
                 }
-                if (options.length() > 18) {
-                    options = options.substring(0, 15) + "...";
-                }
                 
-                text.append(String.format("%-15s %-25s %-12s %-20s %-12s\n", 
-                    name, desc, type, options, defaultValue));
+                text.append(String.format("%-15s %-25s %-12s %-12s\n", 
+                    name, desc, type, defaultValue));
             }
             text.append("\n");
         }
@@ -239,19 +237,20 @@ public class DocumentationStyleGenerator {
         // 事件表格
         List<ComponentInfo.ComponentEvent> events = component.getEvents();
         if (events != null && !events.isEmpty()) {
-            text.append("🎯 事件 (Events)\n");
+            text.append("事件提示\n");
+            text.append("Events\n");
             text.append("-".repeat(80)).append("\n");
             
             // 表头
             text.append(String.format("%-20s %-35s %-25s\n", 
-                "事件名称", "说明", "回调参数"));
+                "事件名", "说明", "类型"));
             text.append("-".repeat(80)).append("\n");
             
             // 表格内容
             for (ComponentInfo.ComponentEvent event : events) {
                 String name = "@" + (event.getName() != null ? event.getName() : "");
                 String desc = event.getDescription() != null ? event.getDescription() : "";
-                String params = event.getParameters() != null ? event.getParameters() : "—";
+                String params = event.getParameters() != null ? event.getParameters() : "Function";
                 
                 // 截断过长的描述
                 if (desc.length() > 33) {
@@ -270,19 +269,20 @@ public class DocumentationStyleGenerator {
         // 插槽表格
         List<ComponentInfo.ComponentSlot> slots = component.getSlots();
         if (slots != null && !slots.isEmpty()) {
-            text.append("🔌 插槽 (Slots)\n");
+            text.append("卡槽提示\n");
+            text.append("Slots\n");
             text.append("-".repeat(80)).append("\n");
             
             // 表头
             text.append(String.format("%-20s %-40s %-20s\n", 
-                "插槽名", "说明", "作用域"));
+                "插槽名", "说明", "子标签"));
             text.append("-".repeat(80)).append("\n");
             
             // 表格内容
             for (ComponentInfo.ComponentSlot slot : slots) {
                 String name = "#" + (slot.getName() != null ? slot.getName() : "");
                 String desc = slot.getDescription() != null ? slot.getDescription() : "";
-                String scope = slot.getScope() != null ? slot.getScope() : "—";
+                String scope = slot.getScope() != null ? slot.getScope() : "";
                 
                 // 截断过长的描述
                 if (desc.length() > 38) {
