@@ -1,6 +1,6 @@
 <template>
   <div>
-    <!-- 测试右键查看组件文档样式 -->
+    <!-- 测试右键查看组件文档背景色 -->
     <el-table :data="tableData" border>
       <el-table-column prop="name" label="姓名"></el-table-column>
       <el-table-column prop="age" label="年龄"></el-table-column>
@@ -14,7 +14,7 @@
 
 <script>
 export default {
-  name: 'DocumentationStyleTest',
+  name: 'BackgroundColorTest',
   data() {
     return {
       tableData: [

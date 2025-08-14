@@ -1,8 +1,7 @@
 <template>
     <div>
 
-        <el-input></el-input>
-        <el-table data="[]">
+        <el-table data="[]" border="false" @sort-change="handleSort-change">
             <template #default>
                 <!-- 自定义列内容 -->
             </template>

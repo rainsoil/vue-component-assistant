@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
@@ -42,7 +43,7 @@ public class HttpClient {
         BufferedReader reader = null;
         
         try {
-            URL urlObj = new URL(url);
+            URL urlObj = URI.create(url).toURL();
             connection = (HttpURLConnection) urlObj.openConnection();
             
             // 设置连接参数
@@ -157,7 +158,7 @@ public class HttpClient {
         HttpURLConnection connection = null;
         
         try {
-            URL urlObj = new URL(url);
+            URL urlObj = URI.create(url).toURL();
             connection = (HttpURLConnection) urlObj.openConnection();
             
             connection.setRequestMethod("HEAD");
@@ -220,7 +221,7 @@ public class HttpClient {
         BufferedReader reader = null;
         
         try {
-            URL urlObj = new URL(url);
+            URL urlObj = URI.create(url).toURL();
             connection = (HttpURLConnection) urlObj.openConnection();
             
             // 设置连接参数

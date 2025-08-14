@@ -253,7 +253,6 @@ public class RemoteLibraryManager {
             }
 
             Gson gson = new GsonBuilder()
-                    .setLenient() // 使用宽松模式
                     .create();
 
             // 首先尝试解析为单个对象

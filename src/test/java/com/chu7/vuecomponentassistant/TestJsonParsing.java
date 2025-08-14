@@ -94,7 +94,6 @@ public class TestJsonParsing {
     private static void testJsonParsing(String json) {
         try {
             Gson gson = new GsonBuilder()
-                    .setLenient() // 使用宽松模式
                     .create();
 
             System.out.println("\n=== 尝试解析为单个对象 ===");
