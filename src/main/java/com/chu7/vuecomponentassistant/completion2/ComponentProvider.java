@@ -140,32 +140,36 @@ public class ComponentProvider {
 
             ComponentLibraryManager libraryManager = new ComponentLibraryManager();
 
-            // 根据检测到的组件库类型查找对应的本地组件库
-            String libraryId = getLibraryIdByType(libraryType);
-            if (libraryId == null) {
-                VueKitLogger.debug(LOG, "无法确定组件库ID: " + libraryType.getDisplayName());
+            // 获取所有组件库，包括自定义组件库
+            List<ComponentLibrary> allLibraries = libraryManager.getAllLibraries();
+            boolean hasLoadedAny = false;
+
+            for (ComponentLibrary library : allLibraries) {
+                // 加载所有自定义组件库（本地和远程）
+                if (("CUSTOM_LOCAL".equals(library.getSource()) || "CUSTOM_REMOTE".equals(library.getSource())) 
+                    && library.getComponents() != null) {
+                    
+                    VueKitLogger.debug(LOG, "加载自定义组件库: " + library.getName() + ", 组件数量: " + library.getComponents().size());
+
+                    // 加载组件数据
+                    for (ComponentInfo component : library.getComponents()) {
+                        // 将 ComponentInfo 转换为 ElementPlusComponent
+                        ElementPlusComponent elementPlusComponent = convertToElementPlusComponent(component);
+                        componentsMap.put(elementPlusComponent.getName(), elementPlusComponent);
+                        componentsList.add(elementPlusComponent);
+                    }
+                    
+                    hasLoadedAny = true;
+                }
+            }
+
+            if (hasLoadedAny) {
+                VueKitLogger.debug(LOG, "成功从本地缓存加载自定义组件库");
+                return true;
+            } else {
+                VueKitLogger.debug(LOG, "本地缓存中未找到自定义组件库");
                 return false;
             }
-
-            // 使用正确的方法名：getLibraryById
-            ComponentLibrary library = libraryManager.getLibraryById(libraryId);
-            if (library == null) {
-                VueKitLogger.debug(LOG, "本地缓存中未找到组件库: " + libraryId);
-                return false;
-            }
-
-            VueKitLogger.debug(LOG, "找到本地组件库: " + library.getName() + ", 组件数量: " + library.getComponents().size());
-
-            // 加载组件数据
-            for (ComponentInfo component : library.getComponents()) {
-                // 将 ComponentInfo 转换为 ElementPlusComponent
-                ElementPlusComponent elementPlusComponent = convertToElementPlusComponent(component);
-                componentsMap.put(elementPlusComponent.getName(), elementPlusComponent);
-                componentsList.add(elementPlusComponent);
-            }
-
-            VueKitLogger.logLibraryDetection(LOG, libraryType.getDisplayName(), library.getComponents().size());
-            return true;
 
         } catch (Exception e) {
             VueKitLogger.error(LOG, "从本地缓存加载组件库失败: " + e.getMessage(), e);

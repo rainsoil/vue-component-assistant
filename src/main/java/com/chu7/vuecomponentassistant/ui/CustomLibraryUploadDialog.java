@@ -10,6 +10,7 @@ import com.intellij.util.ui.JBUI;
 import com.chu7.vuecomponentassistant.remote.ComponentLibraryManager;
 import com.chu7.vuecomponentassistant.remote.model.ComponentLibrary;
 import com.chu7.vuecomponentassistant.remote.model.ImportResult;
+import com.chu7.vuecomponentassistant.completion2.ComponentProviderManager;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
@@ -47,6 +48,8 @@ public class CustomLibraryUploadDialog extends DialogWrapper {
     private JButton previewButton;
     private JTextArea previewArea;
     private JCheckBox enableAfterImportCheckBox;
+    private JPanel inputCardPanel;
+    private CardLayout cardLayout;
     
     public CustomLibraryUploadDialog(Project project, ComponentLibraryManager libraryManager) {
         super(project);
@@ -63,7 +66,7 @@ public class CustomLibraryUploadDialog extends DialogWrapper {
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setPreferredSize(new Dimension(800, 600));
         
-        // 创建导入方式选择面板
+        // 创建导入方式选择面板（必须先创建，因为需要初始化单选按钮）
         JPanel importMethodPanel = createImportMethodPanel();
         
         // 创建输入面板
@@ -112,6 +115,9 @@ public class CustomLibraryUploadDialog extends DialogWrapper {
         panel.add(localFileRadio);
         panel.add(remoteUrlRadio);
         
+        // 初始化面板显示状态（在单选按钮初始化完成后调用）
+        updateInputPanel();
+        
         return panel;
     }
     
@@ -122,7 +128,7 @@ public class CustomLibraryUploadDialog extends DialogWrapper {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createTitledBorder("输入信息"));
         
-        // 本地文件输入
+        // 本地文件输入面板
         JPanel localFilePanel = new JPanel(new BorderLayout());
         localFilePanel.add(new JLabel("文件路径:"), BorderLayout.WEST);
         filePathField = new JTextField();
@@ -131,7 +137,7 @@ public class CustomLibraryUploadDialog extends DialogWrapper {
         browseButton.addActionListener(e -> browseFile());
         localFilePanel.add(browseButton, BorderLayout.EAST);
         
-        // 远程URL输入
+        // 远程URL输入面板
         JPanel remoteUrlPanel = new JPanel(new BorderLayout());
         remoteUrlPanel.add(new JLabel("远程地址:"), BorderLayout.WEST);
         urlField = new JTextField();
@@ -144,15 +150,16 @@ public class CustomLibraryUploadDialog extends DialogWrapper {
         previewButton = new JButton("预览");
         previewButton.addActionListener(e -> previewLibrary());
         
-        // 组装面板
-        JPanel inputFieldsPanel = new JPanel(new GridLayout(2, 1, 5, 5));
-        inputFieldsPanel.add(localFilePanel);
-        inputFieldsPanel.add(remoteUrlPanel);
+        // 使用CardLayout来管理不同的输入面板
+        cardLayout = new CardLayout();
+        inputCardPanel = new JPanel(cardLayout);
+        inputCardPanel.add(localFilePanel, "local");
+        inputCardPanel.add(remoteUrlPanel, "remote");
         
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttonPanel.add(previewButton);
         
-        panel.add(inputFieldsPanel, BorderLayout.CENTER);
+        panel.add(inputCardPanel, BorderLayout.CENTER);
         panel.add(buttonPanel, BorderLayout.SOUTH);
         
         return panel;
@@ -197,11 +204,30 @@ public class CustomLibraryUploadDialog extends DialogWrapper {
      * 更新输入面板显示状态
      */
     private void updateInputPanel() {
+        // 添加空指针检查，确保组件已初始化
+        if (localFileRadio == null || cardLayout == null || inputCardPanel == null) {
+            return; // 如果组件未初始化，直接返回
+        }
+        
         boolean isLocalFile = localFileRadio.isSelected();
-        filePathField.setEnabled(isLocalFile);
-        browseButton.setEnabled(isLocalFile);
-        urlField.setEnabled(!isLocalFile);
-        validateButton.setEnabled(!isLocalFile);
+        
+        // 使用CardLayout切换显示的面板
+        if (isLocalFile) {
+            cardLayout.show(inputCardPanel, "local");
+        } else {
+            cardLayout.show(inputCardPanel, "remote");
+        }
+        
+        // 清空另一个输入框的内容
+        if (isLocalFile) {
+            if (urlField != null) {
+                urlField.setText("");
+            }
+        } else {
+            if (filePathField != null) {
+                filePathField.setText("");
+            }
+        }
     }
     
     /**
@@ -228,55 +254,93 @@ public class CustomLibraryUploadDialog extends DialogWrapper {
             return;
         }
         
-        try {
-            // 显示验证进度
-            Messages.showInfoMessage("正在验证URL...", "验证中");
-            
-            // 检查URL格式
-            if (!url.startsWith("http://") && !url.startsWith("https://")) {
-                throw new RuntimeException("URL必须以http://或https://开头");
-            }
-            
-            // 检查URL是否可访问
-            boolean accessible = HttpClient.checkUrlAccessible(url);
-            
-            if (accessible) {
-                // 尝试下载一小部分内容来验证是否为JSON
-                String sampleJson = HttpClient.downloadJsonSample(url);
-                if (sampleJson != null && sampleJson.trim().startsWith("{")) {
-                    Messages.showInfoMessage("URL验证成功！这是一个有效的JSON文件。", "验证成功");
-                } else {
-                    Messages.showWarningDialog("URL可访问，但可能不是有效的JSON文件。", "验证警告");
+        // 禁用验证按钮，显示验证状态
+        validateButton.setEnabled(false);
+        validateButton.setText("验证中...");
+        
+        // 在后台线程中执行验证
+        new Thread(() -> {
+            try {
+                // 检查URL格式
+                if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                    throw new RuntimeException("URL必须以http://或https://开头");
                 }
-            } else {
-                throw new RuntimeException("URL不可访问");
+                
+                // 检查URL是否可访问
+                boolean accessible = HttpClient.checkUrlAccessible(url);
+                
+                if (accessible) {
+                    // 尝试下载一小部分内容来验证是否为JSON
+                    String sampleJson = HttpClient.downloadJsonSample(url);
+                    if (sampleJson != null && sampleJson.trim().startsWith("{")) {
+                        SwingUtilities.invokeLater(() -> {
+                            Messages.showInfoMessage("URL验证成功！这是一个有效的JSON文件。", "验证成功");
+                        });
+                    } else {
+                        SwingUtilities.invokeLater(() -> {
+                            Messages.showWarningDialog("URL可访问，但可能不是有效的JSON文件。", "验证警告");
+                        });
+                    }
+                } else {
+                    throw new RuntimeException("URL不可访问");
+                }
+                
+            } catch (Exception e) {
+                SwingUtilities.invokeLater(() -> {
+                    Messages.showErrorDialog("URL验证失败: " + e.getMessage(), "错误");
+                });
+            } finally {
+                // 恢复按钮状态
+                SwingUtilities.invokeLater(() -> {
+                    validateButton.setEnabled(true);
+                    validateButton.setText("验证");
+                });
             }
-            
-        } catch (Exception e) {
-            Messages.showErrorDialog("URL验证失败: " + e.getMessage(), "错误");
-        }
+        }).start();
     }
     
     /**
      * 预览组件库
      */
     private void previewLibrary() {
-        try {
-            ComponentLibrary library = null;
-            
-            if (localFileRadio.isSelected()) {
-                library = loadLocalLibrary();
-            } else {
-                library = loadRemoteLibrary();
+        // 禁用预览按钮，显示预览状态
+        previewButton.setEnabled(false);
+        previewButton.setText("预览中...");
+        
+        // 在后台线程中执行预览
+        new Thread(() -> {
+            try {
+                final ComponentLibrary library;
+                
+                if (localFileRadio.isSelected()) {
+                    library = loadLocalLibrary();
+                } else {
+                    library = loadRemoteLibrary();
+                }
+                
+                if (library != null) {
+                    SwingUtilities.invokeLater(() -> {
+                        showLibraryPreview(library);
+                        Messages.showInfoMessage("组件库预览成功！", "预览成功");
+                    });
+                } else {
+                    SwingUtilities.invokeLater(() -> {
+                        Messages.showWarningDialog("无法加载组件库，请检查输入信息", "预览失败");
+                    });
+                }
+                
+            } catch (Exception e) {
+                SwingUtilities.invokeLater(() -> {
+                    Messages.showErrorDialog("预览失败: " + e.getMessage(), "错误");
+                });
+            } finally {
+                // 恢复按钮状态
+                SwingUtilities.invokeLater(() -> {
+                    previewButton.setEnabled(true);
+                    previewButton.setText("预览");
+                });
             }
-            
-            if (library != null) {
-                showLibraryPreview(library);
-            }
-            
-        } catch (Exception e) {
-            Messages.showErrorDialog("预览失败: " + e.getMessage(), "错误");
-        }
+        }).start();
     }
     
          /**
@@ -303,51 +367,40 @@ public class CustomLibraryUploadDialog extends DialogWrapper {
          return parseComponentLibrary(json);
      }
     
-         /**
-      * 加载远程组件库
-      */
-     private ComponentLibrary loadRemoteLibrary() {
-         String url = urlField.getText().trim();
-         if (url.isEmpty()) {
-             SwingUtilities.invokeLater(() -> {
-                 Messages.showWarningDialog("请输入URL", "提示");
-             });
-             return null;
-         }
-         
-         try {
-             // 显示加载进度
-             SwingUtilities.invokeLater(() -> {
-                 Messages.showInfoMessage("正在加载远程组件库...", "加载中");
-             });
-             
-             // 使用 HttpClient 下载 JSON
-             String json = HttpClient.downloadJson(url);
-             
-             // 解析组件库
-             ComponentLibrary library = parseComponentLibrary(json);
-             
-             // 验证组件库
-             if (library.getName() == null || library.getName().trim().isEmpty()) {
-                 throw new RuntimeException("组件库名称不能为空");
-             }
-             
-             if (library.getComponents() == null || library.getComponents().isEmpty()) {
-                 throw new RuntimeException("组件库必须包含至少一个组件");
-             }
-             
-             SwingUtilities.invokeLater(() -> {
-                 Messages.showInfoMessage("远程组件库加载成功！", "成功");
-             });
-             return library;
-             
-         } catch (Exception e) {
-             SwingUtilities.invokeLater(() -> {
-                 Messages.showErrorDialog("远程加载失败: " + e.getMessage(), "错误");
-             });
-             return null;
-         }
-     }
+                   /**
+       * 加载远程组件库
+       */
+      private ComponentLibrary loadRemoteLibrary() {
+          String url = urlField.getText().trim();
+          if (url.isEmpty()) {
+              SwingUtilities.invokeLater(() -> {
+                  Messages.showWarningDialog("请输入URL", "提示");
+              });
+              return null;
+          }
+          
+          try {
+              // 使用 HttpClient 下载 JSON
+              String json = HttpClient.downloadJson(url);
+              
+              // 解析组件库
+              ComponentLibrary library = parseComponentLibrary(json);
+              
+              // 验证组件库
+              if (library.getName() == null || library.getName().trim().isEmpty()) {
+                  throw new RuntimeException("组件库名称不能为空");
+              }
+              
+              if (library.getComponents() == null || library.getComponents().isEmpty()) {
+                  throw new RuntimeException("组件库必须包含至少一个组件");
+              }
+              
+              return library;
+              
+          } catch (Exception e) {
+              throw new RuntimeException("远程加载失败: " + e.getMessage());
+          }
+      }
     
     /**
      * 解析组件库JSON
@@ -432,6 +485,9 @@ public class CustomLibraryUploadDialog extends DialogWrapper {
                 
                                  SwingUtilities.invokeLater(() -> {
                      if (result.isSuccess()) {
+                         // 通知所有 ComponentProvider 重新加载组件数据
+                         ComponentProviderManager.notifyAllProvidersReload();
+                         
                          // 在EDT线程中关闭对话框
                          close(OK_EXIT_CODE);
                          // 在EDT线程中显示成功消息
@@ -453,15 +509,18 @@ public class CustomLibraryUploadDialog extends DialogWrapper {
                              new Thread(() -> {
                                  try {
                                      ImportResult replaceResult = libraryManager.replaceLibrary(library, result.getExistingLibrary());
-                                     SwingUtilities.invokeLater(() -> {
-                                         if (replaceResult.isSuccess()) {
-                                             // 在EDT线程中关闭对话框
-                                             close(OK_EXIT_CODE);
-                                             // 在EDT线程中显示成功消息
-                                             SwingUtilities.invokeLater(() -> {
-                                                 Messages.showInfoMessage("组件库替换成功: " + library.getName(), "成功");
-                                             });
-                                         } else {
+                                                                           SwingUtilities.invokeLater(() -> {
+                                          if (replaceResult.isSuccess()) {
+                                              // 通知所有 ComponentProvider 重新加载组件数据
+                                              ComponentProviderManager.notifyAllProvidersReload();
+                                              
+                                              // 在EDT线程中关闭对话框
+                                              close(OK_EXIT_CODE);
+                                              // 在EDT线程中显示成功消息
+                                              SwingUtilities.invokeLater(() -> {
+                                                  Messages.showInfoMessage("组件库替换成功: " + library.getName(), "成功");
+                                              });
+                                          } else {
                                              getOKAction().setEnabled(true);
                                              setTitle("📁 导入自定义组件库");
                                              previewArea.setText("替换失败: " + replaceResult.getMessage());
