@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'com.chu7'
-version '1.0.1'
+version '1.0.4'
 
 repositories {
     mavenCentral()
@@ -46,5 +46,6 @@ tasks {
     }
 }
 dependencies {
-    // 你的依赖
+    // Gson for JSON parsing
+    implementation 'com.google.code.gson:gson:2.10.1'
 }

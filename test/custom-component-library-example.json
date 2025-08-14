@@ -1,0 +1,643 @@
+{
+  "name": "my-custom-library",
+  "displayName": "我的自定义组件库",
+  "version": "1.0.0",
+  "description": "这是一个示例自定义组件库，展示了如何定义自己的组件库",
+  "componentPrefix": "my-",
+  "documentationUrlTemplate": "https://example.com/docs/%s",
+  "components": [
+    {
+      "name": "my-button",
+      "description": "自定义按钮组件，支持多种样式和状态",
+      "props": [
+        {
+          "name": "type",
+          "description": "按钮类型",
+          "type": "string",
+          "options": ["primary", "secondary", "success", "warning", "danger", "info"],
+          "defaultValue": "primary"
+        },
+        {
+          "name": "size",
+          "description": "按钮大小",
+          "type": "string",
+          "options": ["small", "medium", "large"],
+          "defaultValue": "medium"
+        },
+        {
+          "name": "disabled",
+          "description": "是否禁用按钮",
+          "type": "boolean",
+          "defaultValue": false
+        },
+        {
+          "name": "loading",
+          "description": "是否显示加载状态",
+          "type": "boolean",
+          "defaultValue": false
+        },
+        {
+          "name": "round",
+          "description": "是否圆角按钮",
+          "type": "boolean",
+          "defaultValue": false
+        },
+        {
+          "name": "icon",
+          "description": "按钮图标",
+          "type": "string",
+          "defaultValue": ""
+        }
+      ],
+      "events": [
+        {
+          "name": "click",
+          "description": "点击按钮时的回调",
+          "parameters": "(event: MouseEvent)"
+        },
+        {
+          "name": "dblclick",
+          "description": "双击按钮时的回调",
+          "parameters": "(event: MouseEvent)"
+        }
+      ],
+      "slots": [
+        {
+          "name": "default",
+          "description": "按钮内容",
+          "scope": null
+        },
+        {
+          "name": "icon",
+          "description": "自定义图标",
+          "scope": null
+        }
+      ]
+    },
+    {
+      "name": "my-input",
+      "description": "自定义输入框组件，支持多种输入类型",
+      "props": [
+        {
+          "name": "type",
+          "description": "输入框类型",
+          "type": "string",
+          "options": ["text", "password", "email", "number", "tel", "url"],
+          "defaultValue": "text"
+        },
+        {
+          "name": "placeholder",
+          "description": "占位符文本",
+          "type": "string",
+          "defaultValue": ""
+        },
+        {
+          "name": "value",
+          "description": "输入框的值",
+          "type": "string",
+          "defaultValue": ""
+        },
+        {
+          "name": "disabled",
+          "description": "是否禁用",
+          "type": "boolean",
+          "defaultValue": false
+        },
+        {
+          "name": "readonly",
+          "description": "是否只读",
+          "type": "boolean",
+          "defaultValue": false
+        },
+        {
+          "name": "clearable",
+          "description": "是否可清空",
+          "type": "boolean",
+          "defaultValue": false
+        },
+        {
+          "name": "size",
+          "description": "输入框大小",
+          "type": "string",
+          "options": ["small", "medium", "large"],
+          "defaultValue": "medium"
+        },
+        {
+          "name": "maxlength",
+          "description": "最大输入长度",
+          "type": "number",
+          "defaultValue": null
+        },
+        {
+          "name": "showWordLimit",
+          "description": "是否显示字数统计",
+          "type": "boolean",
+          "defaultValue": false
+        }
+      ],
+      "events": [
+        {
+          "name": "input",
+          "description": "输入事件",
+          "parameters": "(value: string)"
+        },
+        {
+          "name": "change",
+          "description": "值改变事件",
+          "parameters": "(value: string)"
+        },
+        {
+          "name": "focus",
+          "description": "获得焦点事件",
+          "parameters": "(event: FocusEvent)"
+        },
+        {
+          "name": "blur",
+          "description": "失去焦点事件",
+          "parameters": "(event: FocusEvent)"
+        },
+        {
+          "name": "clear",
+          "description": "清空事件",
+          "parameters": "()"
+        }
+      ],
+      "slots": [
+        {
+          "name": "prefix",
+          "description": "输入框前缀内容",
+          "scope": null
+        },
+        {
+          "name": "suffix",
+          "description": "输入框后缀内容",
+          "scope": null
+        },
+        {
+          "name": "prepend",
+          "description": "输入框前置内容",
+          "scope": null
+        },
+        {
+          "name": "append",
+          "description": "输入框后置内容",
+          "scope": null
+        }
+      ]
+    },
+    {
+      "name": "my-select",
+      "description": "自定义选择器组件，支持单选和多选",
+      "props": [
+        {
+          "name": "value",
+          "description": "选中值",
+          "type": "string|array",
+          "defaultValue": ""
+        },
+        {
+          "name": "placeholder",
+          "description": "占位符文本",
+          "type": "string",
+          "defaultValue": "请选择"
+        },
+        {
+          "name": "multiple",
+          "description": "是否多选",
+          "type": "boolean",
+          "defaultValue": false
+        },
+        {
+          "name": "disabled",
+          "description": "是否禁用",
+          "type": "boolean",
+          "defaultValue": false
+        },
+        {
+          "name": "clearable",
+          "description": "是否可清空",
+          "type": "boolean",
+          "defaultValue": false
+        },
+        {
+          "name": "size",
+          "description": "选择器大小",
+          "type": "string",
+          "options": ["small", "medium", "large"],
+          "defaultValue": "medium"
+        },
+        {
+          "name": "filterable",
+          "description": "是否可搜索",
+          "type": "boolean",
+          "defaultValue": false
+        },
+        {
+          "name": "remote",
+          "description": "是否远程搜索",
+          "type": "boolean",
+          "defaultValue": false
+        }
+      ],
+      "events": [
+        {
+          "name": "change",
+          "description": "选中值发生变化时触发",
+          "parameters": "(value: string|array)"
+        },
+        {
+          "name": "visible-change",
+          "description": "下拉框出现/隐藏时触发",
+          "parameters": "(visible: boolean)"
+        },
+        {
+          "name": "remove-tag",
+          "description": "多选模式下移除tag时触发",
+          "parameters": "(value: string)"
+        },
+        {
+          "name": "clear",
+          "description": "可清空的单选模式下用户点击清空按钮时触发",
+          "parameters": "()"
+        },
+        {
+          "name": "blur",
+          "description": "当选择器的输入框失去焦点时触发",
+          "parameters": "(event: FocusEvent)"
+        },
+        {
+          "name": "focus",
+          "description": "当选择器的输入框获得焦点时触发",
+          "parameters": "(event: FocusEvent)"
+        }
+      ],
+      "slots": [
+        {
+          "name": "default",
+          "description": "选项内容",
+          "scope": "{ item, index }"
+        },
+        {
+          "name": "prefix",
+          "description": "选择器头部内容",
+          "scope": null
+        },
+        {
+          "name": "empty",
+          "description": "无选项时的内容",
+          "scope": null
+        }
+      ]
+    },
+    {
+      "name": "my-table",
+      "description": "自定义表格组件，支持排序、筛选、分页等功能",
+      "props": [
+        {
+          "name": "data",
+          "description": "显示的数据",
+          "type": "array",
+          "defaultValue": []
+        },
+        {
+          "name": "columns",
+          "description": "表格列的配置描述",
+          "type": "array",
+          "defaultValue": []
+        },
+        {
+          "name": "height",
+          "description": "Table 的高度",
+          "type": "string|number",
+          "defaultValue": null
+        },
+        {
+          "name": "max-height",
+          "description": "Table 的最大高度",
+          "type": "string|number",
+          "defaultValue": null
+        },
+        {
+          "name": "stripe",
+          "description": "是否为斑马纹 table",
+          "type": "boolean",
+          "defaultValue": false
+        },
+        {
+          "name": "border",
+          "description": "是否带有纵向边框",
+          "type": "boolean",
+          "defaultValue": false
+        },
+        {
+          "name": "size",
+          "description": "Table 的尺寸",
+          "type": "string",
+          "options": ["large", "default", "small"],
+          "defaultValue": "default"
+        },
+        {
+          "name": "fit",
+          "description": "列的宽度是否自撑开",
+          "type": "boolean",
+          "defaultValue": true
+        },
+        {
+          "name": "show-header",
+          "description": "是否显示表头",
+          "type": "boolean",
+          "defaultValue": true
+        },
+        {
+          "name": "highlight-current-row",
+          "description": "是否要高亮当前行",
+          "type": "boolean",
+          "defaultValue": false
+        },
+        {
+          "name": "current-row-key",
+          "description": "当前行的 key，只写属性",
+          "type": "string|number",
+          "defaultValue": null
+        },
+        {
+          "name": "row-class-name",
+          "description": "行的 className 的回调方法",
+          "type": "function",
+          "defaultValue": null
+        },
+        {
+          "name": "row-style",
+          "description": "行的 style 的回调方法",
+          "type": "function",
+          "defaultValue": null
+        },
+        {
+          "name": "cell-class-name",
+          "description": "单元格的 className 的回调方法",
+          "type": "function",
+          "defaultValue": null
+        },
+        {
+          "name": "cell-style",
+          "description": "单元格的 style 的回调方法",
+          "type": "function",
+          "defaultValue": null
+        },
+        {
+          "name": "header-row-class-name",
+          "description": "表头行的 className 的回调方法",
+          "type": "function",
+          "defaultValue": null
+        },
+        {
+          "name": "header-row-style",
+          "description": "表头行的 style 的回调方法",
+          "type": "function",
+          "defaultValue": null
+        },
+        {
+          "name": "header-cell-class-name",
+          "description": "表头单元格的 className 的回调方法",
+          "type": "function",
+          "defaultValue": null
+        },
+        {
+          "name": "header-cell-style",
+          "description": "表头单元格的 style 的回调方法",
+          "type": "function",
+          "defaultValue": null
+        },
+        {
+          "name": "row-key",
+          "description": "行数据的 Key，用来优化 Table 的渲染",
+          "type": "function",
+          "defaultValue": null
+        },
+        {
+          "name": "empty-text",
+          "description": "空数据时显示的文本内容",
+          "type": "string",
+          "defaultValue": "暂无数据"
+        },
+        {
+          "name": "default-expand-all",
+          "description": "是否默认展开所有行",
+          "type": "boolean",
+          "defaultValue": false
+        },
+        {
+          "name": "expand-row-keys",
+          "description": "展开行的 keys 数组",
+          "type": "array",
+          "defaultValue": []
+        },
+        {
+          "name": "default-sort",
+          "description": "默认的排序列的 prop 和顺序",
+          "type": "object",
+          "defaultValue": null
+        },
+        {
+          "name": "tooltip-effect",
+          "description": "tooltip effect 主题",
+          "type": "string",
+          "options": ["dark", "light"],
+          "defaultValue": "dark"
+        },
+        {
+          "name": "show-summary",
+          "description": "是否在表尾显示合计行",
+          "type": "boolean",
+          "defaultValue": false
+        },
+        {
+          "name": "sum-text",
+          "description": "合计行第一列的文本",
+          "type": "string",
+          "defaultValue": "合计"
+        },
+        {
+          "name": "summary-method",
+          "description": "自定义的合计计算方法",
+          "type": "function",
+          "defaultValue": null
+        },
+        {
+          "name": "span-method",
+          "description": "合并行或列的计算方法",
+          "type": "function",
+          "defaultValue": null
+        },
+        {
+          "name": "select-on-indeterminate",
+          "description": "在多选表格中，当仅有部分行被选中时，点击表头的 checkbox 时的行为",
+          "type": "boolean",
+          "defaultValue": true
+        },
+        {
+          "name": "indent",
+          "description": "展示树形数据时，树节点的缩进",
+          "type": "number",
+          "defaultValue": 16
+        },
+        {
+          "name": "lazy",
+          "description": "是否懒加载子节点数据",
+          "type": "boolean",
+          "defaultValue": false
+        },
+        {
+          "name": "load",
+          "description": "加载子节点数据的方法",
+          "type": "function",
+          "defaultValue": null
+        },
+        {
+          "name": "tree-props",
+          "description": "渲染嵌套数据的配置选项",
+          "type": "object",
+          "defaultValue": "{ hasChildren: 'hasChildren', children: 'children' }"
+        },
+        {
+          "name": "table-layout",
+          "description": "设置表格单元、行和列的布局方式",
+          "type": "string",
+          "options": ["fixed", "auto"],
+          "defaultValue": "fixed"
+        },
+        {
+          "name": "scrollbar-always-on",
+          "description": "设置表格总是显示滚动条",
+          "type": "boolean",
+          "defaultValue": false
+        },
+        {
+          "name": "flexible",
+          "description": "设置表格高度自适应",
+          "type": "boolean",
+          "defaultValue": false
+        }
+      ],
+      "events": [
+        {
+          "name": "select",
+          "description": "当用户手动勾选数据行的 Checkbox 时触发的事件",
+          "parameters": "(selection, row)"
+        },
+        {
+          "name": "select-all",
+          "description": "当用户手动勾选全选 Checkbox 时触发的事件",
+          "parameters": "(selection)"
+        },
+        {
+          "name": "selection-change",
+          "description": "当选择项发生变化时会触发该事件",
+          "parameters": "(selection)"
+        },
+        {
+          "name": "cell-mouse-enter",
+          "description": "当单元格 hover 进入时会触发该事件",
+          "parameters": "(row, column, cell, event)"
+        },
+        {
+          "name": "cell-mouse-leave",
+          "description": "当单元格 hover 退出时会触发该事件",
+          "parameters": "(row, column, cell, event)"
+        },
+        {
+          "name": "cell-click",
+          "description": "当某个单元格被点击时会触发该事件",
+          "parameters": "(row, column, cell, event)"
+        },
+        {
+          "name": "cell-dblclick",
+          "description": "当某个单元格被双击击时会触发该事件",
+          "parameters": "(row, column, cell, event)"
+        },
+        {
+          "name": "row-click",
+          "description": "当某一行被点击时会触发该事件",
+          "parameters": "(row, column, event)"
+        },
+        {
+          "name": "row-contextmenu",
+          "description": "当某一行被鼠标右键点击时会触发该事件",
+          "parameters": "(row, column, event)"
+        },
+        {
+          "name": "row-dblclick",
+          "description": "当某一行被双击时会触发该事件",
+          "parameters": "(row, column, event)"
+        },
+        {
+          "name": "header-click",
+          "description": "当某一列的表头被点击时会触发该事件",
+          "parameters": "(column, event)"
+        },
+        {
+          "name": "header-contextmenu",
+          "description": "当某一列的表头被鼠标右键点击时会触发该事件",
+          "parameters": "(column, event)"
+        },
+        {
+          "name": "sort-change",
+          "description": "当表格的排序条件发生变化的时候会触发该事件",
+          "parameters": "({ column, prop, order })"
+        },
+        {
+          "name": "filter-change",
+          "description": "当表格的筛选条件发生变化的时候会触发该事件",
+          "parameters": "(filters)"
+        },
+        {
+          "name": "header-dragend",
+          "description": "当拖动表头改变了列的宽度的时候会触发该事件",
+          "parameters": "(newWidth, oldWidth, column, event)"
+        },
+        {
+          "name": "expand-change",
+          "description": "当用户对某一行展开或者关闭的时候会触发该事件",
+          "parameters": "(row, expandedRows)"
+        },
+        {
+          "name": "expand",
+          "description": "当用户点击展开图标展开某一行时触发的事件",
+          "parameters": "(row, expandedRows)"
+        },
+        {
+          "name": "current-change",
+          "description": "当表格的当前行发生变化的时候会触发该事件",
+          "parameters": "(currentRow, oldCurrentRow)"
+        },
+        {
+          "name": "header-dragstart",
+          "description": "当开始拖拽表头时触发的事件",
+          "parameters": "(column, event)"
+        },
+        {
+          "name": "header-dragend",
+          "description": "当拖拽表头结束时触发的事件",
+          "parameters": "(column, event)"
+        }
+      ],
+      "slots": [
+        {
+          "name": "default",
+          "description": "表格内容",
+          "scope": null
+        },
+        {
+          "name": "append",
+          "description": "插入至表格最后一行之后的内容",
+          "scope": null
+        },
+        {
+          "name": "empty",
+          "description": "当数据为空时自定义的内容",
+          "scope": null
+        }
+      ]
+    }
+  ]
+}

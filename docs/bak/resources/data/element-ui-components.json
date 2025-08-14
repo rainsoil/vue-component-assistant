@@ -1,0 +1,1543 @@
+[
+  {
+    "name": "el-button",
+    "description": "常用的按钮组件，支持多种样式和事件。",
+    "version": "Element UI >=2.0.0",
+    "example": "<el-button type=\"primary\">主要按钮</el-button>",
+    "docUrl": "https://element.eleme.cn/#/zh-CN/component/button",
+    "props": [
+      {
+        "name": "type",
+        "type": "string",
+        "description": "按钮类型",
+        "defaultValue": "default",
+        "required": false,
+        "options": ["primary", "success", "warning", "danger", "info", "default"]
+      },
+      {
+        "name": "size",
+        "type": "string",
+        "description": "按钮尺寸",
+        "defaultValue": "default",
+        "required": false,
+        "options": ["medium", "small", "mini"]
+      },
+      {
+        "name": "disabled",
+        "type": "boolean",
+        "description": "是否禁用按钮",
+        "defaultValue": "false",
+        "required": false
+      }
+    ],
+    "events": [
+      {
+        "name": "click",
+        "description": "点击按钮时触发",
+        "parameters": "event"
+      }
+    ],
+    "slots": [
+      {
+        "name": "default",
+        "description": "按钮内容"
+      }
+    ]
+  },
+  {
+    "name": "el-input",
+    "description": "输入框组件，支持多种类型和校验。",
+    "version": "Element UI >=2.0.0",
+    "example": "<el-input v-model=\"input\"></el-input>",
+    "docUrl": "https://element.eleme.cn/#/zh-CN/component/input",
+    "props": [
+      {
+        "name": "value",
+        "type": "string",
+        "description": "绑定值",
+        "required": false
+      },
+      {
+        "name": "placeholder",
+        "type": "string",
+        "description": "占位文本",
+        "required": false
+      },
+      {
+        "name": "disabled",
+        "type": "boolean",
+        "description": "是否禁用",
+        "defaultValue": "false",
+        "required": false
+      }
+    ],
+    "events": [
+      {
+        "name": "input",
+        "description": "输入时触发",
+        "parameters": "value"
+      },
+      {
+        "name": "change",
+        "description": "值改变时触发",
+        "parameters": "value"
+      }
+    ],
+    "slots": []
+  },
+  {
+    "name": "el-select",
+    "description": "选择器组件，支持单选和多选。",
+    "version": "Element UI >=2.0.0",
+    "example": "<el-select v-model=\"value\"><el-option label=\"选项\" value=\"1\"></el-option></el-select>",
+    "docUrl": "https://element.eleme.cn/#/zh-CN/component/select",
+    "props": [
+      {
+        "name": "value",
+        "type": "string | number | boolean",
+        "description": "绑定值",
+        "required": true
+      },
+      {
+        "name": "placeholder",
+        "type": "string",
+        "description": "占位符",
+        "required": false
+      },
+      {
+        "name": "multiple",
+        "type": "boolean",
+        "description": "是否多选",
+        "defaultValue": "false",
+        "required": false
+      }
+    ],
+    "events": [
+      {
+        "name": "change",
+        "description": "选中值发生变化时触发",
+        "parameters": "value"
+      }
+    ],
+    "slots": [
+      {
+        "name": "default",
+        "description": "选项列表"
+      }
+    ]
+  }
+,{
+  "name": "el-option",
+  "description": "Select 组件的选项。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-option label=\"黄金糕\" value=\"goldcake\"></el-option>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/select",
+  "props": [
+    {
+      "name": "value",
+      "type": "string | number | boolean",
+      "description": "选项的值",
+      "required": true
+    },
+    {
+      "name": "label",
+      "type": "string",
+      "description": "选项的标签",
+      "required": false
+    },
+    {
+      "name": "disabled",
+      "type": "boolean",
+      "description": "是否禁用该选项",
+      "defaultValue": "false",
+      "required": false
+    }
+  ],
+  "events": [],
+  "slots": []
+}
+,{
+  "name": "el-dialog",
+  "description": "对话框组件，用于弹出内容。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-dialog title=\"提示\" :visible.sync=\"dialogVisible\">内容</el-dialog>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/dialog",
+  "props": [
+    {
+      "name": "visible",
+      "type": "boolean",
+      "description": "是否显示 Dialog",
+      "required": true
+    },
+    {
+      "name": "title",
+      "type": "string",
+      "description": "标题",
+      "required": false
+    },
+    {
+      "name": "width",
+      "type": "string",
+      "description": "宽度",
+      "defaultValue": "50%",
+      "required": false
+    }
+  ],
+  "events": [
+    {
+      "name": "open",
+      "description": "Dialog 打开时触发",
+      "parameters": ""
+    },
+    {
+      "name": "close",
+      "description": "Dialog 关闭时触发",
+      "parameters": ""
+    }
+  ],
+  "slots": [
+    {
+      "name": "title",
+      "description": "对话框标题区的内容"
+    },
+    {
+      "name": "default",
+      "description": "对话框主体内容"
+    },
+    {
+      "name": "footer",
+      "description": "底部操作区"
+    }
+  ]
+}
+,{
+  "name": "el-form",
+  "description": "用于数据录入的表单容器。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-form :model=\"formData\"><el-form-item label=\"姓名\"><el-input v-model=\"formData.name\"></el-input></el-form-item></el-form>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/form",
+  "props": [
+    {
+      "name": "model",
+      "type": "object",
+      "description": "表单数据对象",
+      "required": true
+    },
+    {
+      "name": "rules",
+      "type": "object",
+      "description": "表单验证规则",
+      "required": false
+    },
+    {
+      "name": "label-width",
+      "type": "string",
+      "description": "标签宽度",
+      "defaultValue": "80px",
+      "required": false
+    }
+  ],
+  "events": [],
+  "slots": [
+    {
+      "name": "default",
+      "description": "表单项"
+    }
+  ]
+}
+,{
+  "name": "el-form-item",
+  "description": "表单项，用于包裹表单控件。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-form-item label=\"姓名\"><el-input v-model=\"formData.name\"></el-input></el-form-item>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/form",
+  "props": [
+    {
+      "name": "label",
+      "type": "string",
+      "description": "标签文本",
+      "required": false
+    },
+    {
+      "name": "prop",
+      "type": "string",
+      "description": "对应表单域 model 的字段",
+      "required": false
+    },
+    {
+      "name": "required",
+      "type": "boolean",
+      "description": "是否必填，如不设置，则会根据校验规则自动生成",
+      "required": false
+    }
+  ],
+  "events": [],
+  "slots": [
+    {
+      "name": "label",
+      "description": "自定义标签内容"
+    },
+    {
+      "name": "default",
+      "description": "表单控件内容"
+    }
+  ]
+}
+,{
+  "name": "el-table",
+  "description": "用于展示多条结构化数据的表格。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-table :data=\"tableData\"><el-table-column prop=\"name\" label=\"姓名\"></el-table-column></el-table>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/table",
+  "props": [
+    {
+      "name": "data",
+      "type": "array",
+      "description": "显示的数据",
+      "required": true
+    },
+    {
+      "name": "border",
+      "type": "boolean",
+      "description": "是否带有纵向边框",
+      "defaultValue": "false",
+      "required": false
+    },
+    {
+      "name": "stripe",
+      "type": "boolean",
+      "description": "是否为斑马纹 table",
+      "defaultValue": "false",
+      "required": false
+    }
+  ],
+  "events": [
+    {
+      "name": "row-click",
+      "description": "当某一行被点击时会触发该事件",
+      "parameters": "row, column, event"
+    }
+  ],
+  "slots": [
+    {
+      "name": "default",
+      "description": "表格列 slot（使用 el-table-column）"
+    }
+  ]
+}
+,{
+  "name": "el-table-column",
+  "description": "用于配置 el-table 的列。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-table-column prop=\"name\" label=\"姓名\"></el-table-column>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/table",
+  "props": [
+    {
+      "name": "prop",
+      "type": "string",
+      "description": "字段名",
+      "required": false
+    },
+    {
+      "name": "label",
+      "type": "string",
+      "description": "列名",
+      "required": false
+    },
+    {
+      "name": "width",
+      "type": "string | number",
+      "description": "列宽度",
+      "required": false
+    }
+  ],
+  "events": [],
+  "slots": [
+    {
+      "name": "default",
+      "description": "自定义单元格内容"
+    },
+    {
+      "name": "header",
+      "description": "自定义表头内容"
+    }
+  ]
+}
+,{
+  "name": "el-radio",
+  "description": "单选框，用于在多个备选项中选择一个。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-radio v-model=\"radio\" label=\"1\">选项一</el-radio>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/radio",
+  "props": [
+    {
+      "name": "label",
+      "type": "string | number | boolean",
+      "description": "选中状态的值",
+      "required": true
+    },
+    {
+      "name": "disabled",
+      "type": "boolean",
+      "description": "是否禁用",
+      "defaultValue": "false",
+      "required": false
+    }
+  ],
+  "events": [],
+  "slots": [
+    {
+      "name": "default",
+      "description": "选项文本"
+    }
+  ]
+}
+,{
+  "name": "el-checkbox",
+  "description": "多选框，允许在一组备选项中选择多个。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-checkbox v-model=\"checked\">复选框</el-checkbox>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/checkbox",
+  "props": [
+    {
+      "name": "label",
+      "type": "string | number | boolean",
+      "description": "选中时的值",
+      "required": false
+    },
+    {
+      "name": "true-label",
+      "type": "string | number",
+      "description": "选中时的值（自定义）",
+      "required": false
+    },
+    {
+      "name": "false-label",
+      "type": "string | number",
+      "description": "未选中时的值（自定义）",
+      "required": false
+    }
+  ],
+  "events": [],
+  "slots": [
+    {
+      "name": "default",
+      "description": "复选框文本"
+    }
+  ]
+}
+,{
+  "name": "el-switch",
+  "description": "开关，用于表示两种相互对立的状态。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-switch v-model=\"value\"></el-switch>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/switch",
+  "props": [
+    {
+      "name": "value",
+      "type": "boolean | string | number",
+      "description": "绑定值",
+      "required": true
+    },
+    {
+      "name": "active-color",
+      "type": "string",
+      "description": "打开时的背景色",
+      "required": false
+    },
+    {
+      "name": "inactive-color",
+      "type": "string",
+      "description": "关闭时的背景色",
+      "required": false
+    }
+  ],
+  "events": [
+    {
+      "name": "change",
+      "description": "绑定值变化时触发",
+      "parameters": "value"
+    }
+  ],
+  "slots": []
+}
+,{
+  "name": "el-date-picker",
+  "description": "用于选择日期、日期范围的选择器。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-date-picker v-model=\"value\" type=\"date\" placeholder=\"选择日期\"></el-date-picker>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/date-picker",
+  "props": [
+    {
+      "name": "value",
+      "type": "string | Date",
+      "description": "绑定值",
+      "required": true
+    },
+    {
+      "name": "type",
+      "type": "string",
+      "description": "显示类型",
+      "defaultValue": "date",
+      "required": false,
+      "options": ["year", "month", "date", "datetime", "daterange", "monthrange"]
+    },
+    {
+      "name": "placeholder",
+      "type": "string",
+      "description": "占位文本",
+      "required": false
+    }
+  ],
+  "events": [
+    {
+      "name": "change",
+      "description": "用户确认选定的值时触发",
+      "parameters": "value"
+    }
+  ],
+  "slots": []
+}
+,{
+  "name": "el-time-picker",
+  "description": "用于选择时间的选择器。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-time-picker v-model=\"time\" placeholder=\"选择时间\"></el-time-picker>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/time-picker",
+  "props": [
+    {
+      "name": "value",
+      "type": "string | Date",
+      "description": "绑定值",
+      "required": true
+    },
+    {
+      "name": "placeholder",
+      "type": "string",
+      "description": "占位文本",
+      "required": false
+    },
+    {
+      "name": "is-range",
+      "type": "boolean",
+      "description": "是否为时间范围选择",
+      "defaultValue": "false",
+      "required": false
+    }
+  ],
+  "events": [
+    {
+      "name": "change",
+      "description": "用户确认选定的值时触发",
+      "parameters": "value"
+    }
+  ],
+  "slots": []
+}
+,{
+  "name": "el-pagination",
+  "description": "用于数据分页的组件。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-pagination :current-page=\"1\" :page-size=\"10\" :total=\"100\"></el-pagination>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/pagination",
+  "props": [
+    {
+      "name": "total",
+      "type": "number",
+      "description": "总条目数",
+      "required": true
+    },
+    {
+      "name": "page-size",
+      "type": "number",
+      "description": "每页显示条目个数",
+      "defaultValue": "10",
+      "required": false
+    },
+    {
+      "name": "current-page",
+      "type": "number",
+      "description": "当前页数",
+      "defaultValue": "1",
+      "required": false
+    }
+  ],
+  "events": [
+    {
+      "name": "current-change",
+      "description": "当前页改变时触发",
+      "parameters": "newPage"
+    }
+  ],
+  "slots": []
+}
+,{
+  "name": "el-badge",
+  "description": "用于展示数字或状态的徽章。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-badge :value=\"12\"><el-button>评论</el-button></el-badge>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/badge",
+  "props": [
+    {
+      "name": "value",
+      "type": "string | number",
+      "description": "显示值",
+      "required": false
+    },
+    {
+      "name": "max",
+      "type": "number",
+      "description": "最大值，超过会显示为 '{max}+'",
+      "required": false
+    },
+    {
+      "name": "is-dot",
+      "type": "boolean",
+      "description": "是否显示小圆点",
+      "defaultValue": "false",
+      "required": false
+    }
+  ],
+  "events": [],
+  "slots": [
+    {
+      "name": "default",
+      "description": "徽章包裹的内容"
+    }
+  ]
+}
+,{
+  "name": "el-alert",
+  "description": "用于页面中展示重要的提示信息。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-alert title=\"成功提示\" type=\"success\"></el-alert>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/alert",
+  "props": [
+    {
+      "name": "title",
+      "type": "string",
+      "description": "标题",
+      "required": true
+    },
+    {
+      "name": "type",
+      "type": "string",
+      "description": "主题",
+      "defaultValue": "info",
+      "required": false,
+      "options": ["success", "warning", "info", "error"]
+    },
+    {
+      "name": "closable",
+      "type": "boolean",
+      "description": "是否可关闭",
+      "defaultValue": "true",
+      "required": false
+    }
+  ],
+  "events": [
+    {
+      "name": "close",
+      "description": "关闭 Alert 时触发",
+      "parameters": "event"
+    }
+  ],
+  "slots": [
+    {
+      "name": "default",
+      "description": "描述内容"
+    },
+    {
+      "name": "title",
+      "description": "标题内容"
+    }
+  ]
+}
+,{
+  "name": "el-loading",
+  "description": "用于显示加载状态的指令。",
+  "version": "Element UI >=2.0.0",
+  "example": "<div v-loading=\"loading\"></div>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/loading",
+  "props": [
+    {
+      "name": "loading",
+      "type": "boolean",
+      "description": "是否显示加载动画",
+      "required": true
+    }
+  ],
+  "events": [],
+  "slots": []
+}
+,{
+  "name": "el-radio-group",
+  "description": "用于将多个单选框组合在一起。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-radio-group v-model=\"radio\"><el-radio label=\"1\">选项一</el-radio><el-radio label=\"2\">选项二</el-radio></el-radio-group>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/radio",
+  "props": [
+    {
+      "name": "value",
+      "type": "string | number | boolean",
+      "description": "绑定值",
+      "required": true
+    },
+    {
+      "name": "disabled",
+      "type": "boolean",
+      "description": "是否禁用所有单选框",
+      "defaultValue": "false",
+      "required": false
+    }
+  ],
+  "events": [
+    {
+      "name": "change",
+      "description": "绑定值变化时触发",
+      "parameters": "value"
+    }
+  ],
+  "slots": [
+    {
+      "name": "default",
+      "description": "嵌套的 el-radio 组件"
+    }
+  ]
+}
+,{
+  "name": "el-checkbox-group",
+  "description": "用于将多个复选框组合在一起。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-checkbox-group v-model=\"checkList\"><el-checkbox label=\"A\"></el-checkbox><el-checkbox label=\"B\"></el-checkbox></el-checkbox-group>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/checkbox",
+  "props": [
+    {
+      "name": "value",
+      "type": "array",
+      "description": "绑定值",
+      "required": true
+    },
+    {
+      "name": "min",
+      "type": "number",
+      "description": "可被勾选的 checkbox 的最小数量",
+      "required": false
+    },
+    {
+      "name": "max",
+      "type": "number",
+      "description": "可被勾选的 checkbox 的最大数量",
+      "required": false
+    }
+  ],
+  "events": [
+    {
+      "name": "change",
+      "description": "绑定值变化时触发",
+      "parameters": "value"
+    }
+  ],
+  "slots": [
+    {
+      "name": "default",
+      "description": "嵌套的 el-checkbox 组件"
+    }
+  ]
+}
+,{
+  "name": "el-upload",
+  "description": "上传文件的组件，支持拖拽、缩略图、文件列表等功能。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-upload action=\"/upload\" :on-preview=\"handlePreview\" :on-remove=\"handleRemove\"><el-button type=\"primary\">上传文件</el-button></el-upload>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/upload",
+  "props": [
+    {
+      "name": "action",
+      "type": "string",
+      "description": "必选参数，上传的地址",
+      "required": true
+    },
+    {
+      "name": "headers",
+      "type": "object",
+      "description": "设置上传的请求头部",
+      "required": false
+    },
+    {
+      "name": "multiple",
+      "type": "boolean",
+      "description": "是否支持多选文件",
+      "defaultValue": "false",
+      "required": false
+    }
+  ],
+  "events": [
+    {
+      "name": "change",
+      "description": "文件状态改变时触发",
+      "parameters": "file, fileList"
+    },
+    {
+      "name": "remove",
+      "description": "文件列表移除文件时触发",
+      "parameters": "file, fileList"
+    }
+  ],
+  "slots": [
+    {
+      "name": "default",
+      "description": "触发上传组件的内容"
+    },
+    {
+      "name": "trigger",
+      "description": "自定义触发上传的元素"
+    }
+  ]
+}
+,{
+  "name": "el-popover",
+  "description": "点击或悬停元素时显示的内容浮层。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-popover trigger=\"hover\" content=\"这是提示内容\"><el-button slot=\"reference\">悬停查看</el-button></el-popover>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/popover",
+  "props": [
+    {
+      "name": "trigger",
+      "type": "string",
+      "description": "触发方式",
+      "defaultValue": "click",
+      "options": ["click", "focus", "hover", "manual"],
+      "required": false
+    },
+    {
+      "name": "content",
+      "type": "string",
+      "description": "显示的内容",
+      "required": false
+    },
+    {
+      "name": "placement",
+      "type": "string",
+      "description": "出现位置",
+      "defaultValue": "bottom",
+      "required": false
+    }
+  ],
+  "events": [],
+  "slots": [
+    {
+      "name": "reference",
+      "description": "触发 Popover 显示的 HTML 元素"
+    },
+    {
+      "name": "default",
+      "description": "显示的内容"
+    }
+  ]
+}
+,{
+  "name": "el-tooltip",
+  "description": "常用于展示提示信息的小浮层。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-tooltip content=\"提示信息\"><el-button>悬停提示</el-button></el-tooltip>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/tooltip",
+  "props": [
+    {
+      "name": "content",
+      "type": "string",
+      "description": "显示的内容",
+      "required": true
+    },
+    {
+      "name": "placement",
+      "type": "string",
+      "description": "出现位置",
+      "defaultValue": "top",
+      "required": false
+    },
+    {
+      "name": "disabled",
+      "type": "boolean",
+      "description": "是否禁用 tooltip",
+      "defaultValue": "false",
+      "required": false
+    }
+  ],
+  "events": [],
+  "slots": [
+    {
+      "name": "default",
+      "description": "触发 tooltip 的元素"
+    }
+  ]
+}
+,{
+  "name": "el-carousel",
+  "description": "轮播图组件，支持手动和自动播放。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-carousel height=\"200px\"><el-carousel-item v-for=\"item in 4\" :key=\"item\">{{ item }}</el-carousel-item></el-carousel>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/carousel",
+  "props": [
+    {
+      "name": "height",
+      "type": "string",
+      "description": "轮播图高度",
+      "required": false
+    },
+    {
+      "name": "autoplay",
+      "type": "boolean",
+      "description": "是否自动切换",
+      "defaultValue": "true",
+      "required": false
+    },
+    {
+      "name": "interval",
+      "type": "number",
+      "description": "自动切换的时间间隔（ms）",
+      "defaultValue": 3000,
+      "required": false
+    }
+  ],
+  "events": [
+    {
+      "name": "change",
+      "description": "当前激活的幻灯片发生变化时触发",
+      "parameters": "index"
+    }
+  ],
+  "slots": [
+    {
+      "name": "default",
+      "description": "轮播图项（el-carousel-item）"
+    }
+  ]
+}
+,{
+  "name": "el-carousel-item",
+  "description": "轮播图的每一项，只能嵌套在 el-carousel 中使用。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-carousel-item>幻灯片内容</el-carousel-item>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/carousel",
+  "props": [],
+  "events": [],
+  "slots": [
+    {
+      "name": "default",
+      "description": "幻灯片内容"
+    }
+  ]
+}
+,{
+  "name": "el-collapse",
+  "description": "可折叠的面板，用于收纳内容区域。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-collapse><el-collapse-item title=\"标题一\" name=\"1\">内容一</el-collapse-item></el-collapse>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/collapse",
+  "props": [
+    {
+      "name": "value",
+      "type": "string | array",
+      "description": "当前激活的面板(可绑定)",
+      "required": false
+    },
+    {
+      "name": "accordion",
+      "type": "boolean",
+      "description": "是否每次只打开一个面板",
+      "defaultValue": "false",
+      "required": false
+    }
+  ],
+  "events": [
+    {
+      "name": "change",
+      "description": "激活面板变化时触发",
+      "parameters": "activeNames"
+    }
+  ],
+  "slots": [
+    {
+      "name": "default",
+      "description": "collapse-item 列表"
+    }
+  ]
+}
+,{
+  "name": "el-collapse-item",
+  "description": "折叠面板的子项，只能嵌套在 el-collapse 中使用。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-collapse-item title=\"标题\" name=\"1\">内容</el-collapse-item>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/collapse",
+  "props": [
+    {
+      "name": "name",
+      "type": "string | number",
+      "description": "唯一标识",
+      "required": false
+    },
+    {
+      "name": "title",
+      "type": "string",
+      "description": "面板标题",
+      "required": true
+    }
+  ],
+  "events": [],
+  "slots": [
+    {
+      "name": "default",
+      "description": "折叠面板内容"
+    },
+    {
+      "name": "title",
+      "description": "自定义标题内容"
+    }
+  ]
+}
+,{
+  "name": "el-divider",
+  "description": "用于分隔内容的线条，可水平或垂直展示。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-divider content-position=\"left\">左侧标题</el-divider>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/divider",
+  "props": [
+    {
+      "name": "direction",
+      "type": "string",
+      "description": "设置分割线方向",
+      "defaultValue": "horizontal",
+      "options": ["horizontal", "vertical"],
+      "required": false
+    },
+    {
+      "name": "content-position",
+      "type": "string",
+      "description": "设置分割线文案的位置",
+      "defaultValue": "center",
+      "options": ["left", "center", "right"],
+      "required": false
+    }
+  ],
+  "events": [],
+  "slots": [
+    {
+      "name": "default",
+      "description": "分隔线上显示的内容"
+    }
+  ]
+}
+,{
+  "name": "el-carousel",
+  "description": "走马灯轮播组件。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-carousel><el-carousel-item>1</el-carousel-item></el-carousel>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/carousel",
+  "props": [
+    { "name": "height", "type": "string", "description": "走马灯的高度", "defaultValue": "300px", "required": false },
+    { "name": "trigger", "type": "string", "description": "指示器触发方式", "defaultValue": "hover", "required": false, "options": ["hover", "click"] },
+    { "name": "autoplay", "type": "boolean", "description": "是否自动切换", "defaultValue": "true", "required": false }
+  ],
+  "events": [
+    { "name": "change", "description": "幻灯片切换时触发", "parameters": "(newIndex, oldIndex)" }
+  ],
+  "slots": [
+    { "name": "default", "description": "走马灯每一页内容，通常使用 el-carousel-item 包裹" }
+  ]
+}
+,{
+  "name": "el-carousel-item",
+  "description": "走马灯子项组件。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-carousel-item>内容</el-carousel-item>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/carousel",
+  "props": [],
+  "events": [],
+  "slots": [
+    { "name": "default", "description": "幻灯片内容" }
+  ]
+}
+,{
+  "name": "el-collapse",
+  "description": "可折叠面板容器。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-collapse v-model=\"activeNames\"><el-collapse-item title=\"一致性\" name=\"1\">内容</el-collapse-item></el-collapse>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/collapse",
+  "props": [
+    { "name": "accordion", "type": "boolean", "description": "是否手风琴模式", "defaultValue": "false", "required": false },
+    { "name": "value", "type": "[string, array]", "description": "当前激活的面板", "required": false }
+  ],
+  "events": [
+    { "name": "change", "description": "当前激活面板变化时触发", "parameters": "activeNames" }
+  ],
+  "slots": [
+    { "name": "default", "description": "折叠项列表" }
+  ]
+}
+,{
+  "name": "el-collapse-item",
+  "description": "折叠面板项。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-collapse-item title=\"一致性\" name=\"1\">内容</el-collapse-item>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/collapse",
+  "props": [
+    { "name": "title", "type": "string", "description": "面板标题", "required": false },
+    { "name": "name", "type": "[string, number]", "description": "唯一标识", "required": true }
+  ],
+  "events": [],
+  "slots": [
+    { "name": "default", "description": "面板内容" },
+    { "name": "title", "description": "自定义标题内容" }
+  ]
+}
+,{
+  "name": "el-timeline",
+  "description": "时间线组件。",
+  "version": "Element UI >=2.4.0",
+  "example": "<el-timeline><el-timeline-item timestamp=\"2018/4/12\">活动内容</el-timeline-item></el-timeline>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/timeline",
+  "props": [],
+  "events": [],
+  "slots": [
+    { "name": "default", "description": "时间线节点列表" }
+  ]
+}
+,{
+  "name": "el-timeline-item",
+  "description": "时间线节点。",
+  "version": "Element UI >=2.4.0",
+  "example": "<el-timeline-item timestamp=\"2018/4/12\">活动内容</el-timeline-item>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/timeline",
+  "props": [
+    { "name": "timestamp", "type": "string", "description": "时间戳", "required": false },
+    { "name": "placement", "type": "string", "description": "时间戳位置", "defaultValue": "bottom", "options": ["top", "bottom"], "required": false }
+  ],
+  "events": [],
+  "slots": [
+    { "name": "default", "description": "内容主体" },
+    { "name": "timestamp", "description": "时间戳内容" }
+  ]
+}
+,{
+  "name": "el-tag",
+  "description": "标签组件，可移除。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-tag closable @close=\"handleClose\">标签</el-tag>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/tag",
+  "props": [
+    { "name": "type", "type": "string", "description": "类型", "defaultValue": "", "options": ["success", "info", "warning", "danger"], "required": false },
+    { "name": "closable", "type": "boolean", "description": "是否可关闭", "defaultValue": "false", "required": false }
+  ],
+  "events": [
+    { "name": "close", "description": "关闭 tag 时触发", "parameters": "" }
+  ],
+  "slots": [
+    { "name": "default", "description": "标签内容" }
+  ]
+}
+,{
+  "name": "el-progress",
+  "description": "进度条组件。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-progress :percentage=\"50\"></el-progress>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/progress",
+  "props": [
+    { "name": "percentage", "type": "number", "description": "百分比", "required": true },
+    { "name": "type", "type": "string", "description": "进度条类型", "defaultValue": "line", "options": ["line", "circle", "dashboard"], "required": false }
+  ],
+  "events": [],
+  "slots": []
+}
+,{
+  "name": "el-avatar",
+  "description": "头像组件。",
+  "version": "Element UI >=2.13.0",
+  "example": "<el-avatar icon=\"el-icon-user\"></el-avatar>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/avatar",
+  "props": [
+    { "name": "icon", "type": "string", "description": "设置头像的图标", "required": false },
+    { "name": "size", "type": "[number, string]", "description": "头像大小", "defaultValue": "large", "required": false }
+  ],
+  "events": [],
+  "slots": [
+    { "name": "default", "description": "自定义头像展示内容" }
+  ]
+}
+,{
+  "name": "el-badge",
+  "description": "标记组件，用于数字或状态提示。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-badge :value=\"12\"><el-button>评论</el-button></el-badge>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/badge",
+  "props": [
+    { "name": "value", "type": "[string, number]", "description": "显示值", "required": false },
+    { "name": "max", "type": "number", "description": "最大值，超出时显示为 max+", "required": false }
+  ],
+  "events": [],
+  "slots": [
+    { "name": "default", "description": "显示内容的元素" }
+  ]
+}
+,{
+  "name": "el-tooltip",
+  "description": "文字提示组件，鼠标 hover 时显示提示信息。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-tooltip content=\"提示文字\"><el-button>悬停提示</el-button></el-tooltip>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/tooltip",
+  "props": [
+    {
+      "name": "content",
+      "type": "string",
+      "description": "显示的内容",
+      "defaultValue": "",
+      "required": false
+    },
+    {
+      "name": "placement",
+      "type": "string",
+      "description": "Tooltip 的出现位置",
+      "defaultValue": "bottom",
+      "required": false,
+      "options": ["top", "top-start", "top-end", "bottom", "bottom-start", "bottom-end", "left", "left-start", "left-end", "right", "right-start", "right-end"]
+    },
+    {
+      "name": "disabled",
+      "type": "boolean",
+      "description": "是否禁用 tooltip",
+      "defaultValue": "false",
+      "required": false
+    }
+  ],
+  "events": [],
+  "slots": [
+    {
+      "name": "default",
+      "description": "触发 Tooltip 的内容"
+    },
+    {
+      "name": "content",
+      "description": "自定义 tooltip 内容"
+    }
+  ]
+}
+,{
+  "name": "el-transfer",
+  "description": "穿梭框，用于在两个列表中移动元素。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-transfer :data=\"data\"></el-transfer>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/transfer",
+  "props": [
+    {
+      "name": "data",
+      "type": "array",
+      "description": "Transfer 的数据源",
+      "defaultValue": "[]",
+      "required": true
+    },
+    {
+      "name": "filterable",
+      "type": "boolean",
+      "description": "是否可搜索",
+      "defaultValue": "false",
+      "required": false
+    }
+  ],
+  "events": [
+    {
+      "name": "change",
+      "description": "右侧列表变化时触发",
+      "parameters": "(value, direction, movedKeys)"
+    }
+  ],
+  "slots": [
+    {
+      "name": "default",
+      "description": "自定义单项渲染内容"
+    }
+  ]
+}
+,{
+  "name": "el-upload",
+  "description": "文件上传组件，支持拖拽、缩略图等。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-upload action=\"/upload\"><el-button>上传</el-button></el-upload>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/upload",
+  "props": [
+    {
+      "name": "action",
+      "type": "string",
+      "description": "上传的地址",
+      "defaultValue": "",
+      "required": true
+    },
+    {
+      "name": "headers",
+      "type": "object",
+      "description": "设置上传的请求头部",
+      "required": false
+    },
+    {
+      "name": "drag",
+      "type": "boolean",
+      "description": "是否启用拖拽上传",
+      "defaultValue": "false",
+      "required": false
+    }
+  ],
+  "events": [
+    {
+      "name": "success",
+      "description": "文件上传成功时触发",
+      "parameters": "(response, file, fileList)"
+    }
+  ],
+  "slots": [
+    {
+      "name": "trigger",
+      "description": "触发文件选择框的内容"
+    },
+    {
+      "name": "tip",
+      "description": "提示说明文字"
+    }
+  ]
+}
+,{
+  "name": "el-popconfirm",
+  "description": "气泡确认框，用于二次确认操作。",
+  "version": "Element UI >=2.12.0",
+  "example": "<el-popconfirm title=\"确认删除？\"><el-button>删除</el-button></el-popconfirm>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/popconfirm",
+  "props": [
+    {
+      "name": "title",
+      "type": "string",
+      "description": "显示的标题",
+      "defaultValue": "",
+      "required": true
+    }
+  ],
+  "events": [
+    {
+      "name": "confirm",
+      "description": "点击确定按钮时触发",
+      "parameters": "()"
+    },
+    {
+      "name": "cancel",
+      "description": "点击取消按钮时触发",
+      "parameters": "()"
+    }
+  ],
+  "slots": [
+    {
+      "name": "reference",
+      "description": "触发 Popconfirm 显示的元素"
+    }
+  ]
+}
+,{
+  "name": "el-empty",
+  "description": "空状态组件，用于表示数据为空的场景。",
+  "version": "Element UI >=2.13.0",
+  "example": "<el-empty description=\"暂无数据\"></el-empty>",
+  "docUrl": "https://element-plus.org/zh-CN/component/empty.html",
+  "props": [
+    {
+      "name": "description",
+      "type": "string",
+      "description": "描述文字",
+      "defaultValue": "",
+      "required": false
+    }
+  ],
+  "events": [],
+  "slots": [
+    {
+      "name": "default",
+      "description": "自定义显示内容"
+    },
+    {
+      "name": "description",
+      "description": "自定义描述"
+    }
+  ]
+}
+,{
+  "name": "el-skeleton",
+  "description": "骨架屏组件，在内容加载时展示。",
+  "version": "Element UI >=2.13.0",
+  "example": "<el-skeleton :rows=\"3\"></el-skeleton>",
+  "docUrl": "https://element-plus.org/zh-CN/component/skeleton.html",
+  "props": [
+    {
+      "name": "rows",
+      "type": "number",
+      "description": "展示段落占位图的行数",
+      "defaultValue": "3",
+      "required": false
+    },
+    {
+      "name": "animated",
+      "type": "boolean",
+      "description": "是否展示动画效果",
+      "defaultValue": "false",
+      "required": false
+    }
+  ],
+  "events": [],
+  "slots": [
+    {
+      "name": "default",
+      "description": "加载完成后的实际内容"
+    }
+  ]
+},
+  {
+    "name": "el-drawer",
+    "description": "抽屉组件，从侧边滑出的容器。",
+    "version": "Element UI >=2.0.0",
+    "example": "<el-drawer title=\"标题\" :visible.sync=\"visible\">内容</el-drawer>",
+    "docUrl": "https://element.eleme.cn/#/zh-CN/component/drawer",
+    "props": [
+      {
+        "name": "title",
+        "type": "string",
+        "description": "标题",
+        "defaultValue": "",
+        "required": false
+      },
+      {
+        "name": "visible",
+        "type": "boolean",
+        "description": "Drawer 是否可见",
+        "required": true
+      }
+    ],
+    "events": [
+      {
+        "name": "close",
+        "description": "Drawer 关闭时触发",
+        "parameters": "()"
+      }
+    ],
+    "slots": [
+      {
+        "name": "default",
+        "description": "主要内容区域"
+      },
+      {
+        "name": "title",
+        "description": "自定义标题内容"
+      }
+    ]
+  }
+,{
+  "name": "el-backtop",
+  "description": "返回页面顶部按钮。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-backtop :right=\"100\" :bottom=\"100\"></el-backtop>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/backtop",
+  "props": [
+    {
+      "name": "visibilityHeight",
+      "type": "number",
+      "description": "滚动高度达到此参数值才出现",
+      "defaultValue": "200",
+      "required": false
+    },
+    {
+      "name": "right",
+      "type": "number",
+      "description": "控制其显示位置，距离页面右边距",
+      "defaultValue": "40",
+      "required": false
+    }
+  ],
+  "events": [
+    {
+      "name": "click",
+      "description": "点击按钮触发",
+      "parameters": "()"
+    }
+  ],
+  "slots": [
+    {
+      "name": "default",
+      "description": "自定义显示内容"
+    }
+  ]
+}
+,{
+  "name": "el-divider",
+  "description": "分割线组件，可自定义方向和内容。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-divider>分割线</el-divider>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/divider",
+  "props": [
+    {
+      "name": "direction",
+      "type": "string",
+      "description": "设置分割线方向",
+      "defaultValue": "horizontal",
+      "required": false,
+      "options": ["horizontal", "vertical"]
+    },
+    {
+      "name": "content-position",
+      "type": "string",
+      "description": "设置分割线文案的位置",
+      "defaultValue": "center",
+      "required": false,
+      "options": ["left", "center", "right"]
+    }
+  ],
+  "events": [],
+  "slots": [
+    {
+      "name": "default",
+      "description": "自定义内容"
+    }
+  ]
+}
+,{
+  "name": "el-link",
+  "description": "文字链接组件。",
+  "version": "Element UI >=2.0.0",
+  "example": "<el-link href=\"https://element.eleme.cn\" target=\"_blank\">默认链接</el-link>",
+  "docUrl": "https://element.eleme.cn/#/zh-CN/component/link",
+  "props": [
+    {
+      "name": "type",
+      "type": "string",
+      "description": "类型",
+      "defaultValue": "default",
+      "required": false,
+      "options": ["primary", "success", "warning", "danger", "info", "default"]
+    },
+    {
+      "name": "underline",
+      "type": "boolean",
+      "description": "是否下划线",
+      "defaultValue": "true",
+      "required": false
+    }
+  ],
+  "events": [
+    {
+      "name": "click",
+      "description": "点击事件",
+      "parameters": "(event)"
+    }
+  ],
+  "slots": [
+    {
+      "name": "default",
+      "description": "显示文本"
+    }
+  ]
+}
+
+
+]

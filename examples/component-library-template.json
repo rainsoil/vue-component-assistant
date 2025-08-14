@@ -1,0 +1,355 @@
+{
+  "id": "my-component-library",
+  "name": "my-component-library",
+  "displayName": "我的组件库",
+  "description": "这是一个自定义组件库的示例，您可以参考此模板创建自己的组件库",
+  "version": "1.0.0",
+  "source": "CUSTOM_LOCAL",
+  "sourceUrl": "",
+  "lastUpdated": "2024-12-01T10:00:00",
+  "components": [
+    {
+      "name": "my-button",
+      "displayName": "自定义按钮",
+      "description": "一个功能丰富的自定义按钮组件，支持多种类型和状态",
+      "tag": "my-button",
+      "documentation": "这是一个自定义按钮组件，支持多种类型和状态。包括主要按钮、成功按钮、警告按钮、危险按钮等。",
+      "props": [
+        {
+          "name": "type",
+          "type": "string",
+          "description": "按钮类型，支持多种预设样式",
+          "defaultValue": "default",
+          "required": false,
+          "options": [
+            "primary",
+            "success",
+            "warning",
+            "danger",
+            "info",
+            "default"
+          ]
+        },
+        {
+          "name": "size",
+          "type": "string",
+          "description": "按钮尺寸",
+          "defaultValue": "medium",
+          "required": false,
+          "options": [
+            "large",
+            "medium",
+            "small",
+            "mini"
+          ]
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "description": "是否禁用按钮",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "loading",
+          "type": "boolean",
+          "description": "是否显示加载状态",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "round",
+          "type": "boolean",
+          "description": "是否圆角按钮",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "plain",
+          "type": "boolean",
+          "description": "是否朴素按钮",
+          "defaultValue": "false",
+          "required": false
+        }
+      ],
+      "events": [
+        {
+          "name": "click",
+          "description": "点击按钮时触发",
+          "parameters": "event"
+        },
+        {
+          "name": "focus",
+          "description": "按钮获得焦点时触发",
+          "parameters": "event"
+        },
+        {
+          "name": "blur",
+          "description": "按钮失去焦点时触发",
+          "parameters": "event"
+        }
+      ],
+      "slots": [
+        {
+          "name": "default",
+          "description": "按钮内容",
+          "scope": ""
+        },
+        {
+          "name": "icon",
+          "description": "按钮图标",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "name": "my-input",
+      "displayName": "自定义输入框",
+      "description": "一个功能丰富的自定义输入框组件，支持多种类型和验证",
+      "tag": "my-input",
+      "documentation": "这是一个自定义输入框组件，支持多种类型和验证。包括文本输入、密码输入、数字输入等。",
+      "props": [
+        {
+          "name": "value",
+          "type": "string",
+          "description": "输入框的值",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "description": "输入框占位符文本",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "description": "输入框类型",
+          "defaultValue": "text",
+          "required": false,
+          "options": [
+            "text",
+            "password",
+            "number",
+            "email",
+            "tel",
+            "url"
+          ]
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "description": "是否禁用输入框",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "readonly",
+          "type": "boolean",
+          "description": "是否只读",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "clearable",
+          "type": "boolean",
+          "description": "是否可清空",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "maxlength",
+          "type": "number",
+          "description": "最大输入长度",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "minlength",
+          "type": "number",
+          "description": "最小输入长度",
+          "defaultValue": "",
+          "required": false
+        }
+      ],
+      "events": [
+        {
+          "name": "input",
+          "description": "输入内容时触发",
+          "parameters": "value"
+        },
+        {
+          "name": "change",
+          "description": "值改变时触发",
+          "parameters": "value"
+        },
+        {
+          "name": "focus",
+          "description": "获得焦点时触发",
+          "parameters": "event"
+        },
+        {
+          "name": "blur",
+          "description": "失去焦点时触发",
+          "parameters": "event"
+        },
+        {
+          "name": "clear",
+          "description": "清空时触发",
+          "parameters": ""
+        }
+      ],
+      "slots": [
+        {
+          "name": "prefix",
+          "description": "输入框前缀内容",
+          "scope": ""
+        },
+        {
+          "name": "suffix",
+          "description": "输入框后缀内容",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "name": "my-card",
+      "displayName": "自定义卡片",
+      "description": "一个灵活的卡片组件，用于展示内容块",
+      "tag": "my-card",
+      "documentation": "这是一个自定义卡片组件，用于展示内容块。支持头部、内容、底部等区域。",
+      "props": [
+        {
+          "name": "header",
+          "type": "string",
+          "description": "卡片头部文本",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "shadow",
+          "type": "string",
+          "description": "卡片阴影效果",
+          "defaultValue": "always",
+          "required": false,
+          "options": [
+            "always",
+            "hover",
+            "never"
+          ]
+        },
+        {
+          "name": "bodyStyle",
+          "type": "object",
+          "description": "卡片内容区域样式",
+          "defaultValue": "",
+          "required": false
+        }
+      ],
+      "events": [
+        {
+          "name": "header-click",
+          "description": "点击卡片头部时触发",
+          "parameters": ""
+        }
+      ],
+      "slots": [
+        {
+          "name": "header",
+          "description": "卡片头部内容",
+          "scope": ""
+        },
+        {
+          "name": "default",
+          "description": "卡片内容",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "name": "my-modal",
+      "displayName": "自定义模态框",
+      "description": "一个功能完整的模态框组件，用于弹窗展示",
+      "tag": "my-modal",
+      "documentation": "这是一个自定义模态框组件，用于弹窗展示。支持标题、内容、按钮等配置。",
+      "props": [
+        {
+          "name": "visible",
+          "type": "boolean",
+          "description": "是否显示模态框",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "description": "模态框标题",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "width",
+          "type": "string",
+          "description": "模态框宽度",
+          "defaultValue": "50%",
+          "required": false
+        },
+        {
+          "name": "closeOnClickMask",
+          "type": "boolean",
+          "description": "点击遮罩是否关闭",
+          "defaultValue": "true",
+          "required": false
+        },
+        {
+          "name": "showClose",
+          "type": "boolean",
+          "description": "是否显示关闭按钮",
+          "defaultValue": "true",
+          "required": false
+        }
+      ],
+      "events": [
+        {
+          "name": "open",
+          "description": "模态框打开时触发",
+          "parameters": ""
+        },
+        {
+          "name": "close",
+          "description": "模态框关闭时触发",
+          "parameters": ""
+        },
+        {
+          "name": "confirm",
+          "description": "点击确定按钮时触发",
+          "parameters": ""
+        },
+        {
+          "name": "cancel",
+          "description": "点击取消按钮时触发",
+          "parameters": ""
+        }
+      ],
+      "slots": [
+        {
+          "name": "header",
+          "description": "模态框头部内容",
+          "scope": ""
+        },
+        {
+          "name": "default",
+          "description": "模态框内容",
+          "scope": ""
+        },
+        {
+          "name": "footer",
+          "description": "模态框底部内容",
+          "scope": ""
+        }
+      ]
+    }
+  ]
+} 
