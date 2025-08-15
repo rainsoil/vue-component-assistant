@@ -59,12 +59,31 @@
         <lang.documentationProvider language="XML"
                                     implementationClass="com.chu7.vuecomponentassistant.documentation.ComponentDocumentationProvider"/>
 
-        <!-- 注册设置页面 -->
+        <!-- 注册Vue Kit设置组 -->
         <applicationConfigurable
                 parentId="tools"
-                instance="com.chu7.vuecomponentassistant.settings.VueComponentAssistantSettingsConfigurable"
-                id="com.chu7.vuecomponentassistant.settings.VueComponentAssistantSettingsConfigurable"
+                instance="com.chu7.vuecomponentassistant.settings.VueKitSettingsGroupConfigurable"
+                id="com.chu7.vuecomponentassistant.settings.VueKitSettingsGroupConfigurable"
                 displayName="Vue Kit"/>
+
+        <!-- 注册组件库管理设置页面 -->
+        <applicationConfigurable
+                parentId="com.chu7.vuecomponentassistant.settings.VueKitSettingsGroupConfigurable"
+                instance="com.chu7.vuecomponentassistant.settings.ComponentLibraryManagementSettingsConfigurable"
+                id="com.chu7.vuecomponentassistant.settings.ComponentLibraryManagementSettingsConfigurable"
+                displayName="组件库管理"/>
+
+        <!-- 注册组件库配置设置页面 -->
+        <applicationConfigurable
+                parentId="com.chu7.vuecomponentassistant.settings.VueKitSettingsGroupConfigurable"
+                instance="com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigSettingsConfigurable"
+                id="com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigSettingsConfigurable"
+                displayName="组件库配置"/>
+
+        <!-- 注册Vue Kit工具菜单组 -->
+        <group id="VueKit.Tools" text="Vue Kit" description="VueKit开发工具">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </group>
 
         <!-- 注册设置服务 -->
         <applicationService
@@ -81,6 +100,14 @@
         <!-- 注册本地缓存管理器服务 -->
         <applicationService
                 serviceImplementation="com.chu7.vuecomponentassistant.remote.cache.LocalCacheManager"/>
+
+        <!-- 注册组件库配置管理器服务 -->
+        <projectService
+                serviceImplementation="com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager"/>
+
+        <!-- 注册组件库配置启动活动 -->
+        <postStartupActivity
+                implementation="com.chu7.vuecomponentassistant.startup.ComponentLibraryStartupActivity"/>
     </extensions>
 
     <actions>
@@ -92,6 +119,9 @@
             <add-to-group group-id="EditorPopupMenu" anchor="first"/>
         </action>
 
+        <!-- VueKit 工具分隔符 -->
+        <separator id="VueKit.Separator.Before" add-to-group="ToolsMenu" anchor="last"/>
+        
         <!-- 注册组件库管理动作 -->
         <action id="ComponentLibrary.Management"
                 class="com.chu7.vuecomponentassistant.action.ComponentLibraryManagementAction"
@@ -107,6 +137,25 @@
                 description="浏览和下载官方组件库">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
+
+        <!-- 注册组件库配置动作 -->
+        <action id="ComponentLibrary.Config"
+                class="com.chu7.vuecomponentassistant.action.ComponentLibraryConfigAction"
+                text="⚙️ 组件库配置"
+                description="配置组件库启用/禁用状态">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+
+        <!-- 注册自定义组件库管理动作 -->
+        <action id="CustomLibrary.Management"
+                class="com.chu7.vuecomponentassistant.action.CustomLibraryManagementAction"
+                text="📚 自定义组件库管理"
+                description="管理自定义组件库和组件">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+
+        <!-- VueKit 工具分隔符 -->
+        <separator id="VueKit.Separator.After" add-to-group="ToolsMenu" anchor="last"/>
 
     </actions>
 

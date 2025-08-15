@@ -1,7 +1,7 @@
 <template>
     <div>
 
-  <el-select></el-select>
+<el-table></el-table>
     </div>
 </template>
 

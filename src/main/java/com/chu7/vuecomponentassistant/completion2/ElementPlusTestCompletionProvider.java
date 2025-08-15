@@ -191,12 +191,13 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
         for (ElementPlusComponent component : components) {
             if (count >= maxCount) break;
 
-            // 获取组件库显示名称
+            // 获取组件库显示名称和版本
             String libraryDisplayName = componentProvider.getComponentLibraryDisplayName(component.getName());
+            String libraryVersion = componentProvider.getComponentLibraryVersion(component.getName());
             
             // 创建组件补全元素
             LookupElementBuilder element = LookupElementBuilder.create(component.getName())
-                    .withTypeText(libraryDisplayName) // 直接显示组件库名称，不添加 "Component" 后缀
+                    .withTypeText(libraryDisplayName + " (" + libraryVersion + ")") // 显示组件库名称和真实版本号
                     .withTailText(" " + component.getDescription()) // 显示组件描述
                     .withIcon(ElementPlusIcons.COMPONENT_ICON) // 设置组件图标
                     .withInsertHandler((insertContext, item) -> {

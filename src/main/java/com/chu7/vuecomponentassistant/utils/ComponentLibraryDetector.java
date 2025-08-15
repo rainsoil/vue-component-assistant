@@ -34,6 +34,8 @@ public class ComponentLibraryDetector {
         ELEMENT_UI("element-ui", "Element UI"),
         ELEMENT_PLUS("element-plus", "Element Plus"),
         ANT_DESIGN_VUE("ant-design-vue", "Ant Design Vue"),
+        VUETIFY("vuetify", "Vuetify"),
+        QUASAR("quasar", "Quasar"),
         UNKNOWN("unknown", "未知组件库");
 
         private final String packageName;
@@ -183,6 +185,20 @@ public class ComponentLibraryDetector {
             return LibraryType.ANT_DESIGN_VUE;
         }
 
+        // 4. Vuetify
+        if (dependencies.has("vuetify")) {
+            String version = dependencies.get("vuetify").getAsString();
+            VueKitLogger.info(LOG, "    找到 vuetify: " + version);
+            return LibraryType.VUETIFY;
+        }
+
+        // 5. Quasar
+        if (dependencies.has("quasar")) {
+            String version = dependencies.get("quasar").getAsString();
+            VueKitLogger.info(LOG, "    找到 quasar: " + version);
+            return LibraryType.QUASAR;
+        }
+
         VueKitLogger.debug(LOG, "  在 " + dependencyType + " 中未找到支持的组件库");
         return LibraryType.UNKNOWN;
     }
@@ -239,6 +255,10 @@ public class ComponentLibraryDetector {
                 return "el-";
             case ANT_DESIGN_VUE:
                 return "a-";
+            case VUETIFY:
+                return "v-";
+            case QUASAR:
+                return "q-";
             default:
                 VueKitLogger.debug(LOG, "未知组件库类型: " + libraryType + ", 返回空前缀");
                 return "";
@@ -270,6 +290,10 @@ public class ComponentLibraryDetector {
                 return "https://element-plus.org/zh-CN/component/%s.html";
             case ANT_DESIGN_VUE:
                 return "https://antdv.com/components/%s-cn";
+            case VUETIFY:
+                return "https://vuetifyjs.com/en/components/%s/";
+            case QUASAR:
+                return "https://quasar.dev/vue-components/%s";
             default:
                 VueKitLogger.debug(LOG, "未知组件库类型: " + libraryType + ", 返回空文档模板");
                 return "";

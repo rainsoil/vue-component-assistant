@@ -693,6 +693,20 @@ public class CustomComponentLibraryManager {
         return "自定义组件库";
     }
     
+    /**
+     * 获取自定义组件库版本
+     * 
+     * @param componentName 组件名称
+     * @return 组件库版本号，如果不属于任何自定义库则返回null
+     */
+    public static String getCustomLibraryVersion(String componentName) {
+        CustomLibraryConfig config = getCustomLibraryForComponent(componentName);
+        if (config != null) {
+            return config.getVersion();
+        }
+        return null;
+    }
+    
     // ==================== 验证方法 ====================
     
     /**
