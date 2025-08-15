@@ -46,64 +46,64 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- 注册Vue代码补全贡献者 -->
-        <completion.contributor 
-            language="Vue" 
-            implementationClass="com.chu7.vuecomponentassistant.completion2.ElementPlusCompletionContributor"/>
-        
+        <completion.contributor
+                language="Vue"
+                implementationClass="com.chu7.vuecomponentassistant.completion2.ElementPlusCompletionContributor"/>
+
         <!-- 注册HTML代码补全贡献者 -->
-        <completion.contributor 
-            language="HTML" 
-            implementationClass="com.chu7.vuecomponentassistant.completion2.ElementPlusCompletionContributor"/>
-        
+        <completion.contributor
+                language="HTML"
+                implementationClass="com.chu7.vuecomponentassistant.completion2.ElementPlusCompletionContributor"/>
+
         <!-- 注册XML文档提供者 -->
         <lang.documentationProvider language="XML"
-            implementationClass="com.chu7.vuecomponentassistant.documentation.ComponentDocumentationProvider"/>
-        
+                                    implementationClass="com.chu7.vuecomponentassistant.documentation.ComponentDocumentationProvider"/>
+
         <!-- 注册设置页面 -->
-        <applicationConfigurable 
-            parentId="tools" 
-            instance="com.chu7.vuecomponentassistant.settings.VueComponentAssistantSettingsConfigurable"
-            id="com.chu7.vuecomponentassistant.settings.VueComponentAssistantSettingsConfigurable"
-            displayName="Vue Kit"/>
-        
+        <applicationConfigurable
+                parentId="tools"
+                instance="com.chu7.vuecomponentassistant.settings.VueComponentAssistantSettingsConfigurable"
+                id="com.chu7.vuecomponentassistant.settings.VueComponentAssistantSettingsConfigurable"
+                displayName="Vue Kit"/>
+
         <!-- 注册设置服务 -->
-        <applicationService 
-            serviceImplementation="com.chu7.vuecomponentassistant.settings.PluginSettings"/>
-        
+        <applicationService
+                serviceImplementation="com.chu7.vuecomponentassistant.settings.PluginSettings"/>
+
         <!-- 注册远程组件库管理器服务 -->
-        <applicationService 
-            serviceImplementation="com.chu7.vuecomponentassistant.remote.ComponentLibraryManager"/>
-        
+        <applicationService
+                serviceImplementation="com.chu7.vuecomponentassistant.remote.ComponentLibraryManager"/>
+
         <!-- 注册官方组件库管理器服务 -->
-        <applicationService 
-            serviceImplementation="com.chu7.vuecomponentassistant.remote.OfficialLibraryManager"/>
-        
+        <applicationService
+                serviceImplementation="com.chu7.vuecomponentassistant.remote.OfficialLibraryManager"/>
+
         <!-- 注册本地缓存管理器服务 -->
-        <applicationService 
-            serviceImplementation="com.chu7.vuecomponentassistant.remote.cache.LocalCacheManager"/>
+        <applicationService
+                serviceImplementation="com.chu7.vuecomponentassistant.remote.cache.LocalCacheManager"/>
     </extensions>
 
     <actions>
         <!-- 注册Vue Component文档动作 -->
-        <action id="Component.Documentation" 
-                class="com.chu7.vuecomponentassistant.action.ComponentDocumentationAction" 
-                text="📚 查看组件文档" 
+        <action id="Component.Documentation"
+                class="com.chu7.vuecomponentassistant.action.ComponentDocumentationAction"
+                text="📚 查看组件文档"
                 description="查看当前组件的详细文档信息">
             <add-to-group group-id="EditorPopupMenu" anchor="first"/>
         </action>
-        
+
         <!-- 注册组件库管理动作 -->
-        <action id="ComponentLibrary.Management" 
-                class="com.chu7.vuecomponentassistant.action.ComponentLibraryManagementAction" 
-                text="🌐 组件库管理" 
+        <action id="ComponentLibrary.Management"
+                class="com.chu7.vuecomponentassistant.action.ComponentLibraryManagementAction"
+                text="🌐 组件库管理"
                 description="管理VueKit组件库">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
-        
+
         <!-- 注册官方组件库市场动作 -->
-        <action id="OfficialLibrary.Market" 
-                class="com.chu7.vuecomponentassistant.action.OfficialLibraryMarketAction" 
-                text="📦 官方组件库市场" 
+        <action id="OfficialLibrary.Market"
+                class="com.chu7.vuecomponentassistant.action.OfficialLibraryMarketAction"
+                text="📦 官方组件库市场"
                 description="浏览和下载官方组件库">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
