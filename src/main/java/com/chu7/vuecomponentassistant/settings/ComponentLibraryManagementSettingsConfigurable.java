@@ -3,6 +3,11 @@ package com.chu7.vuecomponentassistant.settings;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.JBUI;
+import com.chu7.vuecomponentassistant.settings.PluginSettings;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,14 +21,26 @@ import java.awt.event.ActionListener;
  * 
  * 功能说明：
  * - 作为 Vue Kit 设置组下的子项
- * - 包含所有现有的 VueKit 功能
+ * - 上半部分：全局功能设置（补全、文档、性能优化）
+ * - 下半部分：组件库管理功能
  * - 集成到 Settings/Tools/Vue Kit/组件库管理 目录下
  * 
  * @author VueKit Team
- * @version 3.0.0
+ * @version 3.2.0
  */
 public class ComponentLibraryManagementSettingsConfigurable implements Configurable {
 
+    // 全局功能设置组件
+    private JBCheckBox enableComponentCompletion;
+    private JBCheckBox enableAttributeCompletion;
+    private JBCheckBox enableEventCompletion;
+    private JBCheckBox enableSlotCompletion;
+    private JBCheckBox enableHoverDocumentation;
+    private JBCheckBox enableRightClickDocumentation;
+    private JBCheckBox enableCaching;
+    private JBCheckBox enableDebugMode;
+    
+    // 组件库管理组件
     private JPanel mainPanel;
     private JButton componentLibraryManagementButton;
     private JButton officialLibraryMarketButton;
@@ -37,24 +54,103 @@ public class ComponentLibraryManagementSettingsConfigurable implements Configura
     @Override
     public @Nullable JComponent createComponent() {
         if (mainPanel == null) {
+            // 初始化全局功能设置组件
+            initializeGlobalSettingsComponents();
+            
             mainPanel = new JPanel(new BorderLayout());
             mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
             
-            // 创建标题面板
-            JPanel titlePanel = createTitlePanel();
-            mainPanel.add(titlePanel, BorderLayout.NORTH);
+            // 创建全局功能设置面板（上半部分）
+            JPanel globalSettingsPanel = createGlobalSettingsPanel();
+            mainPanel.add(globalSettingsPanel, BorderLayout.NORTH);
             
-            // 创建功能按钮面板
-            JPanel buttonsPanel = createButtonsPanel();
-            mainPanel.add(buttonsPanel, BorderLayout.CENTER);
+            // 创建分隔线
+            JSeparator separator = new JSeparator();
+            separator.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+            mainPanel.add(separator, BorderLayout.CENTER);
             
-            // 创建说明面板
-            JPanel descriptionPanel = createDescriptionPanel();
-            mainPanel.add(descriptionPanel, BorderLayout.SOUTH);
+            // 创建组件库管理面板（下半部分）
+            JPanel libraryManagementPanel = createLibraryManagementPanel();
+            mainPanel.add(libraryManagementPanel, BorderLayout.SOUTH);
         }
         return mainPanel;
     }
+    
+    private void initializeGlobalSettingsComponents() {
+        // 补全功能设置
+        enableComponentCompletion = new JBCheckBox("启用组件补全", true);
+        enableAttributeCompletion = new JBCheckBox("启用属性补全", true);
+        enableEventCompletion = new JBCheckBox("启用事件补全", true);
+        enableSlotCompletion = new JBCheckBox("启用插槽补全", true);
+        
+        // 文档功能设置
+        enableHoverDocumentation = new JBCheckBox("启用悬停文档", true);
+        enableRightClickDocumentation = new JBCheckBox("启用右键文档", true);
+        
+        // 性能设置
+        enableCaching = new JBCheckBox("启用缓存优化", true);
+        enableDebugMode = new JBCheckBox("启用调试模式", false);
+    }
+    
+    private JPanel createGlobalSettingsPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder("🌐 全局功能设置"),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+        
+        // 创建功能设置表单
+        JPanel settingsPanel = FormBuilder.createFormBuilder()
+            .addComponent(createSectionLabel("🎯 补全功能设置"))
+            .addComponent(enableComponentCompletion)
+            .addComponent(enableAttributeCompletion)
+            .addComponent(enableEventCompletion)
+            .addComponent(enableSlotCompletion)
+            .addSeparator()
+            .addComponent(createSectionLabel("📖 文档功能设置"))
+            .addComponent(enableHoverDocumentation)
+            .addComponent(enableRightClickDocumentation)
+            .addSeparator()
+            .addComponent(createSectionLabel("⚡ 性能优化设置"))
+            .addComponent(enableCaching)
+            .addComponent(enableDebugMode)
+            .addComponentFillVertically(new JPanel(), 0)
+            .getPanel();
+        
+        panel.add(settingsPanel, BorderLayout.CENTER);
+        return panel;
+    }
+    
 
+    
+    private JBLabel createSectionLabel(String text) {
+        JBLabel label = new JBLabel(text);
+        label.setFont(JBUI.Fonts.label(12));
+        return label;
+    }
+    
+    private JPanel createLibraryManagementPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder("📚 组件库管理"),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+        
+        // 创建标题面板
+        JPanel titlePanel = createTitlePanel();
+        panel.add(titlePanel, BorderLayout.NORTH);
+        
+        // 创建功能按钮面板
+        JPanel buttonsPanel = createButtonsPanel();
+        panel.add(buttonsPanel, BorderLayout.CENTER);
+        
+        // 创建说明面板
+        JPanel descriptionPanel = createDescriptionPanel();
+        panel.add(descriptionPanel, BorderLayout.SOUTH);
+        
+        return panel;
+    }
+    
     private JPanel createTitlePanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JLabel titleLabel = new JLabel("组件库管理");
@@ -198,8 +294,6 @@ public class ComponentLibraryManagementSettingsConfigurable implements Configura
         }
     }
 
-
-
     private void showError(String title, String message) {
         JOptionPane.showMessageDialog(mainPanel, message, title, JOptionPane.ERROR_MESSAGE);
     }
@@ -212,19 +306,48 @@ public class ComponentLibraryManagementSettingsConfigurable implements Configura
         return null;
     }
 
+
+
     @Override
     public boolean isModified() {
-        return false; // 这个配置页面不需要保存状态
+        // 检查全局功能设置是否有变更
+        PluginSettings settings = PluginSettings.getInstance();
+        return enableComponentCompletion.isSelected() != settings.isEnableComponentCompletion() ||
+               enableAttributeCompletion.isSelected() != settings.isEnableAttributeCompletion() ||
+               enableEventCompletion.isSelected() != settings.isEnableEventCompletion() ||
+               enableSlotCompletion.isSelected() != settings.isEnableSlotCompletion() ||
+               enableHoverDocumentation.isSelected() != settings.isEnableHoverDocumentation() ||
+               enableRightClickDocumentation.isSelected() != settings.isEnableRightClickDocumentation() ||
+               enableCaching.isSelected() != settings.isEnableCaching() ||
+               enableDebugMode.isSelected() != settings.isEnableDebugMode();
     }
 
     @Override
     public void apply() {
-        // 不需要应用更改
+        // 保存全局功能设置到 PluginSettings
+        PluginSettings settings = PluginSettings.getInstance();
+        settings.setEnableComponentCompletion(enableComponentCompletion.isSelected());
+        settings.setEnableAttributeCompletion(enableAttributeCompletion.isSelected());
+        settings.setEnableEventCompletion(enableEventCompletion.isSelected());
+        settings.setEnableSlotCompletion(enableSlotCompletion.isSelected());
+        settings.setEnableHoverDocumentation(enableHoverDocumentation.isSelected());
+        settings.setEnableRightClickDocumentation(enableRightClickDocumentation.isSelected());
+        settings.setEnableCaching(enableCaching.isSelected());
+        settings.setEnableDebugMode(enableDebugMode.isSelected());
     }
 
     @Override
     public void reset() {
-        // 不需要重置
+        // 从 PluginSettings 加载全局功能设置
+        PluginSettings settings = PluginSettings.getInstance();
+        enableComponentCompletion.setSelected(settings.isEnableComponentCompletion());
+        enableAttributeCompletion.setSelected(settings.isEnableAttributeCompletion());
+        enableEventCompletion.setSelected(settings.isEnableEventCompletion());
+        enableSlotCompletion.setSelected(settings.isEnableSlotCompletion());
+        enableHoverDocumentation.setSelected(settings.isEnableHoverDocumentation());
+        enableRightClickDocumentation.setSelected(settings.isEnableRightClickDocumentation());
+        enableCaching.setSelected(settings.isEnableCaching());
+        enableDebugMode.setSelected(settings.isEnableDebugMode());
     }
 
     @Override

@@ -3,6 +3,12 @@ package com.chu7.vuecomponentassistant.settings;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.JBUI;
+import com.chu7.vuecomponentassistant.settings.PluginSettings;
+import com.chu7.vuecomponentassistant.settings.ProjectSettingsManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,19 +22,42 @@ import java.awt.event.ActionListener;
  * 
  * 功能说明：
  * - 作为 Vue Kit 设置的主入口
- * - 提供组件库管理和组件库配置两个主要功能
+ * - 包含全局功能设置、项目级功能设置和组件库管理
  * - 集成到 Settings/Tools/Vue Kit 目录下
  * 
  * @author VueKit Team
- * @version 3.0.0
+ * @version 4.0.0
  */
 public class VueKitSettingsGroupConfigurable implements Configurable {
 
-    private JPanel mainPanel;
+    // 全局功能设置组件
+    private JBCheckBox globalEnableComponentCompletion;
+    private JBCheckBox globalEnableAttributeCompletion;
+    private JBCheckBox globalEnableEventCompletion;
+    private JBCheckBox globalEnableSlotCompletion;
+    private JBCheckBox globalEnableHoverDocumentation;
+    private JBCheckBox globalEnableRightClickDocumentation;
+    
+    // 项目级功能设置组件
+    private JBCheckBox projectEnableComponentCompletion;
+    private JBCheckBox projectEnableAttributeCompletion;
+    private JBCheckBox projectEnableEventCompletion;
+    private JBCheckBox projectEnableSlotCompletion;
+    private JBCheckBox projectEnableHoverDocumentation;
+    private JBCheckBox projectEnableRightClickDocumentation;
+    
+    // 组件库管理组件
     private JButton componentLibraryManagementButton;
-    private JButton componentLibraryConfigButton;
     private JButton officialLibraryMarketButton;
     private JButton customLibraryManagementButton;
+    
+    // 项目组件库配置组件
+    private JPanel componentLibraryConfigPanel;
+    private java.util.Map<String, JBCheckBox> libraryCheckBoxes;
+    
+    // 主面板
+    private JPanel mainPanel;
+    private Project currentProject;
 
     @Override
     public @Nls(capitalization = Nls.Capitalization.Title) String getDisplayName() {
@@ -38,134 +67,329 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
     @Override
     public @Nullable JComponent createComponent() {
         if (mainPanel == null) {
+            currentProject = getCurrentProject();
+            
+            // 初始化所有组件
+            initializeGlobalSettingsComponents();
+            initializeProjectSettingsComponents();
+            initializeLibraryManagementComponents();
+            
             mainPanel = new JPanel(new BorderLayout());
             mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
             
-            // 创建标题面板
-            JPanel titlePanel = createTitlePanel();
-            mainPanel.add(titlePanel, BorderLayout.NORTH);
-            
-            // 创建功能按钮面板
-            JPanel buttonsPanel = createButtonsPanel();
-            mainPanel.add(buttonsPanel, BorderLayout.CENTER);
-            
-            // 创建说明面板
-            JPanel descriptionPanel = createDescriptionPanel();
-            mainPanel.add(descriptionPanel, BorderLayout.SOUTH);
+            // 创建滚动面板
+            JScrollPane scrollPane = new JScrollPane(createContentPanel());
+            scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+            mainPanel.add(scrollPane, BorderLayout.CENTER);
         }
         return mainPanel;
     }
-
-    private JPanel createTitlePanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JLabel titleLabel = new JLabel("VueKit 开发工具集");
-        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 18f));
-        titleLabel.setForeground(new Color(51, 51, 51));
-        panel.add(titleLabel);
-        return panel;
+    
+    private JPanel createContentPanel() {
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        
+        // 组件库管理卡片（最上面）
+        contentPanel.add(createLibraryManagementCard());
+        contentPanel.add(Box.createVerticalStrut(15));
+        
+        // 项目组件库配置卡片
+        contentPanel.add(createComponentLibraryConfigCard());
+        contentPanel.add(Box.createVerticalStrut(15));
+        
+        // 全局功能设置卡片
+        contentPanel.add(createGlobalSettingsCard());
+        contentPanel.add(Box.createVerticalStrut(15));
+        
+        // 项目级功能设置卡片
+        contentPanel.add(createProjectSettingsCard());
+        
+        return contentPanel;
     }
-
-    private JPanel createButtonsPanel() {
-        JPanel panel = new JPanel(new GridLayout(2, 2, 15, 15));
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+    
+    private JPanel createGlobalSettingsCard() {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder("🌐 全局功能设置（默认设置）"),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
         
-        // 组件库管理按钮
-        componentLibraryManagementButton = createStyledButton("🌐 组件库管理", 
-            "管理VueKit组件库，包括启用/禁用、同步等功能");
-        componentLibraryManagementButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                openComponentLibraryManagement();
-            }
-        });
+        // 创建两列布局
+        JPanel settingsPanel = new JPanel(new GridLayout(1, 2, 20, 0));
         
-        // 官方组件库市场按钮
-        officialLibraryMarketButton = createStyledButton("📦 官方组件库市场", 
-            "浏览和下载官方组件库");
-        officialLibraryMarketButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                openOfficialLibraryMarket();
-            }
-        });
+        // 左列
+        JPanel leftPanel = FormBuilder.createFormBuilder()
+            .addComponent(createSectionLabel("🎯 补全功能设置"))
+            .addComponent(globalEnableComponentCompletion)
+            .addComponent(globalEnableAttributeCompletion)
+            .addComponent(globalEnableEventCompletion)
+            .addComponent(globalEnableSlotCompletion)
+            .addComponentFillVertically(new JPanel(), 0)
+            .getPanel();
         
-        // 组件库配置按钮
-        componentLibraryConfigButton = createStyledButton("⚙️ 组件库配置", 
-            "配置组件库启用/禁用状态");
-        componentLibraryConfigButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                openComponentLibraryConfig();
-            }
-        });
+        // 右列
+        JPanel rightPanel = FormBuilder.createFormBuilder()
+            .addComponent(createSectionLabel("📖 文档功能设置"))
+            .addComponent(globalEnableHoverDocumentation)
+            .addComponent(globalEnableRightClickDocumentation)
+            .addComponentFillVertically(new JPanel(), 0)
+            .getPanel();
         
-        // 自定义组件库管理按钮
-        customLibraryManagementButton = createStyledButton("📚 自定义组件库管理", 
-            "管理自定义组件库和组件");
-        customLibraryManagementButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                openCustomLibraryManagement();
-            }
-        });
+        settingsPanel.add(leftPanel);
+        settingsPanel.add(rightPanel);
         
-        panel.add(componentLibraryManagementButton);
-        panel.add(officialLibraryMarketButton);
-        panel.add(componentLibraryConfigButton);
-        panel.add(customLibraryManagementButton);
-        
-        return panel;
+        card.add(settingsPanel, BorderLayout.CENTER);
+        return card;
     }
-
+    
+    private JPanel createProjectSettingsCard() {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder("⚙️ 项目级功能设置（覆盖全局设置）"),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+        
+        // 创建两列布局
+        JPanel settingsPanel = new JPanel(new GridLayout(1, 2, 20, 0));
+        
+        // 左列
+        JPanel leftPanel = FormBuilder.createFormBuilder()
+            .addComponent(createSectionLabel("🎯 补全功能设置"))
+            .addComponent(projectEnableComponentCompletion)
+            .addComponent(projectEnableAttributeCompletion)
+            .addComponent(projectEnableEventCompletion)
+            .addComponent(projectEnableSlotCompletion)
+            .addComponentFillVertically(new JPanel(), 0)
+            .getPanel();
+        
+        // 右列
+        JPanel rightPanel = FormBuilder.createFormBuilder()
+            .addComponent(createSectionLabel("📖 文档功能设置"))
+            .addComponent(projectEnableHoverDocumentation)
+            .addComponent(projectEnableRightClickDocumentation)
+            .addComponentFillVertically(new JPanel(), 0)
+            .getPanel();
+        
+        settingsPanel.add(leftPanel);
+        settingsPanel.add(rightPanel);
+        
+        // 添加说明标签
+        JBLabel noteLabel = new JBLabel("说明：☑️=项目级开启 ☐=项目级关闭 ⚪=使用全局设置");
+        noteLabel.setForeground(new Color(128, 128, 128));
+        noteLabel.setFont(noteLabel.getFont().deriveFont(Font.ITALIC, 11f));
+        
+        JPanel notePanel = new JPanel(new BorderLayout());
+        notePanel.add(noteLabel, BorderLayout.CENTER);
+        notePanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+        
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.add(settingsPanel, BorderLayout.CENTER);
+        mainPanel.add(notePanel, BorderLayout.SOUTH);
+        
+        card.add(mainPanel, BorderLayout.CENTER);
+        return card;
+    }
+    
+    private JPanel createLibraryManagementCard() {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder("📚 组件库管理"),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+        
+        // 按钮面板
+        JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        buttonsPanel.add(componentLibraryManagementButton);
+        buttonsPanel.add(officialLibraryMarketButton);
+        buttonsPanel.add(customLibraryManagementButton);
+        
+        // 说明标签
+        JBLabel noteLabel = new JBLabel("说明：点击按钮打开对应的管理界面，进行组件库的下载、配置、删除等操作");
+        noteLabel.setForeground(new Color(128, 128, 128));
+        noteLabel.setFont(noteLabel.getFont().deriveFont(Font.ITALIC, 11f));
+        
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.add(buttonsPanel, BorderLayout.CENTER);
+        mainPanel.add(noteLabel, BorderLayout.SOUTH);
+        
+        card.add(mainPanel, BorderLayout.CENTER);
+        return card;
+    }
+    
+    private JPanel createComponentLibraryConfigCard() {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder("🗂️ 项目组件库配置"),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+        
+        componentLibraryConfigPanel = new JPanel();
+        componentLibraryConfigPanel.setLayout(new BoxLayout(componentLibraryConfigPanel, BoxLayout.Y_AXIS));
+        
+        // 说明标签
+        JBLabel noteLabel = new JBLabel("说明：勾选启用该组件库的补全和文档功能，取消勾选则禁用");
+        noteLabel.setForeground(new Color(128, 128, 128));
+        noteLabel.setFont(noteLabel.getFont().deriveFont(Font.ITALIC, 11f));
+        
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.add(componentLibraryConfigPanel, BorderLayout.CENTER);
+        mainPanel.add(noteLabel, BorderLayout.SOUTH);
+        
+        card.add(mainPanel, BorderLayout.CENTER);
+        
+        // 加载组件库配置
+        loadComponentLibraryConfig();
+        
+        return card;
+    }
+    
+    private void initializeGlobalSettingsComponents() {
+        globalEnableComponentCompletion = new JBCheckBox("启用组件补全", true);
+        globalEnableAttributeCompletion = new JBCheckBox("启用属性补全", true);
+        globalEnableEventCompletion = new JBCheckBox("启用事件补全", true);
+        globalEnableSlotCompletion = new JBCheckBox("启用插槽补全", true);
+        globalEnableHoverDocumentation = new JBCheckBox("启用悬停文档", true);
+        globalEnableRightClickDocumentation = new JBCheckBox("启用右键文档", true);
+    }
+    
+    private void initializeProjectSettingsComponents() {
+        projectEnableComponentCompletion = new JBCheckBox("启用组件补全", true);
+        projectEnableAttributeCompletion = new JBCheckBox("启用属性补全", true);
+        projectEnableEventCompletion = new JBCheckBox("启用事件补全", true);
+        projectEnableSlotCompletion = new JBCheckBox("启用插槽补全", true);
+        projectEnableHoverDocumentation = new JBCheckBox("启用悬停文档", true);
+        projectEnableRightClickDocumentation = new JBCheckBox("启用右键文档", true);
+    }
+    
+    private void initializeLibraryManagementComponents() {
+        componentLibraryManagementButton = createStyledButton("管理组件库", "管理VueKit组件库");
+        officialLibraryMarketButton = createStyledButton("官方组件库", "浏览和下载官方组件库");
+        customLibraryManagementButton = createStyledButton("自定义导入组件库", "管理自定义组件库");
+        
+        componentLibraryManagementButton.addActionListener(e -> openComponentLibraryManagement());
+        officialLibraryMarketButton.addActionListener(e -> openOfficialLibraryMarket());
+        customLibraryManagementButton.addActionListener(e -> openCustomLibraryManagement());
+    }
+    
     private JButton createStyledButton(String text, String tooltip) {
         JButton button = new JButton(text);
         button.setToolTipText(tooltip);
-        button.setFont(button.getFont().deriveFont(Font.PLAIN, 14f));
-        button.setPreferredSize(new Dimension(200, 80));
+        button.setFont(button.getFont().deriveFont(Font.PLAIN, 12f));
+        button.setPreferredSize(new Dimension(100, 30));
         button.setBackground(new Color(240, 248, 255));
         button.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(100, 149, 237), 2),
-            BorderFactory.createEmptyBorder(10, 15, 10, 15)
+            BorderFactory.createLineBorder(new Color(100, 149, 237), 1),
+            BorderFactory.createEmptyBorder(5, 10, 5, 10)
         ));
         button.setFocusPainted(false);
         return button;
     }
-
-    private JPanel createDescriptionPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("功能说明"));
-        
-        JTextArea descriptionArea = new JTextArea();
-        descriptionArea.setText(
-            "VueKit 是一个专为 Vue.js 开发者设计的 IntelliJ IDEA 插件，提供以下核心功能：\n\n" +
-            "• 智能组件补全：支持 Element Plus、Element UI、Ant Design Vue 等主流组件库\n" +
-            "• 实时文档显示：悬停或选择时显示详细的组件文档和使用示例\n" +
-            "• 多库支持：自动检测项目中的组件库，支持手动配置\n" +
-            "• 自定义组件库：支持导入和管理自定义组件库\n" +
-            "• 远程管理：从官方市场下载和管理组件库\n\n" +
-            "点击上方按钮访问相应功能。"
-        );
-        descriptionArea.setEditable(false);
-        descriptionArea.setLineWrap(true);
-        descriptionArea.setWrapStyleWord(true);
-        descriptionArea.setBackground(panel.getBackground());
-        descriptionArea.setFont(descriptionArea.getFont().deriveFont(Font.PLAIN, 12f));
-        
-        JScrollPane scrollPane = new JScrollPane(descriptionArea);
-        scrollPane.setPreferredSize(new Dimension(600, 150));
-        panel.add(scrollPane, BorderLayout.CENTER);
-        
-        return panel;
+    
+    private JBLabel createSectionLabel(String text) {
+        JBLabel label = new JBLabel(text);
+        label.setFont(JBUI.Fonts.label(12));
+        return label;
     }
-
+    
+    private void loadComponentLibraryConfig() {
+        if (currentProject == null) {
+            componentLibraryConfigPanel.add(new JBLabel("未找到项目"));
+            return;
+        }
+        
+        try {
+            libraryCheckBoxes = new java.util.HashMap<>();
+            
+            // 获取已安装的组件库列表
+            com.chu7.vuecomponentassistant.remote.ComponentLibraryManager libraryManager = 
+                new com.chu7.vuecomponentassistant.remote.ComponentLibraryManager();
+            java.util.List<com.chu7.vuecomponentassistant.remote.model.ComponentLibrary> installedLibraries = 
+                libraryManager.getAllLibraries();
+            
+            if (installedLibraries == null || installedLibraries.isEmpty()) {
+                componentLibraryConfigPanel.add(new JBLabel("暂无已安装的组件库"));
+                return;
+            }
+            
+            // 获取当前项目的组件库配置
+            com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager configManager = 
+                com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager.getInstance(currentProject);
+            java.util.Set<com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType> enabledLibraries = 
+                configManager.getEnabledLibraries(currentProject);
+            
+            // 为每个已安装的组件库创建复选框
+            for (com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library : installedLibraries) {
+                String displayText = library.getName();
+                if (library.getVersion() != null && !library.getVersion().trim().isEmpty()) {
+                    displayText += " (" + library.getVersion() + ")";
+                }
+                
+                JBCheckBox checkBox = new JBCheckBox(displayText);
+                checkBox.setFont(checkBox.getFont().deriveFont(Font.PLAIN, 12f));
+                checkBox.setToolTipText("版本: " + library.getVersion() + 
+                    (library.getDescription() != null ? "\n描述: " + library.getDescription() : ""));
+                
+                // 检查该组件库是否在当前项目中启用
+                com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType libraryType = 
+                    getLibraryTypeByName(library.getName());
+                if (libraryType != null) {
+                    boolean isEnabled = enabledLibraries.contains(libraryType);
+                    checkBox.setSelected(isEnabled);
+                } else {
+                    checkBox.setSelected(false); // 默认不启用
+                }
+                
+                libraryCheckBoxes.put(library.getName(), checkBox);
+                componentLibraryConfigPanel.add(checkBox);
+            }
+            
+        } catch (Exception e) {
+            componentLibraryConfigPanel.add(new JBLabel("加载组件库配置失败: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * 根据组件库名称获取对应的 LibraryType
+     * 
+     * @param libraryName 组件库名称
+     * @return 对应的 LibraryType，如果找不到则返回 null
+     */
+    private com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType getLibraryTypeByName(String libraryName) {
+        if (libraryName == null || libraryName.trim().isEmpty()) {
+            return null;
+        }
+        
+        // 移除版本号部分，只保留组件库名称
+        String cleanName = libraryName.replaceAll("\\s*\\([^)]*\\)\\s*$", "").trim();
+        
+        // 映射组件库名称到 LibraryType
+        switch (cleanName.toLowerCase()) {
+            case "element plus":
+            case "element-plus":
+                return com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType.ELEMENT_PLUS;
+            case "element ui":
+            case "element-ui":
+                return com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType.ELEMENT_UI;
+            case "ant design vue":
+            case "ant-design-vue":
+                return com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE;
+            case "vuetify":
+                return com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType.VUETIFY;
+            case "quasar":
+                return com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType.QUASAR;
+            default:
+                return null;
+        }
+    }
+    
     private void openComponentLibraryManagement() {
         try {
-            // 直接打开组件库管理对话框
-            Project currentProject = getCurrentProject();
             if (currentProject != null) {
                 com.chu7.vuecomponentassistant.ui.ComponentLibraryManagementDialog dialog = 
                     new com.chu7.vuecomponentassistant.ui.ComponentLibraryManagementDialog(currentProject);
                 dialog.show();
+                // 对话框关闭后刷新组件库配置
+                refreshComponentLibraryConfig();
             } else {
                 showError("项目未找到", "请确保当前有打开的项目");
             }
@@ -176,14 +400,14 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
 
     private void openOfficialLibraryMarket() {
         try {
-            // 直接打开官方组件库市场对话框
-            Project currentProject = getCurrentProject();
             if (currentProject != null) {
                 com.chu7.vuecomponentassistant.remote.ComponentLibraryManager libraryManager = 
                     new com.chu7.vuecomponentassistant.remote.ComponentLibraryManager();
                 com.chu7.vuecomponentassistant.ui.OfficialLibraryMarketDialog dialog = 
                     new com.chu7.vuecomponentassistant.ui.OfficialLibraryMarketDialog(currentProject, libraryManager);
                 dialog.show();
+                // 对话框关闭后刷新组件库配置
+                refreshComponentLibraryConfig();
             } else {
                 showError("项目未找到", "请确保当前有打开的项目");
             }
@@ -192,33 +416,16 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
         }
     }
 
-    private void openComponentLibraryConfig() {
-        try {
-            // 获取当前项目
-            Project currentProject = getCurrentProject();
-            if (currentProject != null) {
-                // 打开组件库配置对话框
-                com.chu7.vuecomponentassistant.ui.ComponentLibraryConfigDialog dialog = 
-                    new com.chu7.vuecomponentassistant.ui.ComponentLibraryConfigDialog(currentProject);
-                dialog.show();
-            } else {
-                showError("项目未找到", "请确保当前有打开的项目");
-            }
-        } catch (Exception e) {
-            showError("打开组件库配置失败", e.getMessage());
-        }
-    }
-
     private void openCustomLibraryManagement() {
         try {
-            // 使用自定义组件库上传对话框作为替代
-            Project currentProject = getCurrentProject();
             if (currentProject != null) {
                 com.chu7.vuecomponentassistant.remote.ComponentLibraryManager libraryManager = 
                     new com.chu7.vuecomponentassistant.remote.ComponentLibraryManager();
                 com.chu7.vuecomponentassistant.ui.CustomLibraryUploadDialog dialog = 
                     new com.chu7.vuecomponentassistant.ui.CustomLibraryUploadDialog(currentProject, libraryManager);
                 dialog.show();
+                // 对话框关闭后刷新组件库配置
+                refreshComponentLibraryConfig();
             } else {
                 showError("项目未找到", "请确保当前有打开的项目");
             }
@@ -226,11 +433,23 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
             showError("打开自定义组件库管理失败", e.getMessage());
         }
     }
+    
+    /**
+     * 刷新组件库配置
+     */
+    private void refreshComponentLibraryConfig() {
+        if (componentLibraryConfigPanel != null) {
+            componentLibraryConfigPanel.removeAll();
+            loadComponentLibraryConfig();
+            componentLibraryConfigPanel.revalidate();
+            componentLibraryConfigPanel.repaint();
+        }
+    }
 
     private Project getCurrentProject() {
         Project[] projects = ProjectManager.getInstance().getOpenProjects();
         if (projects.length > 0) {
-            return projects[0]; // 返回第一个打开的项目
+            return projects[0];
         }
         return null;
     }
@@ -241,22 +460,148 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
 
     @Override
     public boolean isModified() {
-        return false; // 这个配置页面不需要保存状态
+        // 检查全局功能设置是否有变更
+        PluginSettings globalSettings = PluginSettings.getInstance();
+        boolean globalModified = globalEnableComponentCompletion.isSelected() != globalSettings.isEnableComponentCompletion() ||
+                globalEnableAttributeCompletion.isSelected() != globalSettings.isEnableAttributeCompletion() ||
+                globalEnableEventCompletion.isSelected() != globalSettings.isEnableEventCompletion() ||
+                globalEnableSlotCompletion.isSelected() != globalSettings.isEnableSlotCompletion() ||
+                globalEnableHoverDocumentation.isSelected() != globalSettings.isEnableHoverDocumentation() ||
+                globalEnableRightClickDocumentation.isSelected() != globalSettings.isEnableRightClickDocumentation();
+        
+        // 检查项目级功能设置是否有变更
+        boolean projectModified = false;
+        if (currentProject != null) {
+            ProjectSettingsManager projectSettingsManager = currentProject.getService(ProjectSettingsManager.class);
+            ProjectSettingsManager.ProjectSettings projectSettings = projectSettingsManager.getProjectSettings(currentProject);
+            projectModified = projectEnableComponentCompletion.isSelected() != projectSettings.isEnableComponentCompletion() ||
+                    projectEnableAttributeCompletion.isSelected() != projectSettings.isEnableAttributeCompletion() ||
+                    projectEnableEventCompletion.isSelected() != projectSettings.isEnableEventCompletion() ||
+                    projectEnableSlotCompletion.isSelected() != projectSettings.isEnableSlotCompletion() ||
+                    projectEnableHoverDocumentation.isSelected() != projectSettings.isEnableHoverDocumentation() ||
+                    projectEnableRightClickDocumentation.isSelected() != projectSettings.isEnableRightClickDocumentation();
+        }
+        
+        // 检查组件库配置是否有变更
+        boolean libraryModified = false;
+        if (libraryCheckBoxes != null && currentProject != null) {
+            com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager configManager = 
+                com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager.getInstance(currentProject);
+            java.util.Set<com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType> savedEnabledLibraries = 
+                configManager.getEnabledLibraries(currentProject);
+            java.util.Set<com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType> currentEnabledLibraries = 
+                new java.util.HashSet<>();
+            
+            for (java.util.Map.Entry<String, JBCheckBox> entry : libraryCheckBoxes.entrySet()) {
+                String libraryName = entry.getKey();
+                JBCheckBox checkBox = entry.getValue();
+                
+                if (checkBox.isSelected()) {
+                    com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType libraryType = 
+                        getLibraryTypeByName(libraryName);
+                    if (libraryType != null) {
+                        currentEnabledLibraries.add(libraryType);
+                    }
+                }
+            }
+            
+            // 比较当前状态与保存的状态
+            libraryModified = !savedEnabledLibraries.equals(currentEnabledLibraries);
+        }
+        
+        return globalModified || projectModified || libraryModified;
     }
 
     @Override
     public void apply() {
-        // 不需要应用更改
+        // 保存全局功能设置
+        PluginSettings globalSettings = PluginSettings.getInstance();
+        globalSettings.setEnableComponentCompletion(globalEnableComponentCompletion.isSelected());
+        globalSettings.setEnableAttributeCompletion(globalEnableAttributeCompletion.isSelected());
+        globalSettings.setEnableEventCompletion(globalEnableEventCompletion.isSelected());
+        globalSettings.setEnableSlotCompletion(globalEnableSlotCompletion.isSelected());
+        globalSettings.setEnableHoverDocumentation(globalEnableHoverDocumentation.isSelected());
+        globalSettings.setEnableRightClickDocumentation(globalEnableRightClickDocumentation.isSelected());
+        
+        // 保存项目级功能设置
+        if (currentProject != null) {
+            ProjectSettingsManager projectSettingsManager = currentProject.getService(ProjectSettingsManager.class);
+            ProjectSettingsManager.ProjectSettings projectSettings = projectSettingsManager.getProjectSettings(currentProject);
+            projectSettings.setEnableComponentCompletion(projectEnableComponentCompletion.isSelected());
+            projectSettings.setEnableAttributeCompletion(projectEnableAttributeCompletion.isSelected());
+            projectSettings.setEnableEventCompletion(projectEnableEventCompletion.isSelected());
+            projectSettings.setEnableSlotCompletion(projectEnableSlotCompletion.isSelected());
+            projectSettings.setEnableHoverDocumentation(projectEnableHoverDocumentation.isSelected());
+            projectSettings.setEnableRightClickDocumentation(projectEnableRightClickDocumentation.isSelected());
+            projectSettingsManager.saveProjectSettings(currentProject, projectSettings);
+        }
+        
+        // 保存组件库配置
+        if (libraryCheckBoxes != null && currentProject != null) {
+            com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager configManager = 
+                com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager.getInstance(currentProject);
+            java.util.Set<com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType> enabledLibraries = 
+                new java.util.HashSet<>();
+            
+            for (java.util.Map.Entry<String, JBCheckBox> entry : libraryCheckBoxes.entrySet()) {
+                String libraryName = entry.getKey();
+                JBCheckBox checkBox = entry.getValue();
+                
+                if (checkBox.isSelected()) {
+                    com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType libraryType = 
+                        getLibraryTypeByName(libraryName);
+                    if (libraryType != null) {
+                        enabledLibraries.add(libraryType);
+                    }
+                }
+            }
+            
+            // 保存配置
+            configManager.setProjectEnabledLibraries(currentProject, enabledLibraries);
+            System.out.println("组件库配置已保存，启用的组件库: " + 
+                enabledLibraries.stream()
+                    .map(com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType::getDisplayName)
+                    .collect(java.util.stream.Collectors.joining(", ")));
+        }
     }
 
     @Override
     public void reset() {
-        // 不需要重置
+        // 重置全局功能设置
+        PluginSettings globalSettings = PluginSettings.getInstance();
+        globalEnableComponentCompletion.setSelected(globalSettings.isEnableComponentCompletion());
+        globalEnableAttributeCompletion.setSelected(globalSettings.isEnableAttributeCompletion());
+        globalEnableEventCompletion.setSelected(globalSettings.isEnableEventCompletion());
+        globalEnableSlotCompletion.setSelected(globalSettings.isEnableSlotCompletion());
+        globalEnableHoverDocumentation.setSelected(globalSettings.isEnableHoverDocumentation());
+        globalEnableRightClickDocumentation.setSelected(globalSettings.isEnableRightClickDocumentation());
+        
+        // 重置项目级功能设置
+        if (currentProject != null) {
+            ProjectSettingsManager projectSettingsManager = currentProject.getService(ProjectSettingsManager.class);
+            ProjectSettingsManager.ProjectSettings projectSettings = projectSettingsManager.getProjectSettings(currentProject);
+            
+            // 项目级设置：如果为true则显示勾选，如果为false则显示未勾选（使用全局设置）
+            projectEnableComponentCompletion.setSelected(projectSettings.isEnableComponentCompletion());
+            projectEnableAttributeCompletion.setSelected(projectSettings.isEnableAttributeCompletion());
+            projectEnableEventCompletion.setSelected(projectSettings.isEnableEventCompletion());
+            projectEnableSlotCompletion.setSelected(projectSettings.isEnableSlotCompletion());
+            projectEnableHoverDocumentation.setSelected(projectSettings.isEnableHoverDocumentation());
+            projectEnableRightClickDocumentation.setSelected(projectSettings.isEnableRightClickDocumentation());
+        }
+        
+        // 重置组件库配置
+        if (componentLibraryConfigPanel != null) {
+            componentLibraryConfigPanel.removeAll();
+            loadComponentLibraryConfig();
+            componentLibraryConfigPanel.revalidate();
+            componentLibraryConfigPanel.repaint();
+        }
     }
 
     @Override
     public void disposeUIResources() {
         mainPanel = null;
+        libraryCheckBoxes = null;
     }
-
 }

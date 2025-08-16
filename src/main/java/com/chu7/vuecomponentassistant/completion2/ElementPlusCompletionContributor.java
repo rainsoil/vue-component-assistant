@@ -27,22 +27,16 @@ import com.intellij.patterns.PlatformPatterns;
  */
 public class ElementPlusCompletionContributor extends CompletionContributor {
 
-    /** 组件数据提供者，负责获取和管理组件信息 */
-    private final ElementPlusComponentProvider componentProvider;
-    
     /** 上下文分析器，负责分析当前编辑位置的上下文 */
     private final ElementPlusContextAnalyzer contextAnalyzer;
 
     /**
      * 构造函数
      * 
-     * 初始化补全贡献者，创建必要的组件提供者和上下文分析器，
+     * 初始化补全贡献者，创建必要的上下文分析器，
      * 并注册各种类型的补全功能。
      */
     public ElementPlusCompletionContributor() {
-        // 初始化组件数据提供者
-        this.componentProvider = new ElementPlusComponentProvider();
-        
         // 初始化上下文分析器
         this.contextAnalyzer = new ElementPlusContextAnalyzer();
         

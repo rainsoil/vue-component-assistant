@@ -19,6 +19,7 @@ import com.chu7.vuecomponentassistant.documentation.DocumentationStyleGenerator;
 import com.chu7.vuecomponentassistant.ui.ComponentDocumentationDialog;
 import com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector;
 import com.chu7.vuecomponentassistant.settings.PluginSettings;
+import com.chu7.vuecomponentassistant.settings.ProjectSettingsManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -49,6 +50,9 @@ import java.util.List;
  */
 public class ComponentDocumentationAction extends AnAction {
 
+    private static final com.intellij.openapi.diagnostic.Logger LOG = 
+        com.intellij.openapi.diagnostic.Logger.getInstance(ComponentDocumentationAction.class);
+
     /**
      * 构造函数
      * 
@@ -75,17 +79,16 @@ public class ComponentDocumentationAction extends AnAction {
      */
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-        // 检查右键文档设置
-        PluginSettings settings = PluginSettings.getInstance();
-        if (!settings.isEnableRightClickDocumentation()) {
-            Messages.showInfoMessage("右键文档功能已禁用，请在设置中启用", "提示");
-            return;
-        }
-        
         // 获取当前项目
         Project project = e.getProject();
         if (project == null) {
             Messages.showErrorDialog("无法获取项目信息", "错误");
+            return;
+        }
+        
+        // 检查右键文档设置（优先使用项目级设置，如果没有则使用全局设置）
+        if (!isRightClickDocumentationEnabled(project)) {
+            Messages.showInfoMessage("右键文档功能已禁用，请在设置中启用", "提示");
             return;
         }
 
@@ -150,9 +153,15 @@ public class ComponentDocumentationAction extends AnAction {
      */
     @Override
     public void update(@NotNull AnActionEvent e) {
-        // 检查右键文档设置
-        PluginSettings settings = PluginSettings.getInstance();
-        if (!settings.isEnableRightClickDocumentation()) {
+        // 获取当前项目
+        Project project = e.getProject();
+        if (project == null) {
+            e.getPresentation().setEnabledAndVisible(false);
+            return;
+        }
+        
+        // 检查右键文档设置（优先使用项目级设置，如果没有则使用全局设置）
+        if (!isRightClickDocumentationEnabled(project)) {
             e.getPresentation().setEnabledAndVisible(false);
             return;
         }
@@ -262,5 +271,44 @@ public class ComponentDocumentationAction extends AnAction {
             project, componentName, documentation
         );
         dialog.show();
+    }
+
+    /**
+     * 检查右键文档功能是否启用
+     * 项目级设置优先于全局设置，如果项目级设置为false则明确禁用
+     * 
+     * @param project 项目对象
+     * @return 是否启用右键文档
+     */
+    private boolean isRightClickDocumentationEnabled(Project project) {
+        try {
+            // 首先尝试获取项目级设置
+            ProjectSettingsManager projectSettingsManager = ProjectSettingsManager.getInstance(project);
+            ProjectSettingsManager.ProjectSettings projectSettings = projectSettingsManager.getProjectSettings(project);
+            
+            if (projectSettings != null) {
+                boolean projectEnabled = projectSettings.isEnableRightClickDocumentation();
+                LOG.debug("项目级右键文档设置: " + projectEnabled);
+                
+                // 如果项目级设置为false，明确禁用，不检查全局设置
+                if (!projectEnabled) {
+                    LOG.debug("项目级设置为false，明确禁用右键文档");
+                    return false;
+                }
+                
+                // 如果项目级设置为true，直接返回true
+                return true;
+            }
+            
+            // 如果没有项目级设置，使用全局设置
+            PluginSettings globalSettings = PluginSettings.getInstance();
+            boolean globalEnabled = globalSettings.isEnableRightClickDocumentation();
+            LOG.debug("无项目级设置，使用全局右键文档设置: " + globalEnabled);
+            return globalEnabled;
+            
+        } catch (Exception e) {
+            LOG.warn("获取右键文档设置失败，使用默认值: false", e);
+            return false; // 默认禁用
+        }
     }
 } 

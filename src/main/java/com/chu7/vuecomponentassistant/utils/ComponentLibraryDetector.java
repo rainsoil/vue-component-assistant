@@ -334,42 +334,22 @@ public class ComponentLibraryDetector {
     /**
      * 获取组件库的配置文件路径
      * 
-     * 配置文件路径说明：
-     * - Element UI: element-ui-components.json
-     * - Element Plus: element-plus-components.json  
-     * - Ant Design Vue: ant-design-vue-components.json
-     * - 未知类型: 默认使用 Element Plus 配置文件
-     * 
-     * 注意：这些文件位于插件的 resources/data/ 目录下
+     * 注意：此方法已废弃，不再使用内置资源文件
+     * 组件库数据现在通过远程组件库管理器动态加载
      * 
      * @param libraryType 组件库类型，不能为 null
-     * @return 对应的配置文件路径字符串
+     * @return 空字符串（不再使用内置资源文件）
      * @throws IllegalArgumentException 如果组件库类型为 null
+     * @deprecated 使用远程组件库管理器替代
      */
+    @Deprecated
     public static String getComponentDataPath(LibraryType libraryType) {
         if (libraryType == null) {
             throw new IllegalArgumentException("组件库类型不能为 null");
         }
         
-        String dataPath;
-        switch (libraryType) {
-            case ELEMENT_UI:
-                dataPath = "/data/element-ui-components.json";
-                break;
-            case ELEMENT_PLUS:
-                dataPath = "/data/element-plus-components.json";
-                break;
-            case ANT_DESIGN_VUE:
-                dataPath = "/data/ant-design-vue-components.json";
-                break;
-            default:
-                dataPath = "/data/element-plus-components.json"; // 默认使用 Element Plus
-                VueKitLogger.debug(LOG, "未知组件库类型: " + libraryType + ", 使用默认配置文件: " + dataPath);
-                break;
-        }
-        
-        VueKitLogger.debug(LOG, "组件库 '" + libraryType.getDisplayName() + "' 使用配置文件: " + dataPath);
-        return dataPath;
+        VueKitLogger.warn(LOG, "getComponentDataPath 方法已废弃，组件库数据现在通过远程组件库管理器动态加载");
+        return ""; // 不再使用内置资源文件
     }
 
     /**
@@ -402,7 +382,7 @@ public class ComponentLibraryDetector {
             VueKitLogger.info(LOG, "检测到的组件库: " + detectedType.getDisplayName());
             VueKitLogger.info(LOG, "组件前缀: " + getComponentPrefix(detectedType));
             VueKitLogger.info(LOG, "文档模板: " + getDocumentationUrlTemplate(detectedType));
-            VueKitLogger.info(LOG, "数据文件: " + getComponentDataPath(detectedType));
+            VueKitLogger.info(LOG, "数据来源: 远程组件库管理器");
         } catch (Exception e) {
             VueKitLogger.error(LOG, "检测组件库时发生错误", e);
         }

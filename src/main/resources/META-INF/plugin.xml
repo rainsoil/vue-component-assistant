@@ -66,19 +66,9 @@
                 id="com.chu7.vuecomponentassistant.settings.VueKitSettingsGroupConfigurable"
                 displayName="Vue Kit"/>
 
-        <!-- 注册组件库管理设置页面 -->
-        <applicationConfigurable
-                parentId="com.chu7.vuecomponentassistant.settings.VueKitSettingsGroupConfigurable"
-                instance="com.chu7.vuecomponentassistant.settings.ComponentLibraryManagementSettingsConfigurable"
-                id="com.chu7.vuecomponentassistant.settings.ComponentLibraryManagementSettingsConfigurable"
-                displayName="组件库管理"/>
 
-        <!-- 注册组件库配置设置页面 -->
-        <applicationConfigurable
-                parentId="com.chu7.vuecomponentassistant.settings.VueKitSettingsGroupConfigurable"
-                instance="com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigSettingsConfigurable"
-                id="com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigSettingsConfigurable"
-                displayName="组件库配置"/>
+
+
 
         <!-- 注册Vue Kit工具菜单组 -->
         <group id="VueKit.Tools" text="Vue Kit" description="VueKit开发工具">
@@ -100,6 +90,10 @@
         <!-- 注册本地缓存管理器服务 -->
         <applicationService
                 serviceImplementation="com.chu7.vuecomponentassistant.remote.cache.LocalCacheManager"/>
+
+        <!-- 注册项目设置管理器服务 -->
+        <projectService
+                serviceImplementation="com.chu7.vuecomponentassistant.settings.ProjectSettingsManager"/>
 
         <!-- 注册组件库配置管理器服务 -->
         <projectService

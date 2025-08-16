@@ -1,6 +1,7 @@
 package com.chu7.vuecomponentassistant.completion2;
 
 import com.chu7.vuecomponentassistant.settings.PluginSettings;
+import com.chu7.vuecomponentassistant.settings.ProjectSettingsManager;
 import com.chu7.vuecomponentassistant.utils.VueKitLogger;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionProvider;
@@ -70,16 +71,15 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
                                   @NotNull ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
 
-        // 检查补全设置
-        PluginSettings settings = PluginSettings.getInstance();
-        if (!settings.isEnableComponentCompletion()) {
-            return; // 如果组件补全被禁用，直接返回
-        }
-
         // 获取当前项目
         Project project = parameters.getEditor().getProject();
         if (project == null) {
             return;
+        }
+
+        // 检查补全设置（优先使用项目级设置，如果没有则使用全局设置）
+        if (!isComponentCompletionEnabled(project)) {
+            return; // 如果组件补全被禁用，直接返回
         }
 
         // 根据项目动态创建组件提供者
@@ -117,19 +117,19 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
                 break;
             case ATTRIBUTE:
                 // 属性补全：在组件标签内输入空格时显示属性列表
-                if (settings.isEnableAttributeCompletion()) {
+                if (isAttributeCompletionEnabled(project)) {
                     addAttributeCompletions(result, completionContext.getCurrentComponent(), completionContext.getPrefix());
                 }
                 break;
             case EVENT:
                 // 事件补全：输入 @ 时显示事件列表
-                if (settings.isEnableEventCompletion()) {
+                if (isEventCompletionEnabled(project)) {
                     addEventCompletions(result, completionContext.getCurrentComponent(), completionContext.getPrefix());
                 }
                 break;
             case SLOT:
                 // 插槽补全：输入 sl 或 slot 时显示插槽列表
-                if (settings.isEnableSlotCompletion()) {
+                if (isSlotCompletionEnabled(project)) {
                     addSlotCompletions(result, completionContext.getCurrentComponent(), completionContext.getPrefix());
                 }
                 break;
@@ -922,6 +922,150 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
          */
         public String getPrefix() {
             return prefix;
+        }
+    }
+
+    /**
+     * 检查组件补全功能是否启用
+     * 项目级设置优先于全局设置，如果项目级设置为false则明确禁用
+     */
+    private boolean isComponentCompletionEnabled(Project project) {
+        try {
+            // 首先尝试获取项目级设置
+            ProjectSettingsManager projectSettingsManager = ProjectSettingsManager.getInstance(project);
+            ProjectSettingsManager.ProjectSettings projectSettings = projectSettingsManager.getProjectSettings(project);
+            
+            if (projectSettings != null) {
+                boolean projectEnabled = projectSettings.isEnableComponentCompletion();
+                VueKitLogger.debug(LOG, "项目级组件补全设置: " + projectEnabled);
+                
+                // 如果项目级设置为false，明确禁用，不检查全局设置
+                if (!projectEnabled) {
+                    VueKitLogger.debug(LOG, "项目级设置为false，明确禁用组件补全");
+                    return false;
+                }
+                
+                // 如果项目级设置为true，直接返回true
+                return true;
+            }
+            
+            // 如果没有项目级设置，使用全局设置
+            PluginSettings globalSettings = PluginSettings.getInstance();
+            boolean globalEnabled = globalSettings.isEnableComponentCompletion();
+            VueKitLogger.debug(LOG, "无项目级设置，使用全局组件补全设置: " + globalEnabled);
+            return globalEnabled;
+            
+        } catch (Exception e) {
+            VueKitLogger.warn(LOG, "获取组件补全设置失败，使用默认值: false", e);
+            return false; // 默认禁用
+        }
+    }
+
+    /**
+     * 检查属性补全功能是否启用
+     * 项目级设置优先于全局设置，如果项目级设置为false则明确禁用
+     */
+    private boolean isAttributeCompletionEnabled(Project project) {
+        try {
+            // 首先尝试获取项目级设置
+            ProjectSettingsManager projectSettingsManager = ProjectSettingsManager.getInstance(project);
+            ProjectSettingsManager.ProjectSettings projectSettings = projectSettingsManager.getProjectSettings(project);
+            
+            if (projectSettings != null) {
+                boolean projectEnabled = projectSettings.isEnableAttributeCompletion();
+                VueKitLogger.debug(LOG, "项目级属性补全设置: " + projectEnabled);
+                
+                // 如果项目级设置为false，明确禁用，不检查全局设置
+                if (!projectEnabled) {
+                    VueKitLogger.debug(LOG, "项目级设置为false，明确禁用属性补全");
+                    return false;
+                }
+                
+                // 如果项目级设置为true，直接返回true
+                return true;
+            }
+            
+            // 如果没有项目级设置，使用全局设置
+            PluginSettings globalSettings = PluginSettings.getInstance();
+            boolean globalEnabled = globalSettings.isEnableAttributeCompletion();
+            VueKitLogger.debug(LOG, "无项目级设置，使用全局属性补全设置: " + globalEnabled);
+            return globalEnabled;
+            
+        } catch (Exception e) {
+            VueKitLogger.warn(LOG, "获取属性补全设置失败，使用默认值: false", e);
+            return false; // 默认禁用
+        }
+    }
+
+    /**
+     * 检查事件补全功能是否启用
+     * 项目级设置优先于全局设置，如果项目级设置为false则明确禁用
+     */
+    private boolean isEventCompletionEnabled(Project project) {
+        try {
+            // 首先尝试获取项目级设置
+            ProjectSettingsManager projectSettingsManager = ProjectSettingsManager.getInstance(project);
+            ProjectSettingsManager.ProjectSettings projectSettings = projectSettingsManager.getProjectSettings(project);
+            
+            if (projectSettings != null) {
+                boolean projectEnabled = projectSettings.isEnableEventCompletion();
+                VueKitLogger.debug(LOG, "项目级事件补全设置: " + projectEnabled);
+                
+                // 如果项目级设置为false，明确禁用，不检查全局设置
+                if (!projectEnabled) {
+                    VueKitLogger.debug(LOG, "项目级设置为false，明确禁用事件补全");
+                    return false;
+                }
+                
+                // 如果项目级设置为true，直接返回true
+                return true;
+            }
+            
+            // 如果没有项目级设置，使用全局设置
+            PluginSettings globalSettings = PluginSettings.getInstance();
+            boolean globalEnabled = globalSettings.isEnableEventCompletion();
+            VueKitLogger.debug(LOG, "无项目级设置，使用全局事件补全设置: " + globalEnabled);
+            return globalEnabled;
+            
+        } catch (Exception e) {
+            VueKitLogger.warn(LOG, "获取事件补全设置失败，使用默认值: false", e);
+            return false; // 默认禁用
+        }
+    }
+
+    /**
+     * 检查插槽补全功能是否启用
+     * 项目级设置优先于全局设置，如果项目级设置为false则明确禁用
+     */
+    private boolean isSlotCompletionEnabled(Project project) {
+        try {
+            // 首先尝试获取项目级设置
+            ProjectSettingsManager projectSettingsManager = ProjectSettingsManager.getInstance(project);
+            ProjectSettingsManager.ProjectSettings projectSettings = projectSettingsManager.getProjectSettings(project);
+            
+            if (projectSettings != null) {
+                boolean projectEnabled = projectSettings.isEnableSlotCompletion();
+                VueKitLogger.debug(LOG, "项目级插槽补全设置: " + projectEnabled);
+                
+                // 如果项目级设置为false，明确禁用，不检查全局设置
+                if (!projectEnabled) {
+                    VueKitLogger.debug(LOG, "项目级设置为false，明确禁用插槽补全");
+                    return false;
+                }
+                
+                // 如果项目级设置为true，直接返回true
+                return true;
+            }
+            
+            // 如果没有项目级设置，使用全局设置
+            PluginSettings globalSettings = PluginSettings.getInstance();
+            boolean globalEnabled = globalSettings.isEnableSlotCompletion();
+            VueKitLogger.debug(LOG, "无项目级设置，使用全局插槽补全设置: " + globalEnabled);
+            return globalEnabled;
+            
+        } catch (Exception e) {
+            VueKitLogger.warn(LOG, "获取插槽补全设置失败，使用默认值: false", e);
+            return false; // 默认禁用
         }
     }
 }

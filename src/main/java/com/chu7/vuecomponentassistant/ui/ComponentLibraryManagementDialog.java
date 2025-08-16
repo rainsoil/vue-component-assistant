@@ -94,6 +94,11 @@ public class ComponentLibraryManagementDialog extends DialogWrapper {
         // 加载组件库列表
         loadLibraryList();
         
+        // 确保初始化时不选中任何项目
+        libraryList.clearSelection();
+        updateButtonStates();
+        detailArea.setText("请选择一个组件库查看详情");
+        
         return mainPanel;
     }
     
@@ -142,6 +147,9 @@ public class ComponentLibraryManagementDialog extends DialogWrapper {
         libraryList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         libraryList.setCellRenderer(new ComponentLibraryListCellRenderer());
         libraryList.setPreferredSize(new Dimension(400, 600));
+        
+        // 设置更小的行间距，减小行高
+        libraryList.setFixedCellHeight(28); // 默认通常是 20-25，这里设置为 28 以保持适当的可读性
         
         // 添加选择监听器
         libraryList.addListSelectionListener(e -> {
@@ -223,6 +231,9 @@ public class ComponentLibraryManagementDialog extends DialogWrapper {
                 listModel.addElement(library);
             }
             
+            // 确保默认不选中任何项目
+            libraryList.clearSelection();
+            
             updateStatsLabel();
             
         } catch (Exception e) {
@@ -235,6 +246,10 @@ public class ComponentLibraryManagementDialog extends DialogWrapper {
      */
     private void refreshLibraryList() {
         loadLibraryList();
+        // 确保刷新后不选中任何项目
+        libraryList.clearSelection();
+        updateButtonStates();
+        detailArea.setText("请选择一个组件库查看详情");
         Messages.showInfoMessage("组件库列表已刷新", "刷新完成");
     }
     
@@ -313,8 +328,11 @@ public class ComponentLibraryManagementDialog extends DialogWrapper {
         CustomLibraryUploadDialog dialog = new CustomLibraryUploadDialog(project, libraryManager);
         dialog.show();
         
-        // 刷新列表
+        // 刷新列表并确保不选中任何项目
         loadLibraryList();
+        libraryList.clearSelection();
+        updateButtonStates();
+        detailArea.setText("请选择一个组件库查看详情");
     }
     
     /**
@@ -323,8 +341,11 @@ public class ComponentLibraryManagementDialog extends DialogWrapper {
     private void openOfficialMarket() {
         OfficialLibraryMarketDialog dialog = new OfficialLibraryMarketDialog(project, libraryManager);
         dialog.show();
-        // 刷新组件库列表（可能下载了新的组件库）
+        // 刷新组件库列表（可能下载了新的组件库）并确保不选中任何项目
         loadLibraryList();
+        libraryList.clearSelection();
+        updateButtonStates();
+        detailArea.setText("请选择一个组件库查看详情");
     }
     
     /**
@@ -354,6 +375,10 @@ public class ComponentLibraryManagementDialog extends DialogWrapper {
                 if (importResult.isSuccess()) {
                     Messages.showInfoMessage("组件库重新加载成功: " + library.getName(), "成功");
                     loadLibraryList();
+                    // 确保重新加载后不选中任何项目
+                    libraryList.clearSelection();
+                    updateButtonStates();
+                    detailArea.setText("请选择一个组件库查看详情");
                 } else {
                     Messages.showErrorDialog("重新加载失败: " + importResult.getMessage(), "错误");
                 }
@@ -461,6 +486,11 @@ public class ComponentLibraryManagementDialog extends DialogWrapper {
                 if (removed) {
                     Messages.showInfoMessage("组件库删除成功: " + library.getName(), "成功");
                     loadLibraryList();
+                    
+                    // 确保删除后不选中任何项目
+                    libraryList.clearSelection();
+                    updateButtonStates();
+                    detailArea.setText("请选择一个组件库查看详情");
                     
                     // 通知所有 ComponentProvider 重新加载组件数据
                     ComponentProviderManager.notifyAllProvidersReload();

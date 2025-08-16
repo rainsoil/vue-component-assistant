@@ -3,6 +3,7 @@ package com.chu7.vuecomponentassistant.utils;
 import com.chu7.vuecomponentassistant.completion2.ElementPlusComponent;
 import com.chu7.vuecomponentassistant.remote.model.ComponentLibrary;
 import com.chu7.vuecomponentassistant.remote.ComponentLibraryManager;
+import com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -128,7 +129,7 @@ public class SmartComponentFilter {
      * @param project 项目对象
      * @return 项目使用的组件库类型集合
      */
-    private Set<ComponentLibraryDetector.LibraryType> detectProjectLibraries(Project project) {
+    public Set<ComponentLibraryDetector.LibraryType> detectProjectLibraries(Project project) {
         Set<ComponentLibraryDetector.LibraryType> libraries = new HashSet<>();
         
         try {
@@ -347,9 +348,22 @@ public class SmartComponentFilter {
      * @return 用户启用的组件库集合
      */
     private Set<ComponentLibraryDetector.LibraryType> getUserEnabledLibraries(Project project) {
-        // 这里将集成用户配置管理器
-        // 暂时返回空集合，后续实现
-        return new HashSet<>();
+        try {
+            // 集成用户配置管理器
+            ComponentLibraryConfigManager configManager = ComponentLibraryConfigManager.getInstance(project);
+            Set<ComponentLibraryDetector.LibraryType> enabledLibraries = configManager.getEnabledLibraries(project);
+            
+            VueKitLogger.debug(LOG, "从用户配置获取启用的组件库: " + 
+                enabledLibraries.stream()
+                    .map(ComponentLibraryDetector.LibraryType::getDisplayName)
+                    .collect(Collectors.joining(", ")));
+            
+            return enabledLibraries;
+            
+        } catch (Exception e) {
+            VueKitLogger.error(LOG, "获取用户启用的组件库失败", e);
+            return new HashSet<>();
+        }
     }
     
     /**
@@ -362,9 +376,55 @@ public class SmartComponentFilter {
     private boolean isFromEnabledLibrary(ElementPlusComponent component, 
                                        Set<ComponentLibraryDetector.LibraryType> enabledLibraries) {
         
-        // 这里需要根据组件的来源判断
-        // 暂时返回 true，后续实现更精确的判断
-        return true;
+        // 如果没有启用任何组件库，则不显示任何组件
+        if (enabledLibraries.isEmpty()) {
+            VueKitLogger.debug(LOG, "没有启用任何组件库，不显示任何组件");
+            return false;
+        }
+        
+        // 根据组件名称前缀判断来源
+        String componentName = component.getName();
+        if (componentName == null) {
+            return false;
+        }
+        
+        // 检查组件是否来自启用的组件库
+        for (ComponentLibraryDetector.LibraryType libraryType : enabledLibraries) {
+            if (isComponentFromLibrary(componentName, libraryType)) {
+                VueKitLogger.debug(LOG, "组件 " + componentName + " 来自启用的组件库: " + libraryType.getDisplayName());
+                return true;
+            }
+        }
+        
+        VueKitLogger.debug(LOG, "组件 " + componentName + " 不属于任何启用的组件库，将被过滤");
+        return false;
+    }
+    
+    /**
+     * 检查组件是否来自指定的组件库
+     * 
+     * @param componentName 组件名称
+     * @param libraryType 组件库类型
+     * @return 如果组件来自指定组件库则返回 true
+     */
+    private boolean isComponentFromLibrary(String componentName, ComponentLibraryDetector.LibraryType libraryType) {
+        switch (libraryType) {
+            case ELEMENT_UI:
+            case ELEMENT_PLUS:
+                // Element UI 和 Element Plus 都使用 el- 前缀
+                return componentName.startsWith("el-");
+            case ANT_DESIGN_VUE:
+                // Ant Design Vue 使用 a- 前缀
+                return componentName.startsWith("a-");
+            case VUETIFY:
+                // Vuetify 使用 v- 前缀
+                return componentName.startsWith("v-");
+            case QUASAR:
+                // Quasar 使用 q- 前缀
+                return componentName.startsWith("q-");
+            default:
+                return false;
+        }
     }
     
     /**
@@ -402,14 +462,15 @@ public class SmartComponentFilter {
     private boolean isFromProjectLibrary(ElementPlusComponent component,
                                        Set<ComponentLibraryDetector.LibraryType> projectLibraries) {
         
-        // 这里需要根据组件的描述或其他属性判断来源
-        // 暂时通过描述中的标识判断
-        String description = component.getDescription();
-        if (description != null) {
-            for (ComponentLibraryDetector.LibraryType libraryType : projectLibraries) {
-                if (description.contains("[" + libraryType.getDisplayName() + "]")) {
-                    return true;
-                }
+        String componentName = component.getName();
+        if (componentName == null) {
+            return false;
+        }
+        
+        // 根据组件名称前缀判断是否来自项目使用的组件库
+        for (ComponentLibraryDetector.LibraryType libraryType : projectLibraries) {
+            if (isComponentFromLibrary(componentName, libraryType)) {
+                return true;
             }
         }
         

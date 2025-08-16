@@ -10,6 +10,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.chu7.vuecomponentassistant.completion2.ElementPlusComponent;
 import com.chu7.vuecomponentassistant.completion2.ComponentProvider;
 import com.chu7.vuecomponentassistant.settings.PluginSettings;
+import com.chu7.vuecomponentassistant.settings.ProjectSettingsManager;
 import com.chu7.vuecomponentassistant.utils.VueKitLogger;
 import com.chu7.vuecomponentassistant.constants.VueKitConstants;
 import org.jetbrains.annotations.Nullable;
@@ -51,9 +52,16 @@ public class ComponentDocumentationProvider extends AbstractDocumentationProvide
     public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
         long startTime = System.currentTimeMillis();
         
-        // 检查悬停文档设置
-        PluginSettings settings = PluginSettings.getInstance();
-        if (!settings.isEnableHoverDocumentation()) {
+        // 获取当前项目
+        Project project = element != null ? element.getProject() : null;
+        if (project == null) {
+            VueKitLogger.warn(LOG, VueKitConstants.ERROR_NO_PROJECT);
+            return generateTestDocumentation(element);
+        }
+        
+        // 检查悬停文档设置（优先使用项目级设置，如果没有则使用全局设置）
+        boolean hoverDocumentationEnabled = isHoverDocumentationEnabled(project);
+        if (!hoverDocumentationEnabled) {
             VueKitLogger.debug(LOG, "悬停文档功能已禁用");
             return null; // 返回 null 表示不显示文档
         }
@@ -62,13 +70,6 @@ public class ComponentDocumentationProvider extends AbstractDocumentationProvide
         VueKitLogger.debug(LOG, "=== 文档提供者被调用 ===");
         VueKitLogger.debug(LOG, "元素类型: " + (element != null ? element.getClass().getSimpleName() : "null"));
         VueKitLogger.debug(LOG, "元素文本: " + (element != null ? element.getText() : "null"));
-        
-        // 获取当前项目
-        Project project = element != null ? element.getProject() : null;
-        if (project == null) {
-            VueKitLogger.warn(LOG, VueKitConstants.ERROR_NO_PROJECT);
-            return generateTestDocumentation(element);
-        }
 
         // 每次都获取最新的组件提供者实例
         ComponentProvider componentProvider = ComponentProviderManager.getProvider(project);
@@ -124,6 +125,45 @@ public class ComponentDocumentationProvider extends AbstractDocumentationProvide
         html.append("<p><em>这是测试文档，用于调试文档提供者功能。</em></p>");
         html.append("</div>");
         return html.toString();
+    }
+
+    /**
+     * 检查悬停文档功能是否启用
+     * 项目级设置优先于全局设置，如果项目级设置为false则明确禁用
+     * 
+     * @param project 项目对象
+     * @return 是否启用悬停文档
+     */
+    private boolean isHoverDocumentationEnabled(Project project) {
+        try {
+            // 首先尝试获取项目级设置
+            ProjectSettingsManager projectSettingsManager = ProjectSettingsManager.getInstance(project);
+            ProjectSettingsManager.ProjectSettings projectSettings = projectSettingsManager.getProjectSettings(project);
+            
+            if (projectSettings != null) {
+                boolean projectEnabled = projectSettings.isEnableHoverDocumentation();
+                VueKitLogger.debug(LOG, "项目级悬停文档设置: " + projectEnabled);
+                
+                // 如果项目级设置为false，明确禁用，不检查全局设置
+                if (!projectEnabled) {
+                    VueKitLogger.debug(LOG, "项目级设置为false，明确禁用悬停文档");
+                    return false;
+                }
+                
+                // 如果项目级设置为true，直接返回true
+                return true;
+            }
+            
+            // 如果没有项目级设置，使用全局设置
+            PluginSettings globalSettings = PluginSettings.getInstance();
+            boolean globalEnabled = globalSettings.isEnableHoverDocumentation();
+            VueKitLogger.debug(LOG, "无项目级设置，使用全局悬停文档设置: " + globalEnabled);
+            return globalEnabled;
+            
+        } catch (Exception e) {
+            VueKitLogger.warn(LOG, "获取悬停文档设置失败，使用默认值: false", e);
+            return false; // 默认禁用
+        }
     }
 
     /**

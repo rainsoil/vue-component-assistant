@@ -1,7 +1,7 @@
 <template>
     <div>
 
-<el-table></el-table>
+        <el-input></el-input>
     </div>
 </template>
 
