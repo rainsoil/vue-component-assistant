@@ -1017,6 +1017,7 @@ public class ComponentProvider {
 
     /**
      * 根据组件库名称获取对应的 LibraryType
+     * 现在从远程组件库管理器动态获取，不再写死
      * 
      * @param libraryName 组件库名称
      * @return 对应的 LibraryType，如果找不到则返回 null
@@ -1029,23 +1030,7 @@ public class ComponentProvider {
         // 移除版本号部分，只保留组件库名称
         String cleanName = libraryName.replaceAll("\\s*\\([^)]*\\)\\s*$", "").trim();
         
-        // 映射组件库名称到 LibraryType
-        switch (cleanName.toLowerCase()) {
-            case "element plus":
-            case "element-plus":
-                return ComponentLibraryDetector.LibraryType.ELEMENT_PLUS;
-            case "element ui":
-            case "element-ui":
-                return ComponentLibraryDetector.LibraryType.ELEMENT_UI;
-            case "ant design vue":
-            case "ant-design-vue":
-                return ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE;
-            case "vuetify":
-                return ComponentLibraryDetector.LibraryType.VUETIFY;
-            case "quasar":
-                return ComponentLibraryDetector.LibraryType.QUASAR;
-            default:
-                return null;
-        }
+        // 使用动态方法获取 LibraryType
+        return ComponentLibraryDetector.LibraryType.fromLibraryName(cleanName);
     }
 }

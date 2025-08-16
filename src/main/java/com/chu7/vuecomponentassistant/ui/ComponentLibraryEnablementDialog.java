@@ -46,25 +46,67 @@ public class ComponentLibraryEnablementDialog extends DialogWrapper {
     private JButton selectAllButton;
     private JButton deselectAllButton;
     
-    // 组件库类型列表
-    private final ComponentLibraryDetector.LibraryType[] libraryTypes = {
-        ComponentLibraryDetector.LibraryType.ELEMENT_UI,
-        ComponentLibraryDetector.LibraryType.ELEMENT_PLUS,
-        ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE,
-        ComponentLibraryDetector.LibraryType.VUETIFY,
-        ComponentLibraryDetector.LibraryType.QUASAR
-    };
+    // 组件库类型列表 - 现在动态从远程组件库管理器获取
+    private ComponentLibraryDetector.LibraryType[] libraryTypes;
     
     public ComponentLibraryEnablementDialog(Project project) {
         super(project);
         this.project = project;
         this.configManager = ComponentLibraryConfigManager.getInstance(project);
         
+        // 动态初始化组件库列表
+        initializeLibraryTypes();
+        
         setTitle("🔧 组件库启用管理 - VueKit");
         setSize(600, 500);
         setResizable(true);
         
         init();
+    }
+    
+    /**
+     * 动态初始化组件库类型列表
+     */
+    private void initializeLibraryTypes() {
+        try {
+            // 从远程组件库管理器获取已安装的组件库
+            com.chu7.vuecomponentassistant.remote.ComponentLibraryManager libraryManager = 
+                new com.chu7.vuecomponentassistant.remote.ComponentLibraryManager();
+            java.util.List<com.chu7.vuecomponentassistant.remote.model.ComponentLibrary> installedLibraries = 
+                libraryManager.getAllLibraries();
+            
+            java.util.List<ComponentLibraryDetector.LibraryType> libraryTypeList = new java.util.ArrayList<>();
+            
+            for (com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library : installedLibraries) {
+                ComponentLibraryDetector.LibraryType libraryType = 
+                    ComponentLibraryDetector.LibraryType.fromLibraryName(library.getName());
+                
+                if (libraryType != ComponentLibraryDetector.LibraryType.UNKNOWN) {
+                    libraryTypeList.add(libraryType);
+                }
+            }
+            
+            // 如果没有找到任何组件库，使用默认列表
+            if (libraryTypeList.isEmpty()) {
+                libraryTypeList.add(ComponentLibraryDetector.LibraryType.ELEMENT_UI);
+                libraryTypeList.add(ComponentLibraryDetector.LibraryType.ELEMENT_PLUS);
+                libraryTypeList.add(ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE);
+                libraryTypeList.add(ComponentLibraryDetector.LibraryType.VUETIFY);
+                libraryTypeList.add(ComponentLibraryDetector.LibraryType.QUASAR);
+            }
+            
+            libraryTypes = libraryTypeList.toArray(new ComponentLibraryDetector.LibraryType[0]);
+            
+        } catch (Exception e) {
+            // 出错时使用默认列表
+            libraryTypes = new ComponentLibraryDetector.LibraryType[]{
+                ComponentLibraryDetector.LibraryType.ELEMENT_UI,
+                ComponentLibraryDetector.LibraryType.ELEMENT_PLUS,
+                ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE,
+                ComponentLibraryDetector.LibraryType.VUETIFY,
+                ComponentLibraryDetector.LibraryType.QUASAR
+            };
+        }
     }
     
     @Override

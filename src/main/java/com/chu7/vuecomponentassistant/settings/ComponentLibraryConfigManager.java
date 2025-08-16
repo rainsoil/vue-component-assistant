@@ -55,12 +55,53 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
     private static final String PROJECT_CONFIG_FILE = "vuekit-project-config.json";
     private static final String GLOBAL_CONFIG_FILE = "vuekit-libraries.json";
 
-    // 默认启用的组件库
-    private static final Set<ComponentLibraryDetector.LibraryType> DEFAULT_ENABLED_LIBRARIES = new HashSet<>(Arrays.asList(
-            ComponentLibraryDetector.LibraryType.ELEMENT_UI,
-            ComponentLibraryDetector.LibraryType.ELEMENT_PLUS,
-            ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE
-    ));
+    // 默认启用的组件库 - 现在动态从远程组件库管理器获取
+    private static Set<ComponentLibraryDetector.LibraryType> DEFAULT_ENABLED_LIBRARIES;
+    
+    static {
+        initializeDefaultLibraries();
+    }
+    
+    /**
+     * 动态初始化默认启用的组件库
+     */
+    private static void initializeDefaultLibraries() {
+        try {
+            // 从远程组件库管理器获取已安装的组件库
+            com.chu7.vuecomponentassistant.remote.ComponentLibraryManager libraryManager = 
+                new com.chu7.vuecomponentassistant.remote.ComponentLibraryManager();
+            java.util.List<com.chu7.vuecomponentassistant.remote.model.ComponentLibrary> installedLibraries = 
+                libraryManager.getAllLibraries();
+            
+            Set<ComponentLibraryDetector.LibraryType> defaultLibraries = new HashSet<>();
+            
+            for (com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library : installedLibraries) {
+                ComponentLibraryDetector.LibraryType libraryType = 
+                    ComponentLibraryDetector.LibraryType.fromLibraryName(library.getName());
+                
+                if (libraryType != ComponentLibraryDetector.LibraryType.UNKNOWN) {
+                    defaultLibraries.add(libraryType);
+                }
+            }
+            
+            // 如果没有找到任何组件库，使用默认列表
+            if (defaultLibraries.isEmpty()) {
+                defaultLibraries.add(ComponentLibraryDetector.LibraryType.ELEMENT_UI);
+                defaultLibraries.add(ComponentLibraryDetector.LibraryType.ELEMENT_PLUS);
+                defaultLibraries.add(ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE);
+            }
+            
+            DEFAULT_ENABLED_LIBRARIES = defaultLibraries;
+            
+        } catch (Exception e) {
+            // 出错时使用默认列表
+            DEFAULT_ENABLED_LIBRARIES = new HashSet<>(Arrays.asList(
+                ComponentLibraryDetector.LibraryType.ELEMENT_UI,
+                ComponentLibraryDetector.LibraryType.ELEMENT_PLUS,
+                ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE
+            ));
+        }
+    }
 
     // 项目级配置缓存
     private final Map<String, ProjectConfig> projectConfigs = new ConcurrentHashMap<>();

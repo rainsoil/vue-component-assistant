@@ -38,29 +38,61 @@ public class SmartComponentFilter {
     
     private static final Logger LOG = VueKitLogger.getLogger(SmartComponentFilter.class);
     
-    // 组件库类型映射
+    // 组件库类型映射 - 现在动态从远程组件库管理器获取
     private static final Map<String, ComponentLibraryDetector.LibraryType> PACKAGE_TO_LIBRARY = new HashMap<>();
     
     static {
-        // Element UI 相关包名
-        PACKAGE_TO_LIBRARY.put("element-ui", ComponentLibraryDetector.LibraryType.ELEMENT_UI);
-        PACKAGE_TO_LIBRARY.put("@element-ui/vue", ComponentLibraryDetector.LibraryType.ELEMENT_UI);
-        
-        // Element Plus 相关包名
-        PACKAGE_TO_LIBRARY.put("element-plus", ComponentLibraryDetector.LibraryType.ELEMENT_PLUS);
-        PACKAGE_TO_LIBRARY.put("@element-plus/icons-vue", ComponentLibraryDetector.LibraryType.ELEMENT_PLUS);
-        
-        // Ant Design Vue 相关包名
-        PACKAGE_TO_LIBRARY.put("ant-design-vue", ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE);
-        PACKAGE_TO_LIBRARY.put("@ant-design/icons-vue", ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE);
-        
-        // Vuetify 相关包名
-        PACKAGE_TO_LIBRARY.put("vuetify", ComponentLibraryDetector.LibraryType.VUETIFY);
-        PACKAGE_TO_LIBRARY.put("vuetify/lib", ComponentLibraryDetector.LibraryType.VUETIFY);
-        
-        // Quasar 相关包名
-        PACKAGE_TO_LIBRARY.put("quasar", ComponentLibraryDetector.LibraryType.QUASAR);
-        PACKAGE_TO_LIBRARY.put("@quasar/extras", ComponentLibraryDetector.LibraryType.QUASAR);
+        // 初始化时动态加载组件库映射
+        initializePackageToLibraryMapping();
+    }
+    
+    /**
+     * 动态初始化包名到组件库类型的映射
+     */
+    private static void initializePackageToLibraryMapping() {
+        try {
+            // 从远程组件库管理器获取已安装的组件库
+            com.chu7.vuecomponentassistant.remote.ComponentLibraryManager libraryManager = 
+                new com.chu7.vuecomponentassistant.remote.ComponentLibraryManager();
+            java.util.List<com.chu7.vuecomponentassistant.remote.model.ComponentLibrary> installedLibraries = 
+                libraryManager.getAllLibraries();
+            
+            for (com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library : installedLibraries) {
+                String packageName = library.getName();
+                ComponentLibraryDetector.LibraryType libraryType = 
+                    ComponentLibraryDetector.LibraryType.fromLibraryName(packageName);
+                
+                if (libraryType != ComponentLibraryDetector.LibraryType.UNKNOWN) {
+                    PACKAGE_TO_LIBRARY.put(packageName, libraryType);
+                    
+                    // 添加常见的包名变体
+                    if (packageName.contains("element-plus")) {
+                        PACKAGE_TO_LIBRARY.put("@element-plus/icons-vue", libraryType);
+                    } else if (packageName.contains("element-ui")) {
+                        PACKAGE_TO_LIBRARY.put("@element-ui/vue", libraryType);
+                    } else if (packageName.contains("ant-design-vue")) {
+                        PACKAGE_TO_LIBRARY.put("@ant-design/icons-vue", libraryType);
+                    } else if (packageName.contains("quasar")) {
+                        PACKAGE_TO_LIBRARY.put("@quasar/extras", libraryType);
+                    }
+                }
+            }
+            
+        } catch (Exception e) {
+            VueKitLogger.debug(LOG, "动态初始化组件库映射失败，使用静态映射: " + e.getMessage());
+            
+            // 后备方案：静态映射
+            PACKAGE_TO_LIBRARY.put("element-ui", ComponentLibraryDetector.LibraryType.ELEMENT_UI);
+            PACKAGE_TO_LIBRARY.put("@element-ui/vue", ComponentLibraryDetector.LibraryType.ELEMENT_UI);
+            PACKAGE_TO_LIBRARY.put("element-plus", ComponentLibraryDetector.LibraryType.ELEMENT_PLUS);
+            PACKAGE_TO_LIBRARY.put("@element-plus/icons-vue", ComponentLibraryDetector.LibraryType.ELEMENT_PLUS);
+            PACKAGE_TO_LIBRARY.put("ant-design-vue", ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE);
+            PACKAGE_TO_LIBRARY.put("@ant-design/icons-vue", ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE);
+            PACKAGE_TO_LIBRARY.put("vuetify", ComponentLibraryDetector.LibraryType.VUETIFY);
+            PACKAGE_TO_LIBRARY.put("vuetify/lib", ComponentLibraryDetector.LibraryType.VUETIFY);
+            PACKAGE_TO_LIBRARY.put("quasar", ComponentLibraryDetector.LibraryType.QUASAR);
+            PACKAGE_TO_LIBRARY.put("@quasar/extras", ComponentLibraryDetector.LibraryType.QUASAR);
+        }
     }
     
     /**

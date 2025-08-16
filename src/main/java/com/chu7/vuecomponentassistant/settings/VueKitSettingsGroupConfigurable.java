@@ -7,37 +7,25 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
-import com.chu7.vuecomponentassistant.settings.PluginSettings;
-import com.chu7.vuecomponentassistant.settings.ProjectSettingsManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * VueKit 设置组配置类
  * 
  * 功能说明：
  * - 作为 Vue Kit 设置的主入口
- * - 包含全局功能设置、项目级功能设置和组件库管理
+ * - 包含项目级功能设置和组件库管理
  * - 集成到 Settings/Tools/Vue Kit 目录下
  * 
  * @author VueKit Team
- * @version 4.0.0
+ * @version 5.0.0
  */
 public class VueKitSettingsGroupConfigurable implements Configurable {
 
-    // 全局功能设置组件
-    private JBCheckBox globalEnableComponentCompletion;
-    private JBCheckBox globalEnableAttributeCompletion;
-    private JBCheckBox globalEnableEventCompletion;
-    private JBCheckBox globalEnableSlotCompletion;
-    private JBCheckBox globalEnableHoverDocumentation;
-    private JBCheckBox globalEnableRightClickDocumentation;
-    
     // 项目级功能设置组件
     private JBCheckBox projectEnableComponentCompletion;
     private JBCheckBox projectEnableAttributeCompletion;
@@ -70,7 +58,6 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
             currentProject = getCurrentProject();
             
             // 初始化所有组件
-            initializeGlobalSettingsComponents();
             initializeProjectSettingsComponents();
             initializeLibraryManagementComponents();
             
@@ -97,55 +84,16 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
         contentPanel.add(createComponentLibraryConfigCard());
         contentPanel.add(Box.createVerticalStrut(15));
         
-        // 全局功能设置卡片
-        contentPanel.add(createGlobalSettingsCard());
-        contentPanel.add(Box.createVerticalStrut(15));
-        
         // 项目级功能设置卡片
         contentPanel.add(createProjectSettingsCard());
         
         return contentPanel;
     }
     
-    private JPanel createGlobalSettingsCard() {
-        JPanel card = new JPanel(new BorderLayout());
-        card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createTitledBorder("🌐 全局功能设置（默认设置）"),
-            BorderFactory.createEmptyBorder(10, 10, 10, 10)
-        ));
-        
-        // 创建两列布局
-        JPanel settingsPanel = new JPanel(new GridLayout(1, 2, 20, 0));
-        
-        // 左列
-        JPanel leftPanel = FormBuilder.createFormBuilder()
-            .addComponent(createSectionLabel("🎯 补全功能设置"))
-            .addComponent(globalEnableComponentCompletion)
-            .addComponent(globalEnableAttributeCompletion)
-            .addComponent(globalEnableEventCompletion)
-            .addComponent(globalEnableSlotCompletion)
-            .addComponentFillVertically(new JPanel(), 0)
-            .getPanel();
-        
-        // 右列
-        JPanel rightPanel = FormBuilder.createFormBuilder()
-            .addComponent(createSectionLabel("📖 文档功能设置"))
-            .addComponent(globalEnableHoverDocumentation)
-            .addComponent(globalEnableRightClickDocumentation)
-            .addComponentFillVertically(new JPanel(), 0)
-            .getPanel();
-        
-        settingsPanel.add(leftPanel);
-        settingsPanel.add(rightPanel);
-        
-        card.add(settingsPanel, BorderLayout.CENTER);
-        return card;
-    }
-    
     private JPanel createProjectSettingsCard() {
         JPanel card = new JPanel(new BorderLayout());
         card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createTitledBorder("⚙️ 项目级功能设置（覆盖全局设置）"),
+            BorderFactory.createTitledBorder("⚙️ 项目功能设置"),
             BorderFactory.createEmptyBorder(10, 10, 10, 10)
         ));
         
@@ -174,7 +122,7 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
         settingsPanel.add(rightPanel);
         
         // 添加说明标签
-        JBLabel noteLabel = new JBLabel("说明：☑️=项目级开启 ☐=项目级关闭 ⚪=使用全局设置");
+        JBLabel noteLabel = new JBLabel("说明：勾选启用对应功能，取消勾选则禁用。每个项目独立配置。");
         noteLabel.setForeground(new Color(128, 128, 128));
         noteLabel.setFont(noteLabel.getFont().deriveFont(Font.ITALIC, 11f));
         
@@ -241,15 +189,6 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
         loadComponentLibraryConfig();
         
         return card;
-    }
-    
-    private void initializeGlobalSettingsComponents() {
-        globalEnableComponentCompletion = new JBCheckBox("启用组件补全", true);
-        globalEnableAttributeCompletion = new JBCheckBox("启用属性补全", true);
-        globalEnableEventCompletion = new JBCheckBox("启用事件补全", true);
-        globalEnableSlotCompletion = new JBCheckBox("启用插槽补全", true);
-        globalEnableHoverDocumentation = new JBCheckBox("启用悬停文档", true);
-        globalEnableRightClickDocumentation = new JBCheckBox("启用右键文档", true);
     }
     
     private void initializeProjectSettingsComponents() {
@@ -350,9 +289,7 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
     
     /**
      * 根据组件库名称获取对应的 LibraryType
-     * 
-     * @param libraryName 组件库名称
-     * @return 对应的 LibraryType，如果找不到则返回 null
+     * 现在从远程组件库管理器动态获取，不再写死
      */
     private com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType getLibraryTypeByName(String libraryName) {
         if (libraryName == null || libraryName.trim().isEmpty()) {
@@ -362,24 +299,50 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
         // 移除版本号部分，只保留组件库名称
         String cleanName = libraryName.replaceAll("\\s*\\([^)]*\\)\\s*$", "").trim();
         
-        // 映射组件库名称到 LibraryType
-        switch (cleanName.toLowerCase()) {
-            case "element plus":
-            case "element-plus":
-                return com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType.ELEMENT_PLUS;
-            case "element ui":
-            case "element-ui":
-                return com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType.ELEMENT_UI;
-            case "ant design vue":
-            case "ant-design-vue":
-                return com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE;
-            case "vuetify":
-                return com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType.VUETIFY;
-            case "quasar":
-                return com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType.QUASAR;
-            default:
-                return null;
+        try {
+            // 从远程组件库管理器获取组件库信息
+            com.chu7.vuecomponentassistant.remote.ComponentLibraryManager libraryManager = 
+                new com.chu7.vuecomponentassistant.remote.ComponentLibraryManager();
+            java.util.List<com.chu7.vuecomponentassistant.remote.model.ComponentLibrary> installedLibraries = 
+                libraryManager.getAllLibraries();
+            
+            // 查找匹配的组件库
+            for (com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library : installedLibraries) {
+                if (cleanName.equalsIgnoreCase(library.getName())) {
+                    // 根据组件库名称动态创建 LibraryType
+                    return createLibraryTypeFromName(library.getName());
+                }
+            }
+            
+        } catch (Exception e) {
+            System.err.println("获取组件库信息失败: " + e.getMessage());
         }
+        
+        return null;
+    }
+    
+    /**
+     * 根据组件库名称动态创建 LibraryType
+     * 这是一个简化的实现，实际应该从组件库的元数据中获取
+     */
+    private com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType createLibraryTypeFromName(String libraryName) {
+        // 这里应该从组件库的JSON配置文件中读取类型信息
+        // 暂时使用名称匹配作为后备方案
+        String lowerName = libraryName.toLowerCase();
+        
+        if (lowerName.contains("element-plus")) {
+            return com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType.ELEMENT_PLUS;
+        } else if (lowerName.contains("element-ui")) {
+            return com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType.ELEMENT_UI;
+        } else if (lowerName.contains("ant-design-vue")) {
+            return com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE;
+        } else if (lowerName.contains("vuetify")) {
+            return com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType.VUETIFY;
+        } else if (lowerName.contains("quasar")) {
+            return com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType.QUASAR;
+        }
+        
+        return null;
     }
     
     private void openComponentLibraryManagement() {
@@ -388,7 +351,6 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
                 com.chu7.vuecomponentassistant.ui.ComponentLibraryManagementDialog dialog = 
                     new com.chu7.vuecomponentassistant.ui.ComponentLibraryManagementDialog(currentProject);
                 dialog.show();
-                // 对话框关闭后刷新组件库配置
                 refreshComponentLibraryConfig();
             } else {
                 showError("项目未找到", "请确保当前有打开的项目");
@@ -406,7 +368,6 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
                 com.chu7.vuecomponentassistant.ui.OfficialLibraryMarketDialog dialog = 
                     new com.chu7.vuecomponentassistant.ui.OfficialLibraryMarketDialog(currentProject, libraryManager);
                 dialog.show();
-                // 对话框关闭后刷新组件库配置
                 refreshComponentLibraryConfig();
             } else {
                 showError("项目未找到", "请确保当前有打开的项目");
@@ -424,7 +385,6 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
                 com.chu7.vuecomponentassistant.ui.CustomLibraryUploadDialog dialog = 
                     new com.chu7.vuecomponentassistant.ui.CustomLibraryUploadDialog(currentProject, libraryManager);
                 dialog.show();
-                // 对话框关闭后刷新组件库配置
                 refreshComponentLibraryConfig();
             } else {
                 showError("项目未找到", "请确保当前有打开的项目");
@@ -434,9 +394,6 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
         }
     }
     
-    /**
-     * 刷新组件库配置
-     */
     private void refreshComponentLibraryConfig() {
         if (componentLibraryConfigPanel != null) {
             componentLibraryConfigPanel.removeAll();
@@ -460,19 +417,10 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
 
     @Override
     public boolean isModified() {
-        // 检查全局功能设置是否有变更
-        PluginSettings globalSettings = PluginSettings.getInstance();
-        boolean globalModified = globalEnableComponentCompletion.isSelected() != globalSettings.isEnableComponentCompletion() ||
-                globalEnableAttributeCompletion.isSelected() != globalSettings.isEnableAttributeCompletion() ||
-                globalEnableEventCompletion.isSelected() != globalSettings.isEnableEventCompletion() ||
-                globalEnableSlotCompletion.isSelected() != globalSettings.isEnableSlotCompletion() ||
-                globalEnableHoverDocumentation.isSelected() != globalSettings.isEnableHoverDocumentation() ||
-                globalEnableRightClickDocumentation.isSelected() != globalSettings.isEnableRightClickDocumentation();
-        
         // 检查项目级功能设置是否有变更
         boolean projectModified = false;
         if (currentProject != null) {
-            ProjectSettingsManager projectSettingsManager = currentProject.getService(ProjectSettingsManager.class);
+            ProjectSettingsManager projectSettingsManager = ProjectSettingsManager.getInstance(currentProject);
             ProjectSettingsManager.ProjectSettings projectSettings = projectSettingsManager.getProjectSettings(currentProject);
             projectModified = projectEnableComponentCompletion.isSelected() != projectSettings.isEnableComponentCompletion() ||
                     projectEnableAttributeCompletion.isSelected() != projectSettings.isEnableAttributeCompletion() ||
@@ -505,35 +453,30 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
                 }
             }
             
-            // 比较当前状态与保存的状态
             libraryModified = !savedEnabledLibraries.equals(currentEnabledLibraries);
         }
         
-        return globalModified || projectModified || libraryModified;
+        return projectModified || libraryModified;
     }
 
     @Override
     public void apply() {
-        // 保存全局功能设置
-        PluginSettings globalSettings = PluginSettings.getInstance();
-        globalSettings.setEnableComponentCompletion(globalEnableComponentCompletion.isSelected());
-        globalSettings.setEnableAttributeCompletion(globalEnableAttributeCompletion.isSelected());
-        globalSettings.setEnableEventCompletion(globalEnableEventCompletion.isSelected());
-        globalSettings.setEnableSlotCompletion(globalEnableSlotCompletion.isSelected());
-        globalSettings.setEnableHoverDocumentation(globalEnableHoverDocumentation.isSelected());
-        globalSettings.setEnableRightClickDocumentation(globalEnableRightClickDocumentation.isSelected());
-        
         // 保存项目级功能设置
         if (currentProject != null) {
-            ProjectSettingsManager projectSettingsManager = currentProject.getService(ProjectSettingsManager.class);
+            ProjectSettingsManager projectSettingsManager = ProjectSettingsManager.getInstance(currentProject);
             ProjectSettingsManager.ProjectSettings projectSettings = projectSettingsManager.getProjectSettings(currentProject);
+            
+            // 更新项目级设置
             projectSettings.setEnableComponentCompletion(projectEnableComponentCompletion.isSelected());
             projectSettings.setEnableAttributeCompletion(projectEnableAttributeCompletion.isSelected());
             projectSettings.setEnableEventCompletion(projectEnableEventCompletion.isSelected());
             projectSettings.setEnableSlotCompletion(projectEnableSlotCompletion.isSelected());
             projectSettings.setEnableHoverDocumentation(projectEnableHoverDocumentation.isSelected());
             projectSettings.setEnableRightClickDocumentation(projectEnableRightClickDocumentation.isSelected());
+            
+            // 保存到文件
             projectSettingsManager.saveProjectSettings(currentProject, projectSettings);
+            System.out.println("项目功能设置已保存: " + currentProject.getName());
         }
         
         // 保存组件库配置
@@ -567,21 +510,12 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
 
     @Override
     public void reset() {
-        // 重置全局功能设置
-        PluginSettings globalSettings = PluginSettings.getInstance();
-        globalEnableComponentCompletion.setSelected(globalSettings.isEnableComponentCompletion());
-        globalEnableAttributeCompletion.setSelected(globalSettings.isEnableAttributeCompletion());
-        globalEnableEventCompletion.setSelected(globalSettings.isEnableEventCompletion());
-        globalEnableSlotCompletion.setSelected(globalSettings.isEnableSlotCompletion());
-        globalEnableHoverDocumentation.setSelected(globalSettings.isEnableHoverDocumentation());
-        globalEnableRightClickDocumentation.setSelected(globalSettings.isEnableRightClickDocumentation());
-        
         // 重置项目级功能设置
         if (currentProject != null) {
-            ProjectSettingsManager projectSettingsManager = currentProject.getService(ProjectSettingsManager.class);
+            ProjectSettingsManager projectSettingsManager = ProjectSettingsManager.getInstance(currentProject);
             ProjectSettingsManager.ProjectSettings projectSettings = projectSettingsManager.getProjectSettings(currentProject);
             
-            // 项目级设置：如果为true则显示勾选，如果为false则显示未勾选（使用全局设置）
+            // 项目级设置：直接使用保存的值
             projectEnableComponentCompletion.setSelected(projectSettings.isEnableComponentCompletion());
             projectEnableAttributeCompletion.setSelected(projectSettings.isEnableAttributeCompletion());
             projectEnableEventCompletion.setSelected(projectSettings.isEnableEventCompletion());
@@ -604,4 +538,4 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
         mainPanel = null;
         libraryCheckBoxes = null;
     }
-}
+} 

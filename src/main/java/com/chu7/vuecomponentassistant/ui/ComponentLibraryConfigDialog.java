@@ -244,8 +244,8 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
 
         libraryCheckBoxes = new HashMap<>();
 
-        // 获取所有可用的组件库类型
-        ComponentLibraryDetector.LibraryType[] libraryTypes = ComponentLibraryDetector.LibraryType.values();
+        // 动态获取可用的组件库类型
+        ComponentLibraryDetector.LibraryType[] libraryTypes = getAvailableLibraryTypes();
         
         // 添加调试信息
         VueKitLogger.debug(LOG, "创建组件库复选框，找到 " + libraryTypes.length + " 个组件库类型");
@@ -320,6 +320,51 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
         return panel;
     }
 
+    /**
+     * 动态获取可用的组件库类型
+     */
+    private ComponentLibraryDetector.LibraryType[] getAvailableLibraryTypes() {
+        try {
+            // 从远程组件库管理器获取已安装的组件库
+            com.chu7.vuecomponentassistant.remote.ComponentLibraryManager libraryManager = 
+                new com.chu7.vuecomponentassistant.remote.ComponentLibraryManager();
+            java.util.List<com.chu7.vuecomponentassistant.remote.model.ComponentLibrary> installedLibraries = 
+                libraryManager.getAllLibraries();
+            
+            java.util.List<ComponentLibraryDetector.LibraryType> libraryTypeList = new java.util.ArrayList<>();
+            
+            for (com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library : installedLibraries) {
+                ComponentLibraryDetector.LibraryType libraryType = 
+                    ComponentLibraryDetector.LibraryType.fromLibraryName(library.getName());
+                
+                if (libraryType != ComponentLibraryDetector.LibraryType.UNKNOWN) {
+                    libraryTypeList.add(libraryType);
+                }
+            }
+            
+            // 如果没有找到任何组件库，使用默认列表
+            if (libraryTypeList.isEmpty()) {
+                libraryTypeList.add(ComponentLibraryDetector.LibraryType.ELEMENT_UI);
+                libraryTypeList.add(ComponentLibraryDetector.LibraryType.ELEMENT_PLUS);
+                libraryTypeList.add(ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE);
+                libraryTypeList.add(ComponentLibraryDetector.LibraryType.VUETIFY);
+                libraryTypeList.add(ComponentLibraryDetector.LibraryType.QUASAR);
+            }
+            
+            return libraryTypeList.toArray(new ComponentLibraryDetector.LibraryType[0]);
+            
+        } catch (Exception e) {
+            // 出错时使用默认列表
+            return new ComponentLibraryDetector.LibraryType[]{
+                ComponentLibraryDetector.LibraryType.ELEMENT_UI,
+                ComponentLibraryDetector.LibraryType.ELEMENT_PLUS,
+                ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE,
+                ComponentLibraryDetector.LibraryType.VUETIFY,
+                ComponentLibraryDetector.LibraryType.QUASAR
+            };
+        }
+    }
+    
     /**
      * 验证复选框是否正确创建
      */

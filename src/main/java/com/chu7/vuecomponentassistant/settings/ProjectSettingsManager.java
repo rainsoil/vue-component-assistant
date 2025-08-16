@@ -30,7 +30,7 @@ public final class ProjectSettingsManager {
     private static final String PROJECT_CONFIG_FILE = "vuekit-project-config.json";
     
     // 项目级设置缓存
-    private final Map<String, ProjectSettings> projectSettingsCache = new ConcurrentHashMap<>();
+    private static final Map<String, ProjectSettings> projectSettingsCache = new ConcurrentHashMap<>();
     
     /**
      * 获取项目设置管理器实例
@@ -243,16 +243,15 @@ public final class ProjectSettingsManager {
         settings.setProjectId(getProjectId(project));
         settings.setProjectName(project.getName());
         
-        // 默认不启用任何功能，使用全局设置
-        // 这样项目级设置会继承全局设置的默认值
-        settings.setEnableComponentCompletion(false); // 使用全局设置
-        settings.setEnableAttributeCompletion(false); // 使用全局设置
-        settings.setEnableEventCompletion(false); // 使用全局设置
-        settings.setEnableSlotCompletion(false); // 使用全局设置
-        settings.setEnableHoverDocumentation(false); // 使用全局设置
-        settings.setEnableRightClickDocumentation(false); // 使用全局设置
-        settings.setEnableCaching(false); // 使用全局设置
-        settings.setEnableDebugMode(false); // 使用全局设置
+        // 使用合理的默认值，不再依赖全局配置
+        settings.setEnableComponentCompletion(true);      // 默认启用组件补全
+        settings.setEnableAttributeCompletion(true);      // 默认启用属性补全
+        settings.setEnableEventCompletion(true);          // 默认启用事件补全
+        settings.setEnableSlotCompletion(true);           // 默认启用插槽补全
+        settings.setEnableHoverDocumentation(true);       // 默认启用悬停文档
+        settings.setEnableRightClickDocumentation(true);  // 默认启用右键文档
+        settings.setEnableCaching(true);                  // 默认启用缓存
+        settings.setEnableDebugMode(false);               // 默认关闭调试模式
         
         return settings;
     }
@@ -266,19 +265,19 @@ public final class ProjectSettingsManager {
         private String projectId;
         private String projectName;
         
-        // 补全功能设置
-        private boolean enableComponentCompletion = false; // 默认使用全局设置
-        private boolean enableAttributeCompletion = false; // 默认使用全局设置
-        private boolean enableEventCompletion = false; // 默认使用全局设置
-        private boolean enableSlotCompletion = false; // 默认使用全局设置
+        // 补全功能设置 - 默认值将在 createDefaultProjectSettings 中从全局设置继承
+        private boolean enableComponentCompletion;
+        private boolean enableAttributeCompletion;
+        private boolean enableEventCompletion;
+        private boolean enableSlotCompletion;
         
-        // 文档功能设置
-        private boolean enableHoverDocumentation = false; // 默认使用全局设置
-        private boolean enableRightClickDocumentation = false; // 默认使用全局设置
+        // 文档功能设置 - 默认值将在 createDefaultProjectSettings 中从全局设置继承
+        private boolean enableHoverDocumentation;
+        private boolean enableRightClickDocumentation;
         
-        // 性能优化设置
-        private boolean enableCaching = false; // 默认使用全局设置
-        private boolean enableDebugMode = false; // 默认使用全局设置
+        // 性能优化设置 - 默认值将在 createDefaultProjectSettings 中从全局设置继承
+        private boolean enableCaching;
+        private boolean enableDebugMode;
         
         // 组件库配置（新增）
         private java.util.Set<String> enabledLibraryNames = new java.util.HashSet<>();

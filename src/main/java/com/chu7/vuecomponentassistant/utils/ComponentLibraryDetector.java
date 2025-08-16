@@ -29,6 +29,8 @@ public class ComponentLibraryDetector {
 
     /**
      * 组件库类型枚举
+     * 注意：这个枚举现在主要用于向后兼容
+     * 新的组件库信息应该从远程组件库管理器中动态获取
      */
     public enum LibraryType {
         ELEMENT_UI("element-ui", "Element UI"),
@@ -52,6 +54,57 @@ public class ComponentLibraryDetector {
 
         public String getDisplayName() {
             return displayName;
+        }
+        
+        /**
+         * 从组件库名称动态创建 LibraryType
+         * 优先从远程组件库管理器获取信息
+         */
+        public static LibraryType fromLibraryName(String libraryName) {
+            if (libraryName == null || libraryName.trim().isEmpty()) {
+                return UNKNOWN;
+            }
+            
+            try {
+                // 尝试从远程组件库管理器获取信息
+                com.chu7.vuecomponentassistant.remote.ComponentLibraryManager libraryManager = 
+                    new com.chu7.vuecomponentassistant.remote.ComponentLibraryManager();
+                java.util.List<com.chu7.vuecomponentassistant.remote.model.ComponentLibrary> installedLibraries = 
+                    libraryManager.getAllLibraries();
+                
+                for (com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library : installedLibraries) {
+                    if (libraryName.equalsIgnoreCase(library.getName())) {
+                        // 根据组件库名称推断类型
+                        return inferLibraryType(library.getName());
+                    }
+                }
+            } catch (Exception e) {
+                VueKitLogger.debug(LOG, "从远程获取组件库信息失败，使用本地推断: " + e.getMessage());
+            }
+            
+            // 后备方案：使用本地推断
+            return inferLibraryType(libraryName);
+        }
+        
+        /**
+         * 根据组件库名称推断类型
+         */
+        private static LibraryType inferLibraryType(String libraryName) {
+            String lowerName = libraryName.toLowerCase();
+            
+            if (lowerName.contains("element-plus")) {
+                return ELEMENT_PLUS;
+            } else if (lowerName.contains("element-ui")) {
+                return ELEMENT_UI;
+            } else if (lowerName.contains("ant-design-vue")) {
+                return ANT_DESIGN_VUE;
+            } else if (lowerName.contains("vuetify")) {
+                return VUETIFY;
+            } else if (lowerName.contains("quasar")) {
+                return QUASAR;
+            }
+            
+            return UNKNOWN;
         }
     }
 
@@ -147,7 +200,7 @@ public class ComponentLibraryDetector {
      * 检测逻辑：
      * 1. 验证指定的依赖类型是否存在
      * 2. 获取依赖对象并遍历检查
-     * 3. 按优先级检查支持的组件库：Element Plus > Element UI > Ant Design Vue
+     * 3. 动态检查已安装的组件库
      * 4. 记录检测到的组件库版本信息
      * 
      * @param packageJson package.json 的 JSON 对象，不能为 null
@@ -163,40 +216,66 @@ public class ComponentLibraryDetector {
         JsonObject dependencies = packageJson.getAsJsonObject(dependencyType);
         VueKitLogger.debug(LOG, "  检查 " + dependencyType + " 中的依赖项...");
         
-        // 按优先级检查支持的组件库
-        // 1. Element Plus (最新版本)
-        if (dependencies.has("element-plus")) {
-            String version = dependencies.get("element-plus").getAsString();
-            VueKitLogger.info(LOG, "    找到 element-plus: " + version);
-            return LibraryType.ELEMENT_PLUS;
-        }
-
-        // 2. Element UI (经典版本)
-        if (dependencies.has("element-ui")) {
-            String version = dependencies.get("element-ui").getAsString();
-            VueKitLogger.info(LOG, "    找到 element-ui: " + version);
-            return LibraryType.ELEMENT_UI;
-        }
-
-        // 3. Ant Design Vue
-        if (dependencies.has("ant-design-vue")) {
-            String version = dependencies.get("ant-design-vue").getAsString();
-            VueKitLogger.info(LOG, "    找到 ant-design-vue: " + version);
-            return LibraryType.ANT_DESIGN_VUE;
-        }
-
-        // 4. Vuetify
-        if (dependencies.has("vuetify")) {
-            String version = dependencies.get("vuetify").getAsString();
-            VueKitLogger.info(LOG, "    找到 vuetify: " + version);
-            return LibraryType.VUETIFY;
-        }
-
-        // 5. Quasar
-        if (dependencies.has("quasar")) {
-            String version = dependencies.get("quasar").getAsString();
-            VueKitLogger.info(LOG, "    找到 quasar: " + version);
-            return LibraryType.QUASAR;
+        try {
+            // 动态获取已安装的组件库列表
+            com.chu7.vuecomponentassistant.remote.ComponentLibraryManager libraryManager = 
+                new com.chu7.vuecomponentassistant.remote.ComponentLibraryManager();
+            java.util.List<com.chu7.vuecomponentassistant.remote.model.ComponentLibrary> installedLibraries = 
+                libraryManager.getAllLibraries();
+            
+            // 检查每个已安装的组件库是否在依赖中
+            for (com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library : installedLibraries) {
+                String packageName = library.getName();
+                if (dependencies.has(packageName)) {
+                    String version = dependencies.get(packageName).getAsString();
+                    VueKitLogger.info(LOG, "    找到 " + packageName + ": " + version);
+                    return LibraryType.fromLibraryName(packageName);
+                }
+            }
+            
+            // 检查一些常见的组件库包名变体
+            String[] commonPackages = {
+                "element-plus", "element-ui", "ant-design-vue", "vuetify", "quasar",
+                "@element-plus/icons-vue", "@ant-design/icons-vue", "@quasar/extras"
+            };
+            
+            for (String packageName : commonPackages) {
+                if (dependencies.has(packageName)) {
+                    String version = dependencies.get(packageName).getAsString();
+                    VueKitLogger.info(LOG, "    找到 " + packageName + ": " + version);
+                    return LibraryType.fromLibraryName(packageName);
+                }
+            }
+            
+        } catch (Exception e) {
+            VueKitLogger.debug(LOG, "动态检查组件库失败，使用静态检查: " + e.getMessage());
+            
+            // 后备方案：静态检查
+            if (dependencies.has("element-plus")) {
+                String version = dependencies.get("element-plus").getAsString();
+                VueKitLogger.info(LOG, "    找到 element-plus: " + version);
+                return LibraryType.ELEMENT_PLUS;
+            }
+            if (dependencies.has("element-ui")) {
+                String version = dependencies.get("element-ui").getAsString();
+                VueKitLogger.info(LOG, "    找到 element-ui: " + version);
+                return LibraryType.ELEMENT_UI;
+            }
+            if (dependencies.has("ant-design-vue")) {
+                String version = dependencies.get("ant-design-vue").getAsString();
+                VueKitLogger.info(LOG, "    找到 ant-design-vue: " + version);
+                return LibraryType.ANT_DESIGN_VUE;
+            }
+            if (dependencies.has("vuetify")) {
+                String version = dependencies.get("vuetify").getAsString();
+                VueKitLogger.info(LOG, "    找到 vuetify: " + version);
+                return LibraryType.VUETIFY;
+            }
+            if (dependencies.has("quasar")) {
+                String version = dependencies.get("quasar").getAsString();
+                VueKitLogger.info(LOG, "    找到 quasar: " + version);
+                return LibraryType.QUASAR;
+            }
         }
 
         VueKitLogger.debug(LOG, "  在 " + dependencyType + " 中未找到支持的组件库");
