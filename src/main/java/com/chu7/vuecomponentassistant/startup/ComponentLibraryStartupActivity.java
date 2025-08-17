@@ -1,6 +1,7 @@
 package com.chu7.vuecomponentassistant.startup;
 
 import com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager;
+import com.chu7.vuecomponentassistant.utils.PackageJsonAutoDetector;
 import com.chu7.vuecomponentassistant.utils.VueKitLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -12,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
  * 
  * 功能说明：
  * - 在项目启动时自动加载组件库配置
+ * - 自动检测项目中的 package.json 文件并匹配组件库
+ * - 在首次使用时自动启用匹配到的组件库
  * - 使用 StartupActivity 接口（兼容性支持）
  * - 确保组件库配置在项目完全加载后生效
  * 
@@ -34,6 +37,14 @@ public class ComponentLibraryStartupActivity implements StartupActivity {
             
             // 触发项目启动时的配置加载
             configManager.onProjectStarted(project);
+            
+            // 自动检测并启用项目中的组件库
+            boolean autoDetected = PackageJsonAutoDetector.autoDetectAndEnableLibraries(project);
+            if (autoDetected) {
+                VueKitLogger.info(LOG, "✅ 自动检测并启用组件库成功");
+            } else {
+                VueKitLogger.info(LOG, "ℹ️ 跳过自动检测（配置文件已存在或无匹配的组件库）");
+            }
             
             VueKitLogger.info(LOG, "✅ 组件库配置加载完成");
             

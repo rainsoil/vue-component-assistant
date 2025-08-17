@@ -1,0 +1,31 @@
+{
+  "name": "vuekit-case-sensitive-test",
+  "version": "1.0.0",
+  "description": "测试 VueKit 自动检测功能 - 大小写和空格匹配",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.3.0",
+    "Element-Plus": "^2.3.0",
+    "ANT-DESIGN-VUE": "^4.0.0",
+    "Vuetify ": "^3.3.0",
+    " quasar": "^2.12.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.2.0",
+    "vite": "^4.3.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "vue",
+    "vuekit",
+    "auto-detect",
+    "case-sensitive"
+  ],
+  "author": "VueKit Team",
+  "license": "MIT"
+} 

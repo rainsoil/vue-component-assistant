@@ -38,20 +38,20 @@ public class SmartComponentFilter {
     
     private static final Logger LOG = VueKitLogger.getLogger(SmartComponentFilter.class);
     
-    // 组件库类型映射 - 现在动态从远程组件库管理器获取
-    private static final Map<String, ComponentLibraryDetector.LibraryType> PACKAGE_TO_LIBRARY = new HashMap<>();
+    // 组件库名称集合 - 现在动态从远程组件库管理器获取
+    private static final Set<String> AVAILABLE_LIBRARIES = new HashSet<>();
     
     static {
-        // 初始化时动态加载组件库映射
-        initializePackageToLibraryMapping();
+        // 初始化时动态加载组件库
+        initializeLibraryMapping();
     }
     
     /**
-     * 动态初始化包名到组件库类型的映射
+     * 初始化组件库映射
      */
-    private static void initializePackageToLibraryMapping() {
+    private static void initializeLibraryMapping() {
         try {
-            // 从远程组件库管理器获取已安装的组件库
+            // 动态获取已安装的组件库
             com.chu7.vuecomponentassistant.remote.ComponentLibraryManager libraryManager = 
                 new com.chu7.vuecomponentassistant.remote.ComponentLibraryManager();
             java.util.List<com.chu7.vuecomponentassistant.remote.model.ComponentLibrary> installedLibraries = 
@@ -59,40 +59,29 @@ public class SmartComponentFilter {
             
             for (com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library : installedLibraries) {
                 String packageName = library.getName();
-                ComponentLibraryDetector.LibraryType libraryType = 
-                    ComponentLibraryDetector.LibraryType.fromLibraryName(packageName);
+                AVAILABLE_LIBRARIES.add(packageName);
                 
-                if (libraryType != ComponentLibraryDetector.LibraryType.UNKNOWN) {
-                    PACKAGE_TO_LIBRARY.put(packageName, libraryType);
-                    
-                    // 添加常见的包名变体
-                    if (packageName.contains("element-plus")) {
-                        PACKAGE_TO_LIBRARY.put("@element-plus/icons-vue", libraryType);
-                    } else if (packageName.contains("element-ui")) {
-                        PACKAGE_TO_LIBRARY.put("@element-ui/vue", libraryType);
-                    } else if (packageName.contains("ant-design-vue")) {
-                        PACKAGE_TO_LIBRARY.put("@ant-design/icons-vue", libraryType);
-                    } else if (packageName.contains("quasar")) {
-                        PACKAGE_TO_LIBRARY.put("@quasar/extras", libraryType);
-                    }
-                }
+                // 动态生成相关包名，避免硬编码
+                addRelatedPackages(packageName);
             }
             
         } catch (Exception e) {
-            VueKitLogger.debug(LOG, "动态初始化组件库映射失败，使用静态映射: " + e.getMessage());
-            
-            // 后备方案：静态映射
-            PACKAGE_TO_LIBRARY.put("element-ui", ComponentLibraryDetector.LibraryType.ELEMENT_UI);
-            PACKAGE_TO_LIBRARY.put("@element-ui/vue", ComponentLibraryDetector.LibraryType.ELEMENT_UI);
-            PACKAGE_TO_LIBRARY.put("element-plus", ComponentLibraryDetector.LibraryType.ELEMENT_PLUS);
-            PACKAGE_TO_LIBRARY.put("@element-plus/icons-vue", ComponentLibraryDetector.LibraryType.ELEMENT_PLUS);
-            PACKAGE_TO_LIBRARY.put("ant-design-vue", ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE);
-            PACKAGE_TO_LIBRARY.put("@ant-design/icons-vue", ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE);
-            PACKAGE_TO_LIBRARY.put("vuetify", ComponentLibraryDetector.LibraryType.VUETIFY);
-            PACKAGE_TO_LIBRARY.put("vuetify/lib", ComponentLibraryDetector.LibraryType.VUETIFY);
-            PACKAGE_TO_LIBRARY.put("quasar", ComponentLibraryDetector.LibraryType.QUASAR);
-            PACKAGE_TO_LIBRARY.put("@quasar/extras", ComponentLibraryDetector.LibraryType.QUASAR);
+            VueKitLogger.debug(LOG, "动态初始化组件库映射失败: " + e.getMessage());
         }
+    }
+    
+    /**
+     * 动态添加相关包名
+     * 
+     * @param packageName 主包名
+     */
+    private static void addRelatedPackages(String packageName) {
+        // 根据包名动态生成相关包名
+        String normalizedPackageName = StringNormalizer.normalize(packageName);
+        
+        // 这里可以根据需要添加相关包名的生成逻辑
+        // 例如：如果主包名是 element-plus，可以添加 @element-plus/icons-vue 等
+        // 目前暂时不添加，避免硬编码
     }
     
     /**
@@ -110,28 +99,19 @@ public class SmartComponentFilter {
             VueKitLogger.debug(LOG, "开始智能过滤组件，项目: " + project.getName());
             
             // 1. 检测项目使用的组件库
-            Set<ComponentLibraryDetector.LibraryType> projectLibraries = detectProjectLibraries(project);
-            VueKitLogger.info(LOG, "检测到项目使用的组件库: " + 
-                projectLibraries.stream()
-                    .map(ComponentLibraryDetector.LibraryType::getDisplayName)
-                    .collect(Collectors.joining(", ")));
+            Set<String> projectLibraries = detectProjectLibraries(project);
+            VueKitLogger.info(LOG, "检测到项目使用的组件库: " + String.join(", ", projectLibraries));
             
             // 2. 获取用户配置的启用组件库
-            Set<ComponentLibraryDetector.LibraryType> enabledLibraries = getUserEnabledLibraries(project);
-            VueKitLogger.debug(LOG, "用户启用的组件库: " + 
-                enabledLibraries.stream()
-                    .map(ComponentLibraryDetector.LibraryType::getDisplayName)
-                    .collect(Collectors.joining(", ")));
+            Set<String> enabledLibraries = getUserEnabledLibraries(project);
+            VueKitLogger.debug(LOG, "用户启用的组件库: " + String.join(", ", enabledLibraries));
             
             // 3. 合并项目检测和用户配置
-            Set<ComponentLibraryDetector.LibraryType> finalLibraries = new HashSet<>();
+            Set<String> finalLibraries = new HashSet<>();
             finalLibraries.addAll(projectLibraries);
             finalLibraries.addAll(enabledLibraries);
             
-            VueKitLogger.info(LOG, "最终启用的组件库: " + 
-                finalLibraries.stream()
-                    .map(ComponentLibraryDetector.LibraryType::getDisplayName)
-                    .collect(Collectors.joining(", ")));
+            VueKitLogger.info(LOG, "最终启用的组件库: " + String.join(", ", finalLibraries));
             
             // 4. 过滤组件
             List<ElementPlusComponent> filteredComponents = allComponents.stream()
@@ -161,8 +141,8 @@ public class SmartComponentFilter {
      * @param project 项目对象
      * @return 项目使用的组件库类型集合
      */
-    public Set<ComponentLibraryDetector.LibraryType> detectProjectLibraries(Project project) {
-        Set<ComponentLibraryDetector.LibraryType> libraries = new HashSet<>();
+    public Set<String> detectProjectLibraries(Project project) {
+        Set<String> libraries = new HashSet<>();
         
         try {
             // 1. 查找 package.json 文件
@@ -185,10 +165,7 @@ public class SmartComponentFilter {
             checkDependencies(packageData, "dependencies", libraries);
             checkDependencies(packageData, "devDependencies", libraries);
             
-            VueKitLogger.info(LOG, "从 package.json 检测到组件库: " + 
-                libraries.stream()
-                    .map(ComponentLibraryDetector.LibraryType::getDisplayName)
-                    .collect(Collectors.joining(", ")));
+            VueKitLogger.info(LOG, "从 package.json 检测到组件库: " + String.join(", ", libraries));
             
         } catch (Exception e) {
             VueKitLogger.error(LOG, "检测项目组件库失败", e);

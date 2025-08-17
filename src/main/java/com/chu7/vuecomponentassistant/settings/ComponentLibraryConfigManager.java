@@ -84,22 +84,17 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
                 }
             }
             
-            // 如果没有找到任何组件库，使用默认列表
+            // 如果没有找到任何组件库，返回空集合而不是硬编码列表
             if (defaultLibraries.isEmpty()) {
-                defaultLibraries.add(ComponentLibraryDetector.LibraryType.ELEMENT_UI);
-                defaultLibraries.add(ComponentLibraryDetector.LibraryType.ELEMENT_PLUS);
-                defaultLibraries.add(ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE);
+                VueKitLogger.warn(LOG, "未找到任何组件库，使用空集合作为默认配置");
             }
             
             DEFAULT_ENABLED_LIBRARIES = defaultLibraries;
             
         } catch (Exception e) {
-            // 出错时使用默认列表
-            DEFAULT_ENABLED_LIBRARIES = new HashSet<>(Arrays.asList(
-                ComponentLibraryDetector.LibraryType.ELEMENT_UI,
-                ComponentLibraryDetector.LibraryType.ELEMENT_PLUS,
-                ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE
-            ));
+            // 出错时使用空集合，而不是硬编码的默认列表
+            VueKitLogger.error(LOG, "初始化默认组件库失败，使用空集合", e);
+            DEFAULT_ENABLED_LIBRARIES = new HashSet<>();
         }
     }
 
@@ -140,57 +135,62 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
     }
 
     /**
-     * 获取项目启用的组件库
+     * 获取项目启用的组件库名称
      *
      * @param project 项目对象
-     * @return 启用的组件库集合
+     * @return 启用的组件库名称集合
      */
-    public Set<ComponentLibraryDetector.LibraryType> getEnabledLibraries(Project project) {
+    public Set<String> getEnabledLibraryNames(Project project) {
         try {
             String projectId = getProjectId(project);
 
             // 1. 检查项目级配置
             ProjectConfig projectConfig = getProjectConfig(project);
             if (projectConfig != null) {
-                // 如果项目配置存在，直接返回（即使是空的，也表示用户明确选择了不启用任何组件库）
-                Set<ComponentLibraryDetector.LibraryType> enabledLibraries = projectConfig.getEnabledLibraries();
+                // 如果项目配置存在，直接返回
+                Set<String> enabledLibraryNames = projectConfig.getEnabledLibraryNames();
                 VueKitLogger.debug(LOG, "使用项目级配置，启用的组件库: " +
-                        (enabledLibraries.isEmpty() ? "无" : enabledLibraries.stream()
-                                .map(ComponentLibraryDetector.LibraryType::getDisplayName)
-                                .collect(java.util.stream.Collectors.joining(", "))));
-                return new HashSet<>(enabledLibraries);
+                        (enabledLibraryNames.isEmpty() ? "无" : String.join(", ", enabledLibraryNames)));
+                return new HashSet<>(enabledLibraryNames);
             }
 
             // 2. 检查全局配置
-            if (globalConfig != null && !globalConfig.getDefaultEnabledLibraries().isEmpty()) {
+            if (globalConfig != null && !globalConfig.getDefaultEnabledLibraryNames().isEmpty()) {
                 VueKitLogger.debug(LOG, "使用全局配置，启用的组件库: " +
-                        globalConfig.getDefaultEnabledLibraries().stream()
-                                .map(ComponentLibraryDetector.LibraryType::getDisplayName)
-                                .collect(java.util.stream.Collectors.joining(", ")));
-                return new HashSet<>(globalConfig.getDefaultEnabledLibraries());
+                        String.join(", ", globalConfig.getDefaultEnabledLibraryNames()));
+                return new HashSet<>(globalConfig.getDefaultEnabledLibraryNames());
             }
 
-            // 3. 使用默认配置
-            VueKitLogger.debug(LOG, "使用默认配置，启用的组件库: " +
-                    DEFAULT_ENABLED_LIBRARIES.stream()
-                            .map(ComponentLibraryDetector.LibraryType::getDisplayName)
-                            .collect(java.util.stream.Collectors.joining(", ")));
-            return new HashSet<>(DEFAULT_ENABLED_LIBRARIES);
+            // 3. 使用默认配置（空集合）
+            VueKitLogger.debug(LOG, "使用默认配置，启用的组件库: 无");
+            return new HashSet<>();
 
         } catch (Exception e) {
             VueKitLogger.error(LOG, "获取项目启用的组件库失败", e);
-            return new HashSet<>(DEFAULT_ENABLED_LIBRARIES);
+            return new HashSet<>();
         }
     }
 
     /**
-     * 设置项目启用的组件库
+     * 获取项目启用的组件库（向后兼容）
      *
      * @param project 项目对象
-     * @param enabledLibraries 启用的组件库集合
+     * @return 启用的组件库集合
+     * @deprecated 使用 getEnabledLibraryNames 替代
      */
-    public void setProjectEnabledLibraries(Project project,
-                                           Set<ComponentLibraryDetector.LibraryType> enabledLibraries) {
+    @Deprecated
+    public Set<ComponentLibraryDetector.LibraryType> getEnabledLibraries(Project project) {
+        // 为了向后兼容，返回空集合
+        return new HashSet<>();
+    }
+
+    /**
+     * 设置项目启用的组件库名称
+     *
+     * @param project 项目对象
+     * @param enabledLibraryNames 启用的组件库名称集合
+     */
+    public void setProjectEnabledLibraryNames(Project project, Set<String> enabledLibraryNames) {
         try {
             String projectId = getProjectId(project);
             ProjectConfig projectConfig = getProjectConfig(project);
@@ -201,23 +201,39 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
                 projectConfig.setProjectName(project.getName());
             }
 
-            projectConfig.setEnabledLibraries(enabledLibraries);
+            projectConfig.setEnabledLibraryNames(enabledLibraryNames);
             projectConfigs.put(projectId, projectConfig);
 
             // 保存项目配置（即使为空集合也要保存，表示用户明确选择不启用任何组件库）
             saveProjectConfig(project, projectConfig);
 
             // 通知配置变更
-            notifyConfigChanged(project, enabledLibraries);
+            notifyConfigChangedWithNames(project, enabledLibraryNames);
 
             VueKitLogger.info(LOG, "项目 " + project.getName() + " 的组件库配置已更新: " +
-                    (enabledLibraries.isEmpty() ? "无" : enabledLibraries.stream()
-                            .map(ComponentLibraryDetector.LibraryType::getDisplayName)
-                            .collect(java.util.stream.Collectors.joining(", "))));
+                    (enabledLibraryNames.isEmpty() ? "无" : String.join(", ", enabledLibraryNames)));
 
         } catch (Exception e) {
             VueKitLogger.error(LOG, "设置项目启用的组件库失败", e);
         }
+    }
+
+    /**
+     * 设置项目启用的组件库（向后兼容）
+     *
+     * @param project 项目对象
+     * @param enabledLibraries 启用的组件库集合
+     * @deprecated 使用 setProjectEnabledLibraryNames 替代
+     */
+    @Deprecated
+    public void setProjectEnabledLibraries(Project project,
+                                           Set<ComponentLibraryDetector.LibraryType> enabledLibraries) {
+        // 为了向后兼容，转换为字符串名称
+        Set<String> enabledLibraryNames = new HashSet<>();
+        for (ComponentLibraryDetector.LibraryType type : enabledLibraries) {
+            enabledLibraryNames.add(type.getPackageName());
+        }
+        setProjectEnabledLibraryNames(project, enabledLibraryNames);
     }
 
     /**
@@ -295,6 +311,264 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
     public boolean isLibraryEnabled(Project project, ComponentLibraryDetector.LibraryType libraryType) {
         Set<ComponentLibraryDetector.LibraryType> enabledLibraries = getEnabledLibraries(project);
         return enabledLibraries.contains(libraryType);
+    }
+    
+    /**
+     * 获取项目功能开关配置
+     *
+     * @param project 项目对象
+     * @return 项目配置对象
+     */
+    public ProjectConfig getProjectConfigForFeatures(Project project) {
+        return getProjectConfig(project);
+    }
+    
+    /**
+     * 设置项目功能开关配置
+     *
+     * @param project 项目对象
+     * @param config 项目配置对象
+     */
+    public void setProjectConfig(Project project, ProjectConfig config) {
+        try {
+            String projectId = getProjectId(project);
+            projectConfigs.put(projectId, config);
+            
+            // 保存项目配置
+            saveProjectConfig(project, config);
+            
+            // 通知配置变更
+            notifyConfigChanged(project, config.getEnabledLibraries());
+            
+            VueKitLogger.info(LOG, "项目 " + project.getName() + " 的配置已更新");
+            
+        } catch (Exception e) {
+            VueKitLogger.error(LOG, "设置项目配置失败", e);
+        }
+    }
+    
+    /**
+     * 获取组件补全开关状态
+     *
+     * @param project 项目对象
+     * @return 如果启用则返回 true
+     */
+    public boolean isComponentCompletionEnabled(Project project) {
+        ProjectConfig config = getProjectConfigForFeatures(project);
+        return config != null ? config.isEnableComponentCompletion() : true;
+    }
+    
+    /**
+     * 设置组件补全开关状态
+     *
+     * @param project 项目对象
+     * @param enabled 是否启用
+     */
+    public void setComponentCompletionEnabled(Project project, boolean enabled) {
+        ProjectConfig config = getProjectConfigForFeatures(project);
+        if (config == null) {
+            config = new ProjectConfig();
+            config.setProjectId(getProjectId(project));
+            config.setProjectName(project.getName());
+        }
+        config.setEnableComponentCompletion(enabled);
+        setProjectConfig(project, config);
+    }
+    
+    /**
+     * 获取属性补全开关状态
+     *
+     * @param project 项目对象
+     * @return 如果启用则返回 true
+     */
+    public boolean isAttributeCompletionEnabled(Project project) {
+        ProjectConfig config = getProjectConfigForFeatures(project);
+        return config != null ? config.isEnableAttributeCompletion() : true;
+    }
+    
+    /**
+     * 设置属性补全开关状态
+     *
+     * @param project 项目对象
+     * @param enabled 是否启用
+     */
+    public void setAttributeCompletionEnabled(Project project, boolean enabled) {
+        ProjectConfig config = getProjectConfigForFeatures(project);
+        if (config == null) {
+            config = new ProjectConfig();
+            config.setProjectId(getProjectId(project));
+            config.setProjectName(project.getName());
+        }
+        config.setEnableAttributeCompletion(enabled);
+        setProjectConfig(project, config);
+    }
+    
+    /**
+     * 获取事件补全开关状态
+     *
+     * @param project 项目对象
+     * @return 如果启用则返回 true
+     */
+    public boolean isEventCompletionEnabled(Project project) {
+        ProjectConfig config = getProjectConfigForFeatures(project);
+        return config != null ? config.isEnableEventCompletion() : true;
+    }
+    
+    /**
+     * 设置事件补全开关状态
+     *
+     * @param project 项目对象
+     * @param enabled 是否启用
+     */
+    public void setEventCompletionEnabled(Project project, boolean enabled) {
+        ProjectConfig config = getProjectConfigForFeatures(project);
+        if (config == null) {
+            config = new ProjectConfig();
+            config.setProjectId(getProjectId(project));
+            config.setProjectName(project.getName());
+        }
+        config.setEnableEventCompletion(enabled);
+        setProjectConfig(project, config);
+    }
+    
+    /**
+     * 获取插槽补全开关状态
+     *
+     * @param project 项目对象
+     * @return 如果启用则返回 true
+     */
+    public boolean isSlotCompletionEnabled(Project project) {
+        ProjectConfig config = getProjectConfigForFeatures(project);
+        return config != null ? config.isEnableSlotCompletion() : true;
+    }
+    
+    /**
+     * 设置插槽补全开关状态
+     *
+     * @param project 项目对象
+     * @param enabled 是否启用
+     */
+    public void setSlotCompletionEnabled(Project project, boolean enabled) {
+        ProjectConfig config = getProjectConfigForFeatures(project);
+        if (config == null) {
+            config = new ProjectConfig();
+            config.setProjectId(getProjectId(project));
+            config.setProjectName(project.getName());
+        }
+        config.setEnableSlotCompletion(enabled);
+        setProjectConfig(project, config);
+    }
+    
+    /**
+     * 获取悬停文档开关状态
+     *
+     * @param project 项目对象
+     * @return 如果启用则返回 true
+     */
+    public boolean isHoverDocumentationEnabled(Project project) {
+        ProjectConfig config = getProjectConfigForFeatures(project);
+        return config != null ? config.isEnableHoverDocumentation() : true;
+    }
+    
+    /**
+     * 设置悬停文档开关状态
+     *
+     * @param project 项目对象
+     * @param enabled 是否启用
+     */
+    public void setHoverDocumentationEnabled(Project project, boolean enabled) {
+        ProjectConfig config = getProjectConfigForFeatures(project);
+        if (config == null) {
+            config = new ProjectConfig();
+            config.setProjectId(getProjectId(project));
+            config.setProjectName(project.getName());
+        }
+        config.setEnableHoverDocumentation(enabled);
+        setProjectConfig(project, config);
+    }
+    
+    /**
+     * 获取右键文档开关状态
+     *
+     * @param project 项目对象
+     * @return 如果启用则返回 true
+     */
+    public boolean isRightClickDocumentationEnabled(Project project) {
+        ProjectConfig config = getProjectConfigForFeatures(project);
+        return config != null ? config.isEnableRightClickDocumentation() : true;
+    }
+    
+    /**
+     * 设置右键文档开关状态
+     *
+     * @param project 项目对象
+     * @param enabled 是否启用
+     */
+    public void setRightClickDocumentationEnabled(Project project, boolean enabled) {
+        ProjectConfig config = getProjectConfigForFeatures(project);
+        if (config == null) {
+            config = new ProjectConfig();
+            config.setProjectId(getProjectId(project));
+            config.setProjectName(project.getName());
+        }
+        config.setEnableRightClickDocumentation(enabled);
+        setProjectConfig(project, config);
+    }
+    
+    /**
+     * 获取缓存开关状态
+     *
+     * @param project 项目对象
+     * @return 如果启用则返回 true
+     */
+    public boolean isCachingEnabled(Project project) {
+        ProjectConfig config = getProjectConfigForFeatures(project);
+        return config != null ? config.isEnableCaching() : true;
+    }
+    
+    /**
+     * 设置缓存开关状态
+     *
+     * @param project 项目对象
+     * @param enabled 是否启用
+     */
+    public void setCachingEnabled(Project project, boolean enabled) {
+        ProjectConfig config = getProjectConfigForFeatures(project);
+        if (config == null) {
+            config = new ProjectConfig();
+            config.setProjectId(getProjectId(project));
+            config.setProjectName(project.getName());
+        }
+        config.setEnableCaching(enabled);
+        setProjectConfig(project, config);
+    }
+    
+    /**
+     * 获取调试模式开关状态
+     *
+     * @param project 项目对象
+     * @return 如果启用则返回 true
+     */
+    public boolean isDebugModeEnabled(Project project) {
+        ProjectConfig config = getProjectConfigForFeatures(project);
+        return config != null ? config.isEnableDebugMode() : false;
+    }
+    
+    /**
+     * 设置调试模式开关状态
+     *
+     * @param project 项目对象
+     * @param enabled 是否启用
+     */
+    public void setDebugModeEnabled(Project project, boolean enabled) {
+        ProjectConfig config = getProjectConfigForFeatures(project);
+        if (config == null) {
+            config = new ProjectConfig();
+            config.setProjectId(getProjectId(project));
+            config.setProjectName(project.getName());
+        }
+        config.setEnableDebugMode(enabled);
+        setProjectConfig(project, config);
     }
 
     /**
@@ -620,6 +894,22 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
     }
 
     /**
+     * 通知配置变更（使用组件库名称）
+     *
+     * @param project 项目对象
+     * @param enabledLibraryNames 启用的组件库名称
+     */
+    private void notifyConfigChangedWithNames(Project project, Set<String> enabledLibraryNames) {
+        // 通知 ComponentProvider 重新加载组件数据
+        try {
+            ComponentProviderManager.notifyProviderReload(project);
+            VueKitLogger.info(LOG, "已通知 ComponentProvider 重新加载组件数据");
+        } catch (Exception e) {
+            VueKitLogger.error(LOG, "通知 ComponentProvider 重新加载失败", e);
+        }
+    }
+
+    /**
      * 通知全局配置变更
      *
      * @param defaultEnabledLibraries 默认启用的组件库
@@ -707,6 +997,16 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
         private String projectName;
         private Set<String> enabledLibraryNames = new HashSet<>(); // 使用字符串存储枚举名称
         private transient Set<ComponentLibraryDetector.LibraryType> enabledLibraries = new HashSet<>();
+        
+        // 功能开关配置
+        private boolean enableComponentCompletion = true;
+        private boolean enableAttributeCompletion = true;
+        private boolean enableEventCompletion = true;
+        private boolean enableSlotCompletion = true;
+        private boolean enableHoverDocumentation = true;
+        private boolean enableRightClickDocumentation = true;
+        private boolean enableCaching = true;
+        private boolean enableDebugMode = false;
 
         // Getters and Setters
         public String getProjectId() {
@@ -734,17 +1034,39 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
         }
 
         public Set<ComponentLibraryDetector.LibraryType> getEnabledLibraries() {
+            VueKitLogger.info(LOG, "=== ProjectConfig.getEnabledLibraries() 开始 ===");
+            VueKitLogger.info(LOG, "enabledLibraries 当前状态: " + enabledLibraries.size() + " 个");
+            VueKitLogger.info(LOG, "enabledLibraryNames 当前状态: " + enabledLibraryNames.size() + " 个");
+            VueKitLogger.info(LOG, "enabledLibraryNames 内容: " + enabledLibraryNames);
+            
             if (enabledLibraries.isEmpty() && !enabledLibraryNames.isEmpty()) {
+                VueKitLogger.info(LOG, "需要从 enabledLibraryNames 转换为 enabledLibraries");
                 // 从字符串名称转换为枚举
                 for (String name : enabledLibraryNames) {
                     try {
-                        ComponentLibraryDetector.LibraryType type = ComponentLibraryDetector.LibraryType.valueOf(name);
-                        enabledLibraries.add(type);
-                    } catch (IllegalArgumentException e) {
-                        VueKitLogger.warn(LOG, "无效的组件库类型: " + name);
+                        VueKitLogger.info(LOG, "处理组件库名称: '" + name + "'");
+                        // 使用 fromLibraryName 方法，而不是 valueOf
+                        ComponentLibraryDetector.LibraryType type = ComponentLibraryDetector.LibraryType.fromLibraryName(name);
+                        VueKitLogger.info(LOG, "转换结果: '" + name + "' -> " + type.name() + " (" + type.getDisplayName() + ")");
+                        
+                        if (type != ComponentLibraryDetector.LibraryType.UNKNOWN) {
+                            enabledLibraries.add(type);
+                            VueKitLogger.info(LOG, "已添加到 enabledLibraries: " + type.getDisplayName());
+                        } else {
+                            VueKitLogger.warn(LOG, "无法识别的组件库类型: " + name);
+                        }
+                    } catch (Exception e) {
+                        VueKitLogger.warn(LOG, "转换组件库类型失败: " + name + ", 错误: " + e.getMessage());
                     }
                 }
             }
+            
+            VueKitLogger.info(LOG, "最终返回的 enabledLibraries: " + 
+                    enabledLibraries.stream()
+                            .map(ComponentLibraryDetector.LibraryType::getDisplayName)
+                            .collect(java.util.stream.Collectors.joining(", ")));
+            VueKitLogger.info(LOG, "=== ProjectConfig.getEnabledLibraries() 结束 ===");
+            
             return enabledLibraries;
         }
 
@@ -753,8 +1075,74 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
             // 同时更新字符串名称
             this.enabledLibraryNames.clear();
             for (ComponentLibraryDetector.LibraryType type : enabledLibraries) {
-                this.enabledLibraryNames.add(type.name());
+                // 使用 getPackageName() 而不是 name()，保持一致性
+                this.enabledLibraryNames.add(type.getPackageName());
             }
+        }
+        
+        // 功能开关的 Getters and Setters
+        public boolean isEnableComponentCompletion() {
+            return enableComponentCompletion;
+        }
+
+        public void setEnableComponentCompletion(boolean enableComponentCompletion) {
+            this.enableComponentCompletion = enableComponentCompletion;
+        }
+
+        public boolean isEnableAttributeCompletion() {
+            return enableAttributeCompletion;
+        }
+
+        public void setEnableAttributeCompletion(boolean enableAttributeCompletion) {
+            this.enableAttributeCompletion = enableAttributeCompletion;
+        }
+
+        public boolean isEnableEventCompletion() {
+            return enableEventCompletion;
+        }
+
+        public void setEnableEventCompletion(boolean enableEventCompletion) {
+            this.enableEventCompletion = enableEventCompletion;
+        }
+
+        public boolean isEnableSlotCompletion() {
+            return enableSlotCompletion;
+        }
+
+        public void setEnableSlotCompletion(boolean enableSlotCompletion) {
+            this.enableSlotCompletion = enableSlotCompletion;
+        }
+
+        public boolean isEnableHoverDocumentation() {
+            return enableHoverDocumentation;
+        }
+
+        public void setEnableHoverDocumentation(boolean enableHoverDocumentation) {
+            this.enableHoverDocumentation = enableHoverDocumentation;
+        }
+
+        public boolean isEnableRightClickDocumentation() {
+            return enableRightClickDocumentation;
+        }
+
+        public void setEnableRightClickDocumentation(boolean enableRightClickDocumentation) {
+            this.enableRightClickDocumentation = enableRightClickDocumentation;
+        }
+
+        public boolean isEnableCaching() {
+            return enableCaching;
+        }
+
+        public void setEnableCaching(boolean enableCaching) {
+            this.enableCaching = enableCaching;
+        }
+
+        public boolean isEnableDebugMode() {
+            return enableDebugMode;
+        }
+
+        public void setEnableDebugMode(boolean enableDebugMode) {
+            this.enableDebugMode = enableDebugMode;
         }
     }
 
@@ -777,10 +1165,15 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
                 // 从字符串名称转换为枚举
                 for (String name : defaultEnabledLibraryNames) {
                     try {
-                        ComponentLibraryDetector.LibraryType type = ComponentLibraryDetector.LibraryType.valueOf(name);
-                        defaultEnabledLibraries.add(type);
-                    } catch (IllegalArgumentException e) {
-                        VueKitLogger.warn(LOG, "无效的组件库类型: " + name);
+                        // 使用 fromLibraryName 方法，而不是 valueOf，保持一致性
+                        ComponentLibraryDetector.LibraryType type = ComponentLibraryDetector.LibraryType.fromLibraryName(name);
+                        if (type != ComponentLibraryDetector.LibraryType.UNKNOWN) {
+                            defaultEnabledLibraries.add(type);
+                        } else {
+                            VueKitLogger.warn(LOG, "无法识别的组件库类型: " + name);
+                        }
+                    } catch (Exception e) {
+                        VueKitLogger.warn(LOG, "转换组件库类型失败: " + name + ", 错误: " + e.getMessage());
                     }
                 }
             }
@@ -792,7 +1185,8 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
             // 同时更新字符串名称
             this.defaultEnabledLibraryNames.clear();
             for (ComponentLibraryDetector.LibraryType type : defaultEnabledLibraries) {
-                this.defaultEnabledLibraryNames.add(type.name());
+                // 使用 getPackageName() 而不是 name()，保持一致性
+                this.defaultEnabledLibraryNames.add(type.getPackageName());
             }
         }
     }

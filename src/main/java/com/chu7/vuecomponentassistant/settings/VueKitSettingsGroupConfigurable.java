@@ -71,7 +71,7 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
         }
         return mainPanel;
     }
-    
+
     private JPanel createContentPanel() {
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
@@ -209,7 +209,7 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
         officialLibraryMarketButton.addActionListener(e -> openOfficialLibraryMarket());
         customLibraryManagementButton.addActionListener(e -> openCustomLibraryManagement());
     }
-    
+
     private JButton createStyledButton(String text, String tooltip) {
         JButton button = new JButton(text);
         button.setToolTipText(tooltip);
@@ -223,7 +223,7 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
         button.setFocusPainted(false);
         return button;
     }
-    
+
     private JBLabel createSectionLabel(String text) {
         JBLabel label = new JBLabel(text);
         label.setFont(JBUI.Fonts.label(12));
@@ -344,7 +344,7 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
         
         return null;
     }
-    
+
     private void openComponentLibraryManagement() {
         try {
             if (currentProject != null) {
@@ -538,4 +538,4 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
         mainPanel = null;
         libraryCheckBoxes = null;
     }
-} 
+}

@@ -1,14 +1,16 @@
 package com.chu7.vuecomponentassistant.utils;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.chu7.vuecomponentassistant.settings.PluginSettings;
+import com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 
 /**
  * VueKit 日志工具类
  * 
  * 提供统一的日志记录功能，支持：
  * - 不同级别的日志记录
- * - 调试模式控制
+ * - 调试模式控制（全局和项目级）
  * - 性能日志记录
  * - 结构化日志输出
  * 
@@ -33,30 +35,84 @@ public final class VueKitLogger {
     }
     
     /**
+     * 检查是否启用调试模式（全局或项目级）
+     * 
+     * @param project 项目对象，如果为null则只检查全局设置
+     * @return 如果启用调试模式则返回true
+     */
+    public static boolean isDebugModeEnabled(Project project) {
+        // 首先检查全局调试模式
+        PluginSettings globalSettings = PluginSettings.getInstance();
+        if (globalSettings.isEnableDebugMode()) {
+            return true;
+        }
+        
+        // 如果全局未启用，检查项目级调试模式
+        if (project != null) {
+            try {
+                ComponentLibraryConfigManager configManager = ComponentLibraryConfigManager.getInstance(project);
+                return configManager.isDebugModeEnabled(project);
+            } catch (Exception e) {
+                // 如果获取项目配置失败，返回全局设置
+                return globalSettings.isEnableDebugMode();
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
      * 记录调试信息
-     * 只在调试模式开启时记录
+     * 只在调试模式开启时记录（全局或项目级）
      * 
      * @param logger 日志记录器
      * @param message 日志消息
      */
     public static void debug(Logger logger, String message) {
-        PluginSettings settings = PluginSettings.getInstance();
-        if (settings.isEnableDebugMode()) {
+        if (isDebugModeEnabled(null)) {
+            logger.debug(message);
+        }
+    }
+    
+    /**
+     * 记录调试信息（带项目上下文）
+     * 只在调试模式开启时记录（全局或项目级）
+     * 
+     * @param logger 日志记录器
+     * @param project 项目对象
+     * @param message 日志消息
+     */
+    public static void debug(Logger logger, Project project, String message) {
+        if (isDebugModeEnabled(project)) {
             logger.debug(message);
         }
     }
     
     /**
      * 记录调试信息（带异常）
-     * 只在调试模式开启时记录
+     * 只在调试模式开启时记录（全局或项目级）
      * 
      * @param logger 日志记录器
      * @param message 日志消息
      * @param throwable 异常对象
      */
     public static void debug(Logger logger, String message, Throwable throwable) {
-        PluginSettings settings = PluginSettings.getInstance();
-        if (settings.isEnableDebugMode()) {
+        if (isDebugModeEnabled(null)) {
+            logger.debug(message, throwable);
+        }
+    }
+    
+    /**
+     * 记录调试信息（带项目上下文和异常）
+     * 只在调试模式开启时记录（全局或项目级）
+     * 
+     * @param logger 日志记录器
+     * @param project 项目对象
+     * @param message 日志消息
+     * @param throwable 异常对象
+     */
+    public static void debug(Logger logger, Project project, String message, Throwable throwable) {
+        if (isDebugModeEnabled(project)) {
             logger.debug(message, throwable);
         }
     }
@@ -68,6 +124,17 @@ public final class VueKitLogger {
      * @param message 日志消息
      */
     public static void info(Logger logger, String message) {
+        logger.info(message);
+    }
+    
+    /**
+     * 记录信息日志（带项目上下文）
+     * 
+     * @param logger 日志记录器
+     * @param project 项目对象
+     * @param message 日志消息
+     */
+    public static void info(Logger logger, Project project, String message) {
         logger.info(message);
     }
     
@@ -93,6 +160,17 @@ public final class VueKitLogger {
     }
     
     /**
+     * 记录警告日志（带项目上下文）
+     * 
+     * @param logger 日志记录器
+     * @param project 项目对象
+     * @param message 日志消息
+     */
+    public static void warn(Logger logger, Project project, String message) {
+        logger.warn(message);
+    }
+    
+    /**
      * 记录警告日志（带异常）
      * 
      * @param logger 日志记录器
@@ -100,6 +178,18 @@ public final class VueKitLogger {
      * @param throwable 异常对象
      */
     public static void warn(Logger logger, String message, Throwable throwable) {
+        logger.warn(message, throwable);
+    }
+    
+    /**
+     * 记录警告日志（带项目上下文和异常）
+     * 
+     * @param logger 日志记录器
+     * @param project 项目对象
+     * @param message 日志消息
+     * @param throwable 异常对象
+     */
+    public static void warn(Logger logger, Project project, String message, Throwable throwable) {
         logger.warn(message, throwable);
     }
     
@@ -114,6 +204,17 @@ public final class VueKitLogger {
     }
     
     /**
+     * 记录错误日志（带项目上下文）
+     * 
+     * @param logger 日志记录器
+     * @param project 项目对象
+     * @param message 日志消息
+     */
+    public static void error(Logger logger, Project project, String message) {
+        logger.error(message);
+    }
+    
+    /**
      * 记录错误日志（带异常）
      * 
      * @param logger 日志记录器
@@ -121,6 +222,18 @@ public final class VueKitLogger {
      * @param throwable 异常对象
      */
     public static void error(Logger logger, String message, Throwable throwable) {
+        logger.error(message, throwable);
+    }
+    
+    /**
+     * 记录错误日志（带项目上下文和异常）
+     * 
+     * @param logger 日志记录器
+     * @param project 项目对象
+     * @param message 日志消息
+     * @param throwable 异常对象
+     */
+    public static void error(Logger logger, Project project, String message, Throwable throwable) {
         logger.error(message, throwable);
     }
     

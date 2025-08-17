@@ -2,6 +2,7 @@ package com.chu7.vuecomponentassistant.ui;
 
 import com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager;
 import com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector;
+import com.chu7.vuecomponentassistant.utils.StringNormalizer;
 import com.chu7.vuecomponentassistant.utils.VueKitLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -11,6 +12,7 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.chu7.vuecomponentassistant.utils.PackageJsonAutoDetector;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
@@ -62,13 +64,14 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
 
     // UI 组件
     private JBPanel mainPanel;
-    private Map<ComponentLibraryDetector.LibraryType, JBCheckBox> libraryCheckBoxes;
+    private Map<String, JBCheckBox> libraryCheckBoxes;
     private JBTextField projectNameField;
     private JBTextField globalConfigPathField;
+    private JBCheckBox debugModeCheckBox; // 添加调试模式复选框
 
     // 配置数据
-    private Set<ComponentLibraryDetector.LibraryType> currentEnabledLibraries;
-    private Set<ComponentLibraryDetector.LibraryType> originalEnabledLibraries;
+    private Set<String> currentEnabledLibraryNames;
+    private Set<String> originalEnabledLibraryNames;
 
     /**
      * 构造函数
@@ -98,7 +101,7 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
 
     @Override
     protected JComponent createCenterPanel() {
-        VueKitLogger.debug(LOG, "开始创建中心面板");
+        VueKitLogger.info(LOG, project, "开始创建中心面板");
         
         // 使用 GridBagLayout 确保内容正确显示
         mainPanel = new JBPanel(new GridBagLayout());
@@ -110,7 +113,7 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
         // 在界面创建完成后加载配置
         loadCurrentConfig();
         
-        VueKitLogger.debug(LOG, "中心面板创建完成，主面板大小: " + mainPanel.getSize());
+        VueKitLogger.info(LOG, project, "中心面板创建完成，主面板大小: " + mainPanel.getSize());
         
         // 强制设置面板尺寸，确保内容可见
         mainPanel.setPreferredSize(new Dimension(500, 400));
@@ -139,19 +142,29 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
         gbc.weighty = 0.0;
         mainPanel.add(projectInfoPanel, gbc);
 
-        // 2. 组件库配置面板
-        JBPanel libraryConfigPanel = createLibraryConfigPanel();
+        // 2. 自动检测状态面板
+        JBPanel autoDetectPanel = createAutoDetectStatusPanel();
         gbc.gridx = 0;
         gbc.gridy = 1;
+        gbc.weightx = 1.0;
+        gbc.weighty = 0.0;
+        mainPanel.add(autoDetectPanel, gbc);
+
+        // 3. 组件库配置面板
+        VueKitLogger.info(LOG, project, "开始创建组件库配置面板...");
+        JBPanel libraryConfigPanel = createLibraryConfigPanel();
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
         mainPanel.add(libraryConfigPanel, gbc);
+        VueKitLogger.info(LOG, project, "组件库配置面板已添加到主界面");
 
-        // 3. 操作按钮面板
+        // 4. 操作按钮面板
         JBPanel actionPanel = createActionPanel();
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         gbc.weightx = 1.0;
         gbc.weighty = 0.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -192,6 +205,90 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
     }
 
     /**
+     * 创建自动检测状态面板
+     *
+     * @return 自动检测状态面板
+     */
+    private JBPanel createAutoDetectStatusPanel() {
+        JBPanel panel = new JBPanel(new BorderLayout());
+        panel.setBorder(JBUI.Borders.empty(5, 10, 5, 10));
+
+        // 检查是否是通过自动检测启用的组件库
+        boolean hasAutoDetectedLibraries = checkAutoDetectedLibraries();
+        
+        if (hasAutoDetectedLibraries) {
+            // 显示自动检测成功信息
+            JBLabel statusLabel = new JBLabel("✅ 已自动检测并启用项目中的组件库");
+            statusLabel.setForeground(new Color(0, 128, 0)); // 绿色
+            statusLabel.setFont(statusLabel.getFont().deriveFont(Font.BOLD, 12f));
+            
+            JBLabel infoLabel = new JBLabel(
+                "<html>系统已根据 package.json 中的依赖项自动启用了匹配的组件库。<br>" +
+                "您可以在下方调整组件库的启用状态。</html>"
+            );
+            infoLabel.setForeground(new Color(64, 64, 64));
+            
+            JBPanel infoPanel = new JBPanel(new BorderLayout());
+            infoPanel.add(statusLabel, BorderLayout.NORTH);
+            infoPanel.add(infoLabel, BorderLayout.CENTER);
+            
+            panel.add(infoPanel, BorderLayout.CENTER);
+        } else {
+            // 显示手动配置信息
+            JBLabel statusLabel = new JBLabel("ℹ️ 手动配置模式");
+            statusLabel.setForeground(new Color(128, 128, 128)); // 灰色
+            statusLabel.setFont(statusLabel.getFont().deriveFont(Font.BOLD, 12f));
+            
+            JBLabel infoLabel = new JBLabel(
+                "<html>未检测到 package.json 中的组件库依赖，或配置文件已存在。<br>" +
+                "请手动选择要启用的组件库。</html>"
+            );
+            infoLabel.setForeground(new Color(64, 64, 64));
+            
+            JBPanel infoPanel = new JBPanel(new BorderLayout());
+            infoPanel.add(statusLabel, BorderLayout.NORTH);
+            infoPanel.add(infoLabel, BorderLayout.CENTER);
+            
+            panel.add(infoPanel, BorderLayout.CENTER);
+        }
+
+        return panel;
+    }
+
+    /**
+     * 检查是否有通过自动检测启用的组件库
+     *
+     * @return 如果有自动检测的组件库则返回 true
+     */
+    private boolean checkAutoDetectedLibraries() {
+        try {
+            // 检查项目配置文件是否存在且不为空
+            VirtualFile ideaDir = project.getBaseDir().findChild(".idea");
+            if (ideaDir == null) {
+                return false;
+            }
+            
+            VirtualFile configFile = ideaDir.findChild("vuekit-project-config.json");
+            if (configFile == null || !configFile.exists()) {
+                return false;
+            }
+            
+            String configContent = new String(configFile.contentsToByteArray(), java.nio.charset.StandardCharsets.UTF_8);
+            if (configContent.trim().isEmpty() || configContent.equals("{}") || configContent.equals("{\"enabledLibraries\":[]}")) {
+                return false;
+            }
+            
+            // 检查是否有启用的组件库
+            Set<ComponentLibraryDetector.LibraryType> enabledLibraries = configManager.getEnabledLibraries(project);
+            return !enabledLibraries.isEmpty();
+            
+        } catch (Exception e) {
+            VueKitLogger.debug(LOG, project, "检查自动检测状态失败", e);
+            return false;
+        }
+    }
+
+    /**
      * 创建组件库配置面板
      *
      * @return 组件库配置面板
@@ -228,6 +325,65 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
         checkBoxPanel.setBackground(Color.WHITE);
         panel.add(checkBoxPanel);
 
+        // 添加一些间距
+        panel.add(Box.createVerticalStrut(15));
+
+        // 调试模式选项
+        VueKitLogger.info(LOG, project, "开始创建调试模式面板...");
+        JBPanel debugPanel = createDebugModePanel();
+        debugPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(debugPanel);
+        VueKitLogger.info(LOG, project, "调试模式面板已添加到组件库配置面板");
+        VueKitLogger.info(LOG, project, "调试模式面板可见: " + debugPanel.isVisible());
+        VueKitLogger.info(LOG, project, "调试模式面板启用: " + debugPanel.isEnabled());
+        VueKitLogger.info(LOG, project, "组件库配置面板子组件数量: " + panel.getComponentCount());
+
+        return panel;
+    }
+
+    /**
+     * 创建调试模式面板
+     *
+     * @return 调试模式面板
+     */
+    private JBPanel createDebugModePanel() {
+        VueKitLogger.info(LOG, project, "=== createDebugModePanel() 开始 ===");
+        
+        JBPanel panel = new JBPanel(new BorderLayout());
+        panel.setBorder(JBUI.Borders.customLine(Color.LIGHT_GRAY, 1));
+        panel.setBackground(Color.WHITE);
+        
+        // 设置面板的最小尺寸，确保可见
+        panel.setMinimumSize(new Dimension(200, 30));
+        panel.setPreferredSize(new Dimension(300, 40));
+
+        // 调试模式复选框
+        debugModeCheckBox = new JBCheckBox("启用调试模式");
+        debugModeCheckBox.setToolTipText("启用后将在日志中输出详细的调试信息，帮助排查问题");
+        
+        // 确保复选框可见和启用
+        debugModeCheckBox.setVisible(true);
+        debugModeCheckBox.setEnabled(true);
+        
+        // 设置初始状态（这里先设置为false，在loadCurrentConfig中会更新为正确状态）
+        debugModeCheckBox.setSelected(false);
+        VueKitLogger.info(LOG, project, "调试模式复选框初始状态设置为: false（将在配置加载后更新）");
+        
+        // 添加监听器
+        debugModeCheckBox.addActionListener(e -> {
+            boolean enabled = debugModeCheckBox.isSelected();
+            configManager.setDebugModeEnabled(project, enabled);
+            VueKitLogger.info(LOG, project, "调试模式已" + (enabled ? "启用" : "禁用"));
+        });
+
+        panel.add(debugModeCheckBox, BorderLayout.CENTER);
+        
+        VueKitLogger.info(LOG, project, "调试模式面板创建完成，复选框可见: " + debugModeCheckBox.isVisible());
+        VueKitLogger.info(LOG, project, "调试模式面板可见: " + panel.isVisible());
+        VueKitLogger.info(LOG, project, "调试模式面板启用: " + panel.isEnabled());
+        VueKitLogger.info(LOG, project, "调试模式复选框启用: " + debugModeCheckBox.isEnabled());
+        VueKitLogger.info(LOG, project, "=== createDebugModePanel() 结束 ===");
+
         return panel;
     }
 
@@ -237,6 +393,8 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
      * @return 复选框面板
      */
     private JBPanel createLibraryCheckBoxes() {
+        VueKitLogger.info(LOG, project, "=== createLibraryCheckBoxes() 开始 ===");
+        
         // 使用 GridLayout 确保复选框可见
         JBPanel panel = new JBPanel(new GridLayout(0, 1, 5, 5));
         panel.setBorder(JBUI.Borders.customLine(Color.BLACK, 2)); // 添加明显的边框
@@ -244,11 +402,14 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
 
         libraryCheckBoxes = new HashMap<>();
 
-        // 动态获取可用的组件库类型
-        ComponentLibraryDetector.LibraryType[] libraryTypes = getAvailableLibraryTypes();
+        // 动态获取可用的组件库名称
+        String[] libraryNames = getAvailableLibraryNames();
         
         // 添加调试信息
-        VueKitLogger.debug(LOG, "创建组件库复选框，找到 " + libraryTypes.length + " 个组件库类型");
+        VueKitLogger.info(LOG, project, "创建组件库复选框，找到 " + libraryNames.length + " 个组件库");
+        for (String libraryName : libraryNames) {
+            VueKitLogger.info(LOG, project, "- " + libraryName);
+        }
 
         // 添加标题标签
         JBLabel checkBoxTitle = new JBLabel("可用的组件库：");
@@ -256,33 +417,39 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
         checkBoxTitle.setBorder(JBUI.Borders.empty(0, 0, 10, 0));
         panel.add(checkBoxTitle);
 
-        for (ComponentLibraryDetector.LibraryType libraryType : libraryTypes) {
-            if (libraryType != ComponentLibraryDetector.LibraryType.UNKNOWN) {
-                // 创建复选框
-                JBCheckBox checkBox = new JBCheckBox(libraryType.getDisplayName());
-                checkBox.setToolTipText(getLibraryTooltip(libraryType));
-                
-                // 设置复选框为可见和启用状态
-                checkBox.setVisible(true);
-                checkBox.setEnabled(true);
-                checkBox.setSelected(true); // 默认选中，确保可见性
+        for (String libraryName : libraryNames) {
+            // 创建复选框
+            JBCheckBox checkBox = new JBCheckBox(libraryName);
+            checkBox.setToolTipText(getLibraryTooltip(libraryName));
+            
+            // 设置复选框为可见和启用状态
+            checkBox.setVisible(true);
+            checkBox.setEnabled(true);
+            
+            // 重要：不要默认选中，应该根据配置来决定
+            // checkBox.setSelected(true); // 删除这行！
+            checkBox.setSelected(false); // 默认不选中
+            
+            VueKitLogger.info(LOG, project, "创建复选框: " + libraryName + " - 初始状态: 未选中");
 
-                // 添加选择监听器
-                checkBox.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        updateConfiguration();
-                    }
-                });
+            // 添加选择监听器
+            checkBox.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    VueKitLogger.info(LOG, project, "复选框 '" + libraryName + "' 状态改变: " + 
+                            (checkBox.isSelected() ? "选中" : "未选中"));
+                    updateConfiguration();
+                }
+            });
 
-                libraryCheckBoxes.put(libraryType, checkBox);
-                panel.add(checkBox);
-                
-                VueKitLogger.debug(LOG, "添加复选框: " + libraryType.getDisplayName());
-            }
+            libraryCheckBoxes.put(libraryName, checkBox);
+            panel.add(checkBox);
+            
+            VueKitLogger.info(LOG, project, "添加复选框: " + libraryName);
         }
         
-        VueKitLogger.debug(LOG, "总共创建了 " + libraryCheckBoxes.size() + " 个复选框");
+        VueKitLogger.info(LOG, project, "总共创建了 " + libraryCheckBoxes.size() + " 个复选框");
+        VueKitLogger.info(LOG, project, "=== createLibraryCheckBoxes() 结束 ===");
 
         return panel;
     }
@@ -321,47 +488,58 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
     }
 
     /**
-     * 动态获取可用的组件库类型
+     * 动态获取可用的组件库名称
      */
-    private ComponentLibraryDetector.LibraryType[] getAvailableLibraryTypes() {
+    private String[] getAvailableLibraryNames() {
+        VueKitLogger.info(LOG, project, "=== getAvailableLibraryNames() 开始 ===");
+        
         try {
+            VueKitLogger.info(LOG, project, "=== 获取可用组件库名称 ===");
+            
             // 从远程组件库管理器获取已安装的组件库
+            VueKitLogger.info(LOG, project, "开始从远程组件库管理器获取组件库...");
             com.chu7.vuecomponentassistant.remote.ComponentLibraryManager libraryManager = 
                 new com.chu7.vuecomponentassistant.remote.ComponentLibraryManager();
             java.util.List<com.chu7.vuecomponentassistant.remote.model.ComponentLibrary> installedLibraries = 
                 libraryManager.getAllLibraries();
             
-            java.util.List<ComponentLibraryDetector.LibraryType> libraryTypeList = new java.util.ArrayList<>();
-            
+            VueKitLogger.info(LOG, project, "远程组件库管理器返回的组件库数量: " + installedLibraries.size());
+            VueKitLogger.info(LOG, project, "远程组件库列表:");
             for (com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library : installedLibraries) {
-                ComponentLibraryDetector.LibraryType libraryType = 
-                    ComponentLibraryDetector.LibraryType.fromLibraryName(library.getName());
-                
-                if (libraryType != ComponentLibraryDetector.LibraryType.UNKNOWN) {
-                    libraryTypeList.add(libraryType);
-                }
+                VueKitLogger.info(LOG, project, "- " + library.getName() + " (描述: " + library.getDescription() + ")");
             }
             
-            // 如果没有找到任何组件库，使用默认列表
-            if (libraryTypeList.isEmpty()) {
-                libraryTypeList.add(ComponentLibraryDetector.LibraryType.ELEMENT_UI);
-                libraryTypeList.add(ComponentLibraryDetector.LibraryType.ELEMENT_PLUS);
-                libraryTypeList.add(ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE);
-                libraryTypeList.add(ComponentLibraryDetector.LibraryType.VUETIFY);
-                libraryTypeList.add(ComponentLibraryDetector.LibraryType.QUASAR);
+            java.util.List<String> libraryNameList = new java.util.ArrayList<>();
+            
+            VueKitLogger.info(LOG, project, "开始收集组件库名称...");
+            for (com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library : installedLibraries) {
+                VueKitLogger.info(LOG, project, "处理远程组件库: '" + library.getName() + "'");
+                libraryNameList.add(library.getName());
+                VueKitLogger.info(LOG, project, "已添加到可用组件库列表: " + library.getName());
             }
             
-            return libraryTypeList.toArray(new ComponentLibraryDetector.LibraryType[0]);
+            VueKitLogger.info(LOG, project, "收集到的组件库名称数量: " + libraryNameList.size());
+            VueKitLogger.info(LOG, project, "收集到的组件库列表:");
+            for (String name : libraryNameList) {
+                VueKitLogger.info(LOG, project, "- " + name);
+            }
+            
+            // 如果没有找到任何组件库，返回空数组而不是硬编码列表
+            if (libraryNameList.isEmpty()) {
+                VueKitLogger.warn(LOG, "未找到任何组件库，返回空列表");
+                return new String[0];
+            }
+            
+            String[] result = libraryNameList.toArray(new String[0]);
+            VueKitLogger.info(LOG, project, "最终返回的组件库名称: " + String.join(", ", result));
+            
+            VueKitLogger.info(LOG, project, "=== getAvailableLibraryNames() 结束 ===");
+            return result;
             
         } catch (Exception e) {
-            // 出错时使用默认列表
-            return new ComponentLibraryDetector.LibraryType[]{
-                ComponentLibraryDetector.LibraryType.ELEMENT_UI,
-                ComponentLibraryDetector.LibraryType.ELEMENT_PLUS,
-                ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE,
-                ComponentLibraryDetector.LibraryType.VUETIFY,
-                ComponentLibraryDetector.LibraryType.QUASAR
-            };
+            VueKitLogger.error(LOG, "获取可用组件库名称失败，返回空列表", e);
+            // 出错时返回空列表，而不是硬编码的默认列表
+            return new String[0];
         }
     }
     
@@ -374,14 +552,14 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
             return;
         }
         
-        VueKitLogger.debug(LOG, "验证复选框状态:");
-        VueKitLogger.debug(LOG, "- 复选框数量: " + libraryCheckBoxes.size());
+        VueKitLogger.debug(LOG, project, "验证复选框状态:");
+        VueKitLogger.debug(LOG, project, "- 复选框数量: " + libraryCheckBoxes.size());
         
-        for (Map.Entry<ComponentLibraryDetector.LibraryType, JBCheckBox> entry : libraryCheckBoxes.entrySet()) {
-            ComponentLibraryDetector.LibraryType libraryType = entry.getKey();
+        for (Map.Entry<String, JBCheckBox> entry : libraryCheckBoxes.entrySet()) {
+            String libraryName = entry.getKey();
             JBCheckBox checkBox = entry.getValue();
             
-            VueKitLogger.debug(LOG, "- " + libraryType.getDisplayName() + 
+            VueKitLogger.debug(LOG, project, "- " + libraryName + 
                 " (可见: " + checkBox.isVisible() + 
                 ", 启用: " + checkBox.isEnabled() + 
                 ", 文本: " + checkBox.getText() + ")");
@@ -392,66 +570,123 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
      * 加载当前配置
      */
     private void loadCurrentConfig() {
+        VueKitLogger.info(LOG, project, "=== loadCurrentConfig() 开始 ===");
+        
         try {
-            // 获取当前启用的组件库
-            currentEnabledLibraries = configManager.getEnabledLibraries(project);
-            originalEnabledLibraries = new HashSet<>(currentEnabledLibraries);
+            VueKitLogger.info(LOG, project, "开始获取当前启用的组件库...");
+            
+            // 获取当前启用的组件库名称
+            currentEnabledLibraryNames = configManager.getEnabledLibraryNames(project);
+            originalEnabledLibraryNames = new HashSet<>(currentEnabledLibraryNames);
+
+            VueKitLogger.info(LOG, project, "获取到的组件库配置:");
+            VueKitLogger.info(LOG, project, "- currentEnabledLibraryNames 数量: " + currentEnabledLibraryNames.size());
+            VueKitLogger.info(LOG, project, "- currentEnabledLibraryNames 内容: " + String.join(", ", currentEnabledLibraryNames));
 
             // 更新复选框状态（只有在界面创建完成后才更新）
             if (libraryCheckBoxes != null && !libraryCheckBoxes.isEmpty()) {
+                VueKitLogger.info(LOG, project, "libraryCheckBoxes 已初始化，开始更新复选框状态...");
                 updateCheckBoxes();
+            } else {
+                VueKitLogger.info(LOG, project, "libraryCheckBoxes 尚未初始化，跳过更新");
+                VueKitLogger.info(LOG, project, "- libraryCheckBoxes: " + (libraryCheckBoxes == null ? "null" : "empty"));
             }
 
-            VueKitLogger.debug(LOG, "当前配置已加载，启用的组件库: " +
-                    currentEnabledLibraries.stream()
-                            .map(ComponentLibraryDetector.LibraryType::getDisplayName)
-                            .collect(java.util.stream.Collectors.joining(", ")));
+            // 更新调试模式复选框状态
+            if (debugModeCheckBox != null) {
+                VueKitLogger.info(LOG, project, "debugModeCheckBox 已初始化，开始更新调试模式状态...");
+                boolean debugModeEnabled = configManager.isDebugModeEnabled(project);
+                debugModeCheckBox.setSelected(debugModeEnabled);
+                VueKitLogger.info(LOG, project, "调试模式复选框状态已更新: " + (debugModeEnabled ? "启用" : "禁用"));
+            } else {
+                VueKitLogger.info(LOG, project, "debugModeCheckBox 尚未初始化，跳过更新");
+            }
+
+            VueKitLogger.info(LOG, project, "当前配置已加载，启用的组件库: " + String.join(", ", currentEnabledLibraryNames));
 
         } catch (Exception e) {
             VueKitLogger.error(LOG, "加载当前配置失败", e);
             Messages.showErrorDialog(project, "加载配置失败: " + e.getMessage(), "错误");
         }
+        
+        VueKitLogger.info(LOG, project, "=== loadCurrentConfig() 结束 ===");
     }
 
     /**
      * 更新复选框状态
      */
     private void updateCheckBoxes() {
+        VueKitLogger.debug(LOG, project, "=== updateCheckBoxes() 开始 ===");
+        
         // 确保 libraryCheckBoxes 已初始化
         if (libraryCheckBoxes == null || libraryCheckBoxes.isEmpty()) {
-            VueKitLogger.debug(LOG, "libraryCheckBoxes 尚未初始化，跳过更新");
+            VueKitLogger.debug(LOG, project, "libraryCheckBoxes 尚未初始化，跳过更新");
             return;
         }
         
-        for (Map.Entry<ComponentLibraryDetector.LibraryType, JBCheckBox> entry : libraryCheckBoxes.entrySet()) {
-            ComponentLibraryDetector.LibraryType libraryType = entry.getKey();
+        VueKitLogger.debug(LOG, project, "=== 更新复选框状态 ===");
+        VueKitLogger.debug(LOG, project, "当前启用的组件库数量: " + currentEnabledLibraryNames.size());
+        VueKitLogger.debug(LOG, project, "当前启用的组件库: " + String.join(", ", currentEnabledLibraryNames));
+        
+        VueKitLogger.debug(LOG, project, "复选框数量: " + libraryCheckBoxes.size());
+        VueKitLogger.debug(LOG, project, "复选框列表:");
+        for (Map.Entry<String, JBCheckBox> entry : libraryCheckBoxes.entrySet()) {
+            String libraryName = entry.getKey();
+            VueKitLogger.debug(LOG, project, "- " + libraryName);
+        }
+        
+        for (Map.Entry<String, JBCheckBox> entry : libraryCheckBoxes.entrySet()) {
+            String libraryName = entry.getKey();
             JBCheckBox checkBox = entry.getValue();
 
-            boolean isEnabled = currentEnabledLibraries.contains(libraryType);
+            boolean isEnabled = currentEnabledLibraryNames.contains(libraryName);
             checkBox.setSelected(isEnabled);
+            
+            VueKitLogger.debug(LOG, project, "复选框 '" + libraryName + "' -> " + 
+                    (isEnabled ? "选中" : "未选中") + 
+                    " (在 currentEnabledLibraryNames 中: " + currentEnabledLibraryNames.contains(libraryName) + ")");
         }
+        
+        VueKitLogger.debug(LOG, project, "=== updateCheckBoxes() 结束 ===");
     }
 
     /**
      * 更新配置
      */
     private void updateConfiguration() {
-        currentEnabledLibraries.clear();
+        VueKitLogger.debug(LOG, project, "=== updateConfiguration() 开始 ===");
+        
+        VueKitLogger.debug(LOG, project, "清空当前启用的组件库列表...");
+        currentEnabledLibraryNames.clear();
 
         // 确保 libraryCheckBoxes 已初始化
         if (libraryCheckBoxes == null || libraryCheckBoxes.isEmpty()) {
-            VueKitLogger.debug(LOG, "libraryCheckBoxes 尚未初始化，跳过配置更新");
+            VueKitLogger.debug(LOG, project, "libraryCheckBoxes 尚未初始化，跳过配置更新");
             return;
         }
 
-        for (Map.Entry<ComponentLibraryDetector.LibraryType, JBCheckBox> entry : libraryCheckBoxes.entrySet()) {
-            ComponentLibraryDetector.LibraryType libraryType = entry.getKey();
+        VueKitLogger.debug(LOG, project, "开始检查复选框状态...");
+        VueKitLogger.debug(LOG, project, "复选框数量: " + libraryCheckBoxes.size());
+        
+        for (Map.Entry<String, JBCheckBox> entry : libraryCheckBoxes.entrySet()) {
+            String libraryName = entry.getKey();
             JBCheckBox checkBox = entry.getValue();
 
-            if (checkBox.isSelected()) {
-                currentEnabledLibraries.add(libraryType);
+            boolean isSelected = checkBox.isSelected();
+            VueKitLogger.debug(LOG, project, "复选框 '" + libraryName + "' 状态: " + 
+                    (isSelected ? "选中" : "未选中"));
+
+            if (isSelected) {
+                currentEnabledLibraryNames.add(libraryName);
+                VueKitLogger.debug(LOG, project, "已添加到启用的组件库: " + libraryName);
             }
         }
+        
+        VueKitLogger.debug(LOG, project, "配置更新完成:");
+        VueKitLogger.debug(LOG, project, "- 启用的组件库数量: " + currentEnabledLibraryNames.size());
+        VueKitLogger.debug(LOG, project, "- 启用的组件库: " + String.join(", ", currentEnabledLibraryNames));
+        
+        VueKitLogger.debug(LOG, project, "=== updateConfiguration() 结束 ===");
     }
 
     /**
@@ -566,54 +801,93 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
     /**
      * 获取组件库提示信息
      *
-     * @param libraryType 组件库类型
+     * @param libraryName 组件库名称
      * @return 提示信息
      */
-    private String getLibraryTooltip(ComponentLibraryDetector.LibraryType libraryType) {
-        switch (libraryType) {
-            case ELEMENT_UI:
-                return "Element UI - 基于 Vue 2.x 的桌面端组件库";
-            case ELEMENT_PLUS:
-                return "Element Plus - 基于 Vue 3.x 的桌面端组件库";
-            case ANT_DESIGN_VUE:
-                return "Ant Design Vue - 基于 Ant Design 设计体系的 Vue 组件库";
-            case VUETIFY:
-                return "Vuetify - 基于 Material Design 的 Vue 组件库";
-            case QUASAR:
-                return "Quasar - 基于 Vue 的跨平台 UI 框架";
-
-            default:
-                return "未知组件库类型";
+    private String getLibraryTooltip(String libraryName) {
+        try {
+            // 动态从远程组件库管理器获取组件库信息
+            com.chu7.vuecomponentassistant.remote.ComponentLibraryManager libraryManager = 
+                new com.chu7.vuecomponentassistant.remote.ComponentLibraryManager();
+            com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library = 
+                libraryManager.getLibrary(libraryName);
+            
+            if (library != null && library.getDescription() != null && !library.getDescription().trim().isEmpty()) {
+                return library.getDescription();
+            }
+            
+            // 如果远程获取失败，使用动态生成的描述
+            return generateLibraryDescription(libraryName);
+            
+        } catch (Exception e) {
+            VueKitLogger.debug(LOG, project, "动态获取组件库描述失败，使用默认描述: " + e.getMessage());
+            return generateLibraryDescription(libraryName);
+        }
+    }
+    
+    /**
+     * 动态生成组件库描述
+     *
+     * @param libraryName 组件库名称
+     * @return 生成的描述
+     */
+    private String generateLibraryDescription(String libraryName) {
+        // 根据组件库名称动态生成描述
+        if (StringNormalizer.contains(libraryName, "element")) {
+            if (StringNormalizer.contains(libraryName, "plus")) {
+                return libraryName + " - 基于 Vue 3.x 的桌面端组件库";
+            } else {
+                return libraryName + " - 基于 Vue 2.x 的桌面端组件库";
+            }
+        } else if (StringNormalizer.contains(libraryName, "ant")) {
+            return libraryName + " - 基于 Ant Design 设计体系的 Vue 组件库";
+        } else if (StringNormalizer.contains(libraryName, "vuetify")) {
+            return libraryName + " - 基于 Material Design 的 Vue 组件库";
+        } else if (StringNormalizer.contains(libraryName, "quasar")) {
+            return libraryName + " - 基于 Vue 的跨平台 UI 框架";
+        } else {
+            return libraryName + " - Vue 组件库";
         }
     }
 
     @Override
     protected void doOKAction() {
+        VueKitLogger.debug(LOG, project, "=== doOKAction() 开始 ===");
+        
         try {
+            VueKitLogger.debug(LOG, project, "开始更新配置...");
+            
             // 更新配置
             updateConfiguration();
+            
+            VueKitLogger.debug(LOG, project, "配置更新完成，当前启用的组件库:");
+            VueKitLogger.debug(LOG, project, "- 数量: " + currentEnabledLibraryNames.size());
+            VueKitLogger.debug(LOG, project, "- 内容: " + String.join(", ", currentEnabledLibraryNames));
 
+            VueKitLogger.debug(LOG, project, "开始保存配置到文件...");
+            
             // 保存配置
-            configManager.setProjectEnabledLibraries(project, currentEnabledLibraries);
+            configManager.setProjectEnabledLibraryNames(project, currentEnabledLibraryNames);
+            
+            VueKitLogger.debug(LOG, project, "配置已保存到文件");
 
             // 关闭对话框
             super.doOKAction();
 
-            VueKitLogger.info(LOG, "组件库配置已保存，启用的组件库: " +
-                    currentEnabledLibraries.stream()
-                            .map(ComponentLibraryDetector.LibraryType::getDisplayName)
-                            .collect(java.util.stream.Collectors.joining(", ")));
+            VueKitLogger.info(LOG, "组件库配置已保存，启用的组件库: " + String.join(", ", currentEnabledLibraryNames));
 
         } catch (Exception e) {
             VueKitLogger.error(LOG, "保存配置失败", e);
             Messages.showErrorDialog(project, "保存配置失败: " + e.getMessage(), "错误");
         }
+        
+        VueKitLogger.debug(LOG, project, "=== doOKAction() 结束 ===");
     }
 
     @Override
     protected ValidationInfo doValidate() {
         // 检查是否至少选择了一个组件库
-        if (currentEnabledLibraries.isEmpty()) {
+        if (currentEnabledLibraryNames.isEmpty()) {
             // 确保 libraryCheckBoxes 已初始化且有内容
             if (libraryCheckBoxes != null && !libraryCheckBoxes.isEmpty()) {
                 return new ValidationInfo("请至少选择一个组件库", libraryCheckBoxes.values().iterator().next());
@@ -628,7 +902,7 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
     @Override
     public void doCancelAction() {
         // 检查是否有未保存的更改
-        if (!currentEnabledLibraries.equals(originalEnabledLibraries)) {
+        if (!currentEnabledLibraryNames.equals(originalEnabledLibraryNames)) {
             int result = Messages.showYesNoDialog(project,
                     "您有未保存的配置更改，确定要取消吗？",
                     "确认取消",

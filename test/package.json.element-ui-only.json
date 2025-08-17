@@ -1,0 +1,28 @@
+{
+  "name": "vuekit-element-ui-test",
+  "version": "1.0.0",
+  "description": "测试 VueKit 自动检测功能 - 仅 Element UI",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^2.7.0",
+    "element-ui": "^2.15.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.2.0",
+    "vite": "^4.3.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "vue",
+    "vuekit",
+    "auto-detect",
+    "element-ui"
+  ],
+  "author": "VueKit Team",
+  "license": "MIT"
+} 

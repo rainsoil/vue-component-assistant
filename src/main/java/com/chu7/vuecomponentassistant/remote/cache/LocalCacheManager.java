@@ -186,20 +186,31 @@ public class LocalCacheManager {
      * @return 所有缓存的组件库列表，如果没有则返回空列表
      */
     public List<ComponentLibrary> getAllLibraries() {
+        LOG.info("=== LocalCacheManager.getAllLibraries() 开始 ===");
         List<ComponentLibrary> libraries = new ArrayList<>();
         
         try {
+            LOG.info("缓存目录: " + cacheDir);
             File[] files = cacheDir.toFile().listFiles((dir, name) -> 
                 name.startsWith(COMPONENT_LIBRARY_PREFIX) && name.endsWith(COMPONENT_LIBRARY_SUFFIX));
             
+            LOG.info("找到缓存文件数量: " + (files != null ? files.length : 0));
+            
             if (files != null) {
                 for (File file : files) {
+                    LOG.info("处理缓存文件: " + file.getName());
                     try {
                         String json = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+                        LOG.info("文件内容长度: " + json.length() + " 字符");
+                        LOG.info("文件内容前100字符: " + json.substring(0, Math.min(100, json.length())));
+                        
                         ComponentLibrary library = convertJsonToLibrary(json);
                         if (library != null) {
                             libraries.add(library);
                             memoryCache.put(library.getId(), library);
+                            LOG.info("成功加载组件库: " + library.getName() + " (ID: " + library.getId() + ")");
+                        } else {
+                            LOG.warn("转换组件库失败: " + file.getName());
                         }
                     } catch (Exception e) {
                         LOG.warn("加载缓存文件失败: " + file.getName(), e);
@@ -209,12 +220,17 @@ public class LocalCacheManager {
             }
             
             LOG.info("成功加载 " + libraries.size() + " 个组件库到内存缓存");
+            LOG.info("加载的组件库列表:");
+            for (ComponentLibrary library : libraries) {
+                LOG.info("- " + library.getName() + " (ID: " + library.getId() + ", 描述: " + library.getDescription() + ")");
+            }
         } catch (Exception e) {
             String errorMsg = "获取所有组件库失败";
             LOG.error(errorMsg, e);
             ErrorHandler.handleException(errorMsg, e, false);
         }
         
+        LOG.info("=== LocalCacheManager.getAllLibraries() 结束，返回 " + libraries.size() + " 个组件库 ===");
         return libraries;
     }
     

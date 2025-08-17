@@ -61,49 +61,80 @@ public class ComponentLibraryDetector {
          * 优先从远程组件库管理器获取信息
          */
         public static LibraryType fromLibraryName(String libraryName) {
+            VueKitLogger.info(LOG, "=== LibraryType.fromLibraryName() 开始 ===");
+            VueKitLogger.info(LOG, "输入参数 libraryName: '" + libraryName + "'");
+            
             if (libraryName == null || libraryName.trim().isEmpty()) {
+                VueKitLogger.info(LOG, "libraryName 为空，返回 UNKNOWN");
                 return UNKNOWN;
             }
             
             try {
                 // 尝试从远程组件库管理器获取信息
+                VueKitLogger.info(LOG, "尝试从远程组件库管理器获取信息...");
                 com.chu7.vuecomponentassistant.remote.ComponentLibraryManager libraryManager = 
                     new com.chu7.vuecomponentassistant.remote.ComponentLibraryManager();
                 java.util.List<com.chu7.vuecomponentassistant.remote.model.ComponentLibrary> installedLibraries = 
                     libraryManager.getAllLibraries();
                 
+                VueKitLogger.info(LOG, "远程组件库管理器返回 " + installedLibraries.size() + " 个组件库");
+                
                 for (com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library : installedLibraries) {
-                    if (libraryName.equalsIgnoreCase(library.getName())) {
+                    VueKitLogger.info(LOG, "检查远程组件库: '" + library.getName() + "' 是否匹配 '" + libraryName + "'");
+                    if (StringNormalizer.matches(libraryName, library.getName())) {
+                        VueKitLogger.info(LOG, "找到匹配的远程组件库: '" + library.getName() + "'");
                         // 根据组件库名称推断类型
-                        return inferLibraryType(library.getName());
+                        LibraryType result = inferLibraryType(library.getName());
+                        VueKitLogger.info(LOG, "推断结果: " + result.name() + " (" + result.getDisplayName() + ")");
+                        return result;
                     }
                 }
+                VueKitLogger.info(LOG, "未在远程组件库中找到匹配项");
             } catch (Exception e) {
-                VueKitLogger.debug(LOG, "从远程获取组件库信息失败，使用本地推断: " + e.getMessage());
+                VueKitLogger.info(LOG, "从远程获取组件库信息失败，使用本地推断: " + e.getMessage());
             }
             
             // 后备方案：使用本地推断
-            return inferLibraryType(libraryName);
+            VueKitLogger.info(LOG, "使用本地推断...");
+            LibraryType result = inferLibraryType(libraryName);
+            VueKitLogger.info(LOG, "本地推断结果: " + result.name() + " (" + result.getDisplayName() + ")");
+            VueKitLogger.info(LOG, "=== LibraryType.fromLibraryName() 结束 ===");
+            return result;
         }
         
         /**
          * 根据组件库名称推断类型
+         * 使用 StringNormalizer 进行标准化匹配，避免硬编码
          */
         private static LibraryType inferLibraryType(String libraryName) {
-            String lowerName = libraryName.toLowerCase();
+            VueKitLogger.info(LOG, "=== LibraryType.inferLibraryType() 开始 ===");
+            VueKitLogger.info(LOG, "输入参数 libraryName: '" + libraryName + "'");
             
-            if (lowerName.contains("element-plus")) {
-                return ELEMENT_PLUS;
-            } else if (lowerName.contains("element-ui")) {
-                return ELEMENT_UI;
-            } else if (lowerName.contains("ant-design-vue")) {
-                return ANT_DESIGN_VUE;
-            } else if (lowerName.contains("vuetify")) {
-                return VUETIFY;
-            } else if (lowerName.contains("quasar")) {
-                return QUASAR;
+            if (libraryName == null || libraryName.trim().isEmpty()) {
+                VueKitLogger.info(LOG, "libraryName 为空，返回 UNKNOWN");
+                return UNKNOWN;
             }
             
+            // 使用 StringNormalizer 进行标准化匹配
+            String normalizedName = StringNormalizer.normalize(libraryName);
+            VueKitLogger.info(LOG, "标准化后的名称: '" + normalizedName + "'");
+            
+            // 检查是否匹配已知的组件库类型
+            for (LibraryType type : LibraryType.values()) {
+                if (type == UNKNOWN) continue;
+                
+                String normalizedPackageName = StringNormalizer.normalize(type.getPackageName());
+                VueKitLogger.info(LOG, "比较: '" + normalizedName + "' vs '" + normalizedPackageName + "' (来自 " + type.name() + ")");
+                
+                if (normalizedName.equals(normalizedPackageName)) {
+                    VueKitLogger.info(LOG, "找到匹配: " + type.name() + " (" + type.getDisplayName() + ")");
+                    VueKitLogger.info(LOG, "=== LibraryType.inferLibraryType() 结束 ===");
+                    return type;
+                }
+            }
+            
+            VueKitLogger.info(LOG, "未找到匹配的组件库类型，返回 UNKNOWN");
+            VueKitLogger.info(LOG, "=== LibraryType.inferLibraryType() 结束 ===");
             return UNKNOWN;
         }
     }
@@ -233,48 +264,19 @@ public class ComponentLibraryDetector {
                 }
             }
             
-            // 检查一些常见的组件库包名变体
-            String[] commonPackages = {
-                "element-plus", "element-ui", "ant-design-vue", "vuetify", "quasar",
-                "@element-plus/icons-vue", "@ant-design/icons-vue", "@quasar/extras"
-            };
-            
-            for (String packageName : commonPackages) {
-                if (dependencies.has(packageName)) {
-                    String version = dependencies.get(packageName).getAsString();
-                    VueKitLogger.info(LOG, "    找到 " + packageName + ": " + version);
-                    return LibraryType.fromLibraryName(packageName);
-                }
-            }
-            
         } catch (Exception e) {
             VueKitLogger.debug(LOG, "动态检查组件库失败，使用静态检查: " + e.getMessage());
             
-            // 后备方案：静态检查
-            if (dependencies.has("element-plus")) {
-                String version = dependencies.get("element-plus").getAsString();
-                VueKitLogger.info(LOG, "    找到 element-plus: " + version);
-                return LibraryType.ELEMENT_PLUS;
-            }
-            if (dependencies.has("element-ui")) {
-                String version = dependencies.get("element-ui").getAsString();
-                VueKitLogger.info(LOG, "    找到 element-ui: " + version);
-                return LibraryType.ELEMENT_UI;
-            }
-            if (dependencies.has("ant-design-vue")) {
-                String version = dependencies.get("ant-design-vue").getAsString();
-                VueKitLogger.info(LOG, "    找到 ant-design-vue: " + version);
-                return LibraryType.ANT_DESIGN_VUE;
-            }
-            if (dependencies.has("vuetify")) {
-                String version = dependencies.get("vuetify").getAsString();
-                VueKitLogger.info(LOG, "    找到 vuetify: " + version);
-                return LibraryType.VUETIFY;
-            }
-            if (dependencies.has("quasar")) {
-                String version = dependencies.get("quasar").getAsString();
-                VueKitLogger.info(LOG, "    找到 quasar: " + version);
-                return LibraryType.QUASAR;
+            // 后备方案：使用已知的组件库类型进行静态检查
+            for (LibraryType type : LibraryType.values()) {
+                if (type == LibraryType.UNKNOWN) continue;
+                
+                String packageName = type.getPackageName();
+                if (dependencies.has(packageName)) {
+                    String version = dependencies.get(packageName).getAsString();
+                    VueKitLogger.info(LOG, "    找到 " + packageName + ": " + version);
+                    return type;
+                }
             }
         }
 

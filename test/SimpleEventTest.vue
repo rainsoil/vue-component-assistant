@@ -1,7 +1,5 @@
 <template>
     <div>
-
-        <el-input disabled="false"></el-input>
         <el-button></el-button>
     </div>
 </template>

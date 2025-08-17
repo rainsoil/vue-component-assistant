@@ -152,26 +152,44 @@ public class DynamicLibraryManager {
      * 从已知的组件库配置中获取信息（作为后备方案）
      */
     private static LibraryInfo getKnownLibraryInfo(String packageName) {
-        String lowerName = packageName.toLowerCase();
+        // 使用 StringNormalizer 进行标准化匹配
+        String normalizedName = StringNormalizer.normalize(packageName);
         
-        switch (lowerName) {
-            case "element-plus":
+        // 检查是否匹配已知的组件库类型
+        for (ComponentLibraryDetector.LibraryType type : ComponentLibraryDetector.LibraryType.values()) {
+            if (type == ComponentLibraryDetector.LibraryType.UNKNOWN) continue;
+            
+            String normalizedPackageName = StringNormalizer.normalize(type.getPackageName());
+            if (normalizedName.equals(normalizedPackageName)) {
+                return createLibraryInfoFromLibraryType(type);
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * 从 LibraryType 创建 LibraryInfo
+     */
+    private static LibraryInfo createLibraryInfoFromLibraryType(ComponentLibraryDetector.LibraryType type) {
+        switch (type) {
+            case ELEMENT_PLUS:
                 return new LibraryInfo("element-plus", "Element Plus", "el-", 
                     "https://element-plus.org/zh-CN/component/%s.html", 
                     "Element Plus - 基于 Vue 3 的组件库");
-            case "element-ui":
+            case ELEMENT_UI:
                 return new LibraryInfo("element-ui", "Element UI", "el-", 
                     "https://element.eleme.cn/#/zh-CN/component/%s", 
                     "Element UI - 基于 Vue 2 的组件库");
-            case "ant-design-vue":
+            case ANT_DESIGN_VUE:
                 return new LibraryInfo("ant-design-vue", "Ant Design Vue", "a-", 
                     "https://antdv.com/components/%s-cn", 
                     "Ant Design Vue - 基于 Ant Design 的 Vue 组件库");
-            case "vuetify":
+            case VUETIFY:
                 return new LibraryInfo("vuetify", "Vuetify", "v-", 
                     "https://vuetifyjs.com/en/components/%s/", 
                     "Vuetify - 基于 Material Design 的 Vue 组件库");
-            case "quasar":
+            case QUASAR:
                 return new LibraryInfo("quasar", "Quasar", "q-", 
                     "https://quasar.dev/vue-components/%s", 
                     "Quasar - 基于 Vue 的跨平台 UI 框架");
@@ -184,15 +202,16 @@ public class DynamicLibraryManager {
      * 推断组件前缀
      */
     private static String inferComponentPrefix(String packageName) {
-        String lowerName = packageName.toLowerCase();
+        // 使用 StringNormalizer 进行标准化匹配
+        String normalizedName = StringNormalizer.normalize(packageName);
         
-        if (lowerName.contains("element")) {
+        if (StringNormalizer.contains(normalizedName, "element")) {
             return "el-";
-        } else if (lowerName.contains("ant")) {
+        } else if (StringNormalizer.contains(normalizedName, "ant")) {
             return "a-";
-        } else if (lowerName.contains("vuetify")) {
+        } else if (StringNormalizer.contains(normalizedName, "vuetify")) {
             return "v-";
-        } else if (lowerName.contains("quasar")) {
+        } else if (StringNormalizer.contains(normalizedName, "quasar")) {
             return "q-";
         } else {
             return ""; // 默认无前缀
@@ -203,17 +222,18 @@ public class DynamicLibraryManager {
      * 推断文档URL
      */
     private static String inferDocumentationUrl(String packageName) {
-        String lowerName = packageName.toLowerCase();
+        // 使用 StringNormalizer 进行标准化匹配
+        String normalizedName = StringNormalizer.normalize(packageName);
         
-        if (lowerName.contains("element-plus")) {
+        if (StringNormalizer.contains(normalizedName, "element-plus")) {
             return "https://element-plus.org/zh-CN/component/%s.html";
-        } else if (lowerName.contains("element-ui")) {
+        } else if (StringNormalizer.contains(normalizedName, "element-ui")) {
             return "https://element.eleme.cn/#/zh-CN/component/%s";
-        } else if (lowerName.contains("ant-design-vue")) {
+        } else if (StringNormalizer.contains(normalizedName, "ant-design-vue")) {
             return "https://antdv.com/components/%s-cn";
-        } else if (lowerName.contains("vuetify")) {
+        } else if (StringNormalizer.contains(normalizedName, "vuetify")) {
             return "https://vuetifyjs.com/en/components/%s/";
-        } else if (lowerName.contains("quasar")) {
+        } else if (StringNormalizer.contains(normalizedName, "quasar")) {
             return "https://quasar.dev/vue-components/%s";
         } else {
             return ""; // 默认无文档URL
