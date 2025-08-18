@@ -86,26 +86,17 @@ public class ComponentLibraryEnablementDialog extends DialogWrapper {
                 }
             }
             
-            // 如果没有找到任何组件库，使用默认列表
+            // 如果没有找到任何组件库，使用空列表而不是硬编码
             if (libraryTypeList.isEmpty()) {
-                libraryTypeList.add(LibraryTypeHelper.ELEMENT_UI);
-                libraryTypeList.add(LibraryTypeHelper.ELEMENT_PLUS);
-                libraryTypeList.add(LibraryTypeHelper.ANT_DESIGN_VUE);
-                libraryTypeList.add(LibraryTypeHelper.VUETIFY);
-                libraryTypeList.add(LibraryTypeHelper.QUASAR);
+                VueKitLogger.warn(LOG, "没有找到已安装的组件库，使用空列表");
             }
             
             libraryTypes = libraryTypeList.toArray(new String[0]);
             
         } catch (Exception e) {
-            // 出错时使用默认列表
-            libraryTypes = new String[]{
-                LibraryTypeHelper.ELEMENT_UI,
-                LibraryTypeHelper.ELEMENT_PLUS,
-                LibraryTypeHelper.ANT_DESIGN_VUE,
-                LibraryTypeHelper.VUETIFY,
-                LibraryTypeHelper.QUASAR
-            };
+            // 出错时使用空列表而不是硬编码
+            VueKitLogger.error(LOG, "获取组件库列表失败，使用空列表", e);
+            libraryTypes = new String[0];
         }
     }
     
@@ -252,19 +243,29 @@ public class ComponentLibraryEnablementDialog extends DialogWrapper {
      * 获取组件库信息
      */
     private String getLibraryInfo(String libraryType) {
-        switch (libraryType) {
-            case LibraryTypeHelper.ELEMENT_UI:
-                return "Element UI - 基于 Vue 2.x 的组件库，组件前缀：el-";
-            case LibraryTypeHelper.ELEMENT_PLUS:
-                return "Element Plus - 基于 Vue 3.x 的组件库，组件前缀：el-";
-            case LibraryTypeHelper.ANT_DESIGN_VUE:
-                return "Ant Design Vue - 基于 Ant Design 的 Vue 组件库，组件前缀：a-";
-            case LibraryTypeHelper.VUETIFY:
-                return "Vuetify - Material Design 组件库，组件前缀：v-";
-            case LibraryTypeHelper.QUASAR:
-                return "Quasar - 高性能 Vue.js 组件库，组件前缀：q-";
-            default:
-                return "未知组件库";
+        try {
+            // 动态获取组件库信息，不再硬编码
+            com.chu7.vuecomponentassistant.remote.ComponentLibraryManager libraryManager = 
+                new com.chu7.vuecomponentassistant.remote.ComponentLibraryManager();
+            java.util.List<com.chu7.vuecomponentassistant.remote.model.ComponentLibrary> installedLibraries = 
+                libraryManager.getAllLibraries();
+            
+            for (com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library : installedLibraries) {
+                if (libraryType.equals(library.getName())) {
+                    String displayName = library.getDisplayName() != null ? library.getDisplayName() : library.getName();
+                    String componentPrefix = library.getComponentPrefix() != null ? library.getComponentPrefix() : "";
+                    String description = library.getDescription() != null ? library.getDescription() : "";
+                    
+                    return displayName + " - " + description + "，组件前缀：" + componentPrefix;
+                }
+            }
+            
+            // 如果没有找到，返回通用信息
+            return libraryType + " - 组件库信息不可用";
+            
+        } catch (Exception e) {
+            VueKitLogger.warn(LOG, "获取组件库信息失败: " + e.getMessage());
+            return libraryType + " - 组件库信息获取失败";
         }
     }
     

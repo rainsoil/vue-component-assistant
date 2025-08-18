@@ -1,6 +1,5 @@
 package com.chu7.vuecomponentassistant.settings;
 
-import com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector;
 import com.chu7.vuecomponentassistant.utils.VueKitLogger;
 import com.chu7.vuecomponentassistant.utils.LibraryTypeHelper;
 import com.chu7.vuecomponentassistant.completion2.ComponentProviderManager;
@@ -179,7 +178,7 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
      * @deprecated 使用 getEnabledLibraryNames 替代
      */
     @Deprecated
-    public Set<ComponentLibraryDetector.LibraryType> getEnabledLibraries(Project project) {
+    public Set<String> getEnabledLibraries(Project project) {
         // 为了向后兼容，返回空集合
         return new HashSet<>();
     }
@@ -227,13 +226,9 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
      */
     @Deprecated
     public void setProjectEnabledLibraries(Project project,
-                                           Set<ComponentLibraryDetector.LibraryType> enabledLibraries) {
-        // 为了向后兼容，转换为字符串名称
-        Set<String> enabledLibraryNames = new HashSet<>();
-        for (ComponentLibraryDetector.LibraryType type : enabledLibraries) {
-            enabledLibraryNames.add(type.getPackageName());
-        }
-        setProjectEnabledLibraryNames(project, enabledLibraryNames);
+                                           Set<String> enabledLibraries) {
+        // 为了向后兼容，直接传递字符串名称
+        setProjectEnabledLibraryNames(project, enabledLibraries);
     }
 
     /**

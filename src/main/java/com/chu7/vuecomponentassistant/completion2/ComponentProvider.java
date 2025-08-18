@@ -9,6 +9,7 @@ import com.chu7.vuecomponentassistant.utils.LibraryTypeHelper;
 import com.chu7.vuecomponentassistant.utils.VueKitLogger;
 import com.chu7.vuecomponentassistant.utils.ErrorHandler;
 import com.chu7.vuecomponentassistant.utils.SmartComponentFilter;
+import com.chu7.vuecomponentassistant.utils.DynamicLibraryConfigManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 
@@ -149,21 +150,15 @@ public class ComponentProvider {
     private String getLibraryIdByType(String libraryType) {
         Objects.requireNonNull(libraryType, "组件库类型不能为null");
 
-        switch (libraryType) {
-            case "element-ui":
-                return "element-ui";
-            case "element-plus":
-                return "element-plus";
-            case "ant-design-vue":
-                return "ant-design-vue";
-            case "vuetify":
-                return "vuetify";
-            case "quasar":
-                return "quasar";
-            default:
-                VueKitLogger.warn(LOG, "未知的组件库类型: " + libraryType);
-                return null;
+        // 使用动态配置管理器获取组件库ID
+        DynamicLibraryConfigManager configManager = DynamicLibraryConfigManager.getInstance();
+        String libraryId = configManager.getLibraryIdByPackageName(libraryType);
+        
+        if (libraryId == null) {
+            VueKitLogger.warn(LOG, "未知的组件库类型: " + libraryType);
         }
+        
+        return libraryId;
     }
 
     /**
@@ -390,20 +385,16 @@ public class ComponentProvider {
      * 根据组件库类型获取对应的包名
      */
     private String getPackageNameByLibraryType() {
-        switch (libraryType) {
-            case "element-ui":
-                return "element-ui";
-            case "element-plus":
-                return "element-plus";
-            case "ant-design-vue":
-                return "ant-design-vue";
-            case "vuetify":
-                return "vuetify";
-            case "quasar":
-                return "quasar";
-            default:
-                return null;
+        // 使用动态配置管理器获取包名
+        DynamicLibraryConfigManager configManager = DynamicLibraryConfigManager.getInstance();
+        DynamicLibraryConfigManager.LibraryConfig config = configManager.getLibraryConfig(libraryType);
+        
+        if (config != null) {
+            return config.getPackageName();
         }
+        
+        // 如果找不到配置，直接返回 libraryType（可能是包名）
+        return libraryType;
     }
 
     /**

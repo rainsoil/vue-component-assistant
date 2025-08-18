@@ -8,6 +8,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
 import com.chu7.vuecomponentassistant.utils.LibraryTypeHelper;
+import com.chu7.vuecomponentassistant.utils.DynamicLibraryConfigManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -323,26 +324,42 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
     
     /**
      * 根据组件库名称动态创建组件库类型
-     * 这是一个简化的实现，实际应该从组件库的元数据中获取
+     * 完全动态化，从组件库的元数据中获取信息
      */
     private String createLibraryTypeFromName(String libraryName) {
-        // 这里应该从组件库的JSON配置文件中读取类型信息
-        // 暂时使用名称匹配作为后备方案
-        String lowerName = libraryName.toLowerCase();
-        
-        if (lowerName.contains("element-plus")) {
-            return LibraryTypeHelper.ELEMENT_PLUS;
-        } else if (lowerName.contains("element-ui")) {
-            return LibraryTypeHelper.ELEMENT_UI;
-        } else if (lowerName.contains("ant-design-vue")) {
-            return LibraryTypeHelper.ANT_DESIGN_VUE;
-        } else if (lowerName.contains("vuetify")) {
-            return LibraryTypeHelper.VUETIFY;
-        } else if (lowerName.contains("quasar")) {
-            return LibraryTypeHelper.QUASAR;
+        if (libraryName == null || libraryName.trim().isEmpty()) {
+            return null;
         }
         
-        return null;
+        try {
+            // 尝试从动态配置管理器获取组件库信息
+            DynamicLibraryConfigManager configManager = DynamicLibraryConfigManager.getInstance();
+            if (configManager.isKnownLibrary(libraryName)) {
+                // 如果已知，直接返回包名
+                return libraryName;
+            }
+            
+            // 尝试从已下载的组件库中查找
+            com.chu7.vuecomponentassistant.remote.ComponentLibraryManager libraryManager = 
+                new com.chu7.vuecomponentassistant.remote.ComponentLibraryManager();
+            java.util.List<com.chu7.vuecomponentassistant.remote.model.ComponentLibrary> installedLibraries = 
+                libraryManager.getAllLibraries();
+            
+            for (com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library : installedLibraries) {
+                if (libraryName.equals(library.getName()) || 
+                    libraryName.equals(library.getDisplayName()) ||
+                    libraryName.toLowerCase().contains(library.getName().toLowerCase())) {
+                    return library.getName(); // 返回包名而不是硬编码的常量
+                }
+            }
+            
+            // 如果都找不到，返回原始名称（让系统自动处理）
+            return libraryName;
+            
+        } catch (Exception e) {
+            // 如果出现异常，返回原始名称
+            return libraryName;
+        }
     }
 
     private void openComponentLibraryManagement() {

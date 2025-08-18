@@ -478,11 +478,29 @@ public class SmartComponentFilter {
      */
     public static Map<String, String> getPackageToLibraryMap() {
         Map<String, String> packageToLibrary = new HashMap<>();
-        packageToLibrary.put("element-ui", "element-ui");
-        packageToLibrary.put("element-plus", "element-plus");
-        packageToLibrary.put("ant-design-vue", "ant-design-vue");
-        packageToLibrary.put("vuetify", "vuetify");
-        packageToLibrary.put("quasar", "quasar");
+        
+        try {
+            // 动态获取已安装的组件库
+            com.chu7.vuecomponentassistant.remote.ComponentLibraryManager libraryManager = 
+                new com.chu7.vuecomponentassistant.remote.ComponentLibraryManager();
+            java.util.List<com.chu7.vuecomponentassistant.remote.model.ComponentLibrary> installedLibraries = 
+                libraryManager.getAllLibraries();
+            
+            if (installedLibraries != null && !installedLibraries.isEmpty()) {
+                for (com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library : installedLibraries) {
+                    String packageName = library.getName();
+                    if (packageName != null && !packageName.trim().isEmpty()) {
+                        packageToLibrary.put(packageName, packageName);
+                        VueKitLogger.debug(LOG, "动态添加包名映射: " + packageName + " -> " + packageName);
+                    }
+                }
+            } else {
+                VueKitLogger.debug(LOG, "没有找到已安装的组件库，返回空映射");
+            }
+        } catch (Exception e) {
+            VueKitLogger.warn(LOG, "动态获取组件库映射失败，返回空映射: " + e.getMessage());
+        }
+        
         return packageToLibrary;
     }
 }

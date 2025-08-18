@@ -3,6 +3,7 @@ package com.chu7.vuecomponentassistant.completion2;
 import com.chu7.vuecomponentassistant.settings.PluginSettings;
 import com.chu7.vuecomponentassistant.settings.ProjectSettingsManager;
 import com.chu7.vuecomponentassistant.utils.VueKitLogger;
+import com.chu7.vuecomponentassistant.utils.DefaultValueConverter;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionProvider;
 import com.intellij.codeInsight.completion.CompletionResultSet;
@@ -249,8 +250,23 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
                         // 插入属性名和等号
                         Editor editor = insertContext.getEditor();
                         int offset = insertContext.getTailOffset();
-                        String defaultValue = prop.getDefaultValueAsString();
-                        editor.getDocument().insertString(offset, "=\"" + defaultValue + "\"");
+                        Object defaultValue = prop.getDefaultValue();
+                        String defaultValueStr = DefaultValueConverter.formatForDisplay(defaultValue);
+                        
+                        // 根据类型决定是否加引号
+                        if (defaultValue instanceof String) {
+                            // 字符串类型需要加引号
+                            editor.getDocument().insertString(offset, "=\"" + defaultValueStr + "\"");
+                        } else if (defaultValue instanceof Number) {
+                            // 数字类型不需要加引号
+                            editor.getDocument().insertString(offset, "=" + defaultValueStr);
+                        } else if (defaultValue instanceof Boolean) {
+                            // 布尔类型不需要加引号
+                            editor.getDocument().insertString(offset, "=" + defaultValueStr);
+                        } else {
+                            // 其他类型默认不加引号
+                            editor.getDocument().insertString(offset, "=" + defaultValueStr);
+                        }
                         editor.getCaretModel().moveToOffset(offset - 1);
                     });
 

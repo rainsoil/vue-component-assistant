@@ -1,34 +1,28 @@
 package com.chu7.vuecomponentassistant.utils;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.chu7.vuecomponentassistant.utils.DynamicLibraryConfigManager;
 
 /**
  * 组件库类型辅助工具类
- * 替代原来的LibraryType枚举，直接使用字符串包名处理组件库配置
+ * 使用动态配置管理器，支持从配置文件动态加载组件库信息
  * 
  * @author VueKit Team
- * @version 2.0.0
+ * @version 3.0.0
  */
 public class LibraryTypeHelper {
     
     /** 日志记录器 */
     private static final Logger LOG = Logger.getInstance(LibraryTypeHelper.class);
     
-    // 支持的组件库包名常量
-    public static final String ELEMENT_UI = "element-ui";
-    public static final String ELEMENT_PLUS = "element-plus";
-    public static final String ANT_DESIGN_VUE = "ant-design-vue";
-    public static final String VUETIFY = "vuetify";
-    public static final String QUASAR = "quasar";
+    /** 未知组件库标识 */
     public static final String UNKNOWN = "unknown";
     
-    // 支持的组件库显示名称常量
-    public static final String ELEMENT_UI_DISPLAY = "Element UI";
-    public static final String ELEMENT_PLUS_DISPLAY = "Element Plus";
-    public static final String ANT_DESIGN_VUE_DISPLAY = "Ant Design Vue";
-    public static final String VUETIFY_DISPLAY = "Vuetify";
-    public static final String QUASAR_DISPLAY = "Quasar";
+    /** 未知组件库显示名称 */
     public static final String UNKNOWN_DISPLAY = "未知组件库";
+    
+    /** 动态配置管理器 */
+    private static final DynamicLibraryConfigManager configManager = DynamicLibraryConfigManager.getInstance();
     
     /**
      * 从组件库名称获取包名
@@ -41,26 +35,32 @@ public class LibraryTypeHelper {
             return UNKNOWN;
         }
         
-        String cleanName = libraryName.trim().toLowerCase();
-        
-        switch (cleanName) {
-            case "element-ui":
-            case "element ui":
-                return ELEMENT_UI;
-            case "element-plus":
-            case "element plus":
-                return ELEMENT_PLUS;
-            case "ant-design-vue":
-            case "ant design vue":
-            case "antd":
-                return ANT_DESIGN_VUE;
-            case "vuetify":
-                return VUETIFY;
-            case "quasar":
-                return QUASAR;
-            default:
-                return UNKNOWN;
+        // 使用动态配置管理器获取包名
+        DynamicLibraryConfigManager.LibraryConfig config = configManager.getLibraryConfig(libraryName);
+        if (config != null && config.getPackageName() != null) {
+            return config.getPackageName();
         }
+        
+        // 如果找不到配置，尝试模糊匹配
+        String inferredType = configManager.inferLibraryTypeFromPackageName(libraryName);
+        if (inferredType != null) {
+            return inferredType;
+        }
+        
+        // 如果还是找不到，尝试从下载的组件库中自动推断
+        try {
+            if (DynamicLibraryInfoProvider.autoInferLibraryConfig(libraryName)) {
+                // 重新尝试获取配置
+                config = configManager.getLibraryConfig(libraryName);
+                if (config != null && config.getPackageName() != null) {
+                    return config.getPackageName();
+                }
+            }
+        } catch (Exception e) {
+            LOG.debug("自动推断组件库配置失败: " + libraryName, e);
+        }
+        
+        return UNKNOWN;
     }
     
     /**
@@ -74,26 +74,22 @@ public class LibraryTypeHelper {
             return UNKNOWN_DISPLAY;
         }
         
-        String cleanName = libraryName.trim().toLowerCase();
-        
-        switch (cleanName) {
-            case "element-ui":
-            case "element ui":
-                return ELEMENT_UI_DISPLAY;
-            case "element-plus":
-            case "element plus":
-                return ELEMENT_PLUS_DISPLAY;
-            case "ant-design-vue":
-            case "ant design vue":
-            case "antd":
-                return ANT_DESIGN_VUE_DISPLAY;
-            case "vuetify":
-                return VUETIFY_DISPLAY;
-            case "quasar":
-                return QUASAR_DISPLAY;
-            default:
-                return UNKNOWN_DISPLAY;
+        // 使用动态配置管理器获取显示名称
+        DynamicLibraryConfigManager.LibraryConfig config = configManager.getLibraryConfig(libraryName);
+        if (config != null && config.getDisplayName() != null) {
+            return config.getDisplayName();
         }
+        
+        // 如果找不到配置，尝试模糊匹配
+        String inferredType = configManager.inferLibraryTypeFromPackageName(libraryName);
+        if (inferredType != null) {
+            config = configManager.getLibraryConfig(inferredType);
+            if (config != null && config.getDisplayName() != null) {
+                return config.getDisplayName();
+            }
+        }
+        
+        return UNKNOWN_DISPLAY;
     }
     
     /**
@@ -107,12 +103,8 @@ public class LibraryTypeHelper {
             return false;
         }
         
-        String cleanName = libraryName.trim().toLowerCase();
-        return cleanName.equals(ELEMENT_UI) || 
-               cleanName.equals(ELEMENT_PLUS) || 
-               cleanName.equals(ANT_DESIGN_VUE) || 
-               cleanName.equals(VUETIFY) || 
-               cleanName.equals(QUASAR);
+        // 使用动态配置管理器检查
+        return configManager.isKnownLibrary(libraryName);
     }
     
     /**
@@ -126,26 +118,13 @@ public class LibraryTypeHelper {
             return "";
         }
         
-        String cleanName = libraryName.trim().toLowerCase();
-        
-        switch (cleanName) {
-            case "element-ui":
-            case "element plus":
-                return "el-";
-            case "ant-design-vue":
-            case "antd":
-                return "a-";
-            case "vuetify":
-                return "v-";
-            case "quasar":
-                return "q-";
-            default:
-                return "";
-        }
+        // 使用动态配置管理器获取组件前缀
+        return configManager.getComponentPrefix(libraryName);
     }
     
     /**
      * 获取文档URL模板
+     * 从下载的组件库中获取，而不是从静态配置中获取
      * 
      * @param libraryName 组件库名称
      * @return 文档URL模板
@@ -155,22 +134,9 @@ public class LibraryTypeHelper {
             return "";
         }
         
-        String cleanName = libraryName.trim().toLowerCase();
-        
-        switch (cleanName) {
-            case "element-ui":
-                return "https://element.eleme.cn/#/zh-CN/component/";
-            case "element-plus":
-                return "https://element-plus.org/zh-CN/component/";
-            case "ant-design-vue":
-                return "https://antdv.com/components/";
-            case "vuetify":
-                return "https://vuetifyjs.com/en/components/";
-            case "quasar":
-                return "https://quasar.dev/vue-components/";
-            default:
-                return "";
-        }
+        // 文档URL模板应该从下载的组件库中获取
+        // 这里返回空字符串，表示需要从动态加载的组件库中获取
+        return "";
     }
     
     /**
@@ -195,6 +161,7 @@ public class LibraryTypeHelper {
     
     /**
      * 获取组件数据路径
+     * 从下载的组件库中获取，而不是从静态配置中获取
      * 
      * @param libraryName 组件库名称
      * @return 组件数据路径
@@ -204,21 +171,8 @@ public class LibraryTypeHelper {
             return "";
         }
         
-        String cleanName = libraryName.trim().toLowerCase();
-        
-        switch (cleanName) {
-            case "element-ui":
-                return "/data/element-ui-components.json";
-            case "element-plus":
-                return "/data/element-plus-components.json";
-            case "ant-design-vue":
-                return "/data/ant-design-vue-components.json";
-            case "vuetify":
-                return "/data/vuetify-components.json";
-            case "quasar":
-                return "/data/quasar-components.json";
-            default:
-                return "";
-        }
+        // 组件数据路径应该从下载的组件库中获取
+        // 这里返回空字符串，表示需要从动态加载的组件库中获取
+        return "";
     }
 }

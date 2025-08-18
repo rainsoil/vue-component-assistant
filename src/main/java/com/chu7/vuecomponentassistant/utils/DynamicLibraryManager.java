@@ -153,56 +153,49 @@ public class DynamicLibraryManager {
      * 从已知的组件库配置中获取信息（作为后备方案）
      */
     private static LibraryInfo getKnownLibraryInfo(String packageName) {
-        // 使用 StringNormalizer 进行标准化匹配
-        String normalizedName = StringNormalizer.normalize(packageName);
-        
-        // 检查是否匹配已知的组件库类型
-        String[] knownLibraries = {
-            LibraryTypeHelper.ELEMENT_UI,
-            LibraryTypeHelper.ELEMENT_PLUS,
-            LibraryTypeHelper.ANT_DESIGN_VUE,
-            LibraryTypeHelper.VUETIFY,
-            LibraryTypeHelper.QUASAR
-        };
-        
-        for (String libraryType : knownLibraries) {
-            String normalizedPackageName = StringNormalizer.normalize(libraryType);
-            if (normalizedName.equals(normalizedPackageName)) {
-                return createLibraryInfoFromLibraryType(libraryType);
+        try {
+            // 动态获取已安装的组件库，不再硬编码
+            ComponentLibraryManager libraryManager = new ComponentLibraryManager();
+            List<ComponentLibrary> installedLibraries = libraryManager.getAllLibraries();
+            
+            for (ComponentLibrary library : installedLibraries) {
+                if (packageName.equals(library.getName())) {
+                    return createLibraryInfoFromComponentLibrary(library);
+                }
             }
+            
+            // 如果没有找到，尝试智能推断
+            return createInferredLibraryInfo(packageName);
+            
+        } catch (Exception e) {
+            VueKitLogger.warn(LOG, "动态获取组件库信息失败，使用智能推断: " + e.getMessage());
+            return createInferredLibraryInfo(packageName);
         }
-        
+    }
+    
+    /**
+     * 从 LibraryType 创建 LibraryInfo（已废弃）
+     */
+    @Deprecated
+    private static LibraryInfo createLibraryInfoFromLibraryType(String type) {
+        VueKitLogger.warn(LOG, "createLibraryInfoFromLibraryType 方法已废弃，使用动态获取替代");
         return null;
     }
     
     /**
-     * 从 LibraryType 创建 LibraryInfo
+     * 创建推断的组件库信息
      */
-    private static LibraryInfo createLibraryInfoFromLibraryType(String type) {
-        switch (type) {
-            case LibraryTypeHelper.ELEMENT_PLUS:
-                return new LibraryInfo("element-plus", "Element Plus", "el-", 
-                    "https://element-plus.org/zh-CN/component/%s.html", 
-                    "Element Plus - 基于 Vue 3 的组件库");
-            case LibraryTypeHelper.ELEMENT_UI:
-                return new LibraryInfo("element-ui", "Element UI", "el-", 
-                    "https://element.eleme.cn/#/zh-CN/component/%s", 
-                    "Element UI - 基于 Vue 2 的组件库");
-            case LibraryTypeHelper.ANT_DESIGN_VUE:
-                return new LibraryInfo("ant-design-vue", "Ant Design Vue", "a-", 
-                    "https://antdv.com/components/%s-cn", 
-                    "Ant Design Vue - 基于 Ant Design 的 Vue 组件库");
-            case LibraryTypeHelper.VUETIFY:
-                return new LibraryInfo("vuetify", "Vuetify", "v-", 
-                    "https://vuetifyjs.com/en/components/%s/", 
-                    "Vuetify - 基于 Material Design 的 Vue 组件库");
-            case LibraryTypeHelper.QUASAR:
-                return new LibraryInfo("quasar", "Quasar", "q-", 
-                    "https://quasar.dev/vue-components/%s", 
-                    "Quasar - 基于 Vue 的跨平台 UI 框架");
-            default:
-                return null;
+    private static LibraryInfo createInferredLibraryInfo(String packageName) {
+        if (packageName == null || packageName.trim().isEmpty()) {
+            return null;
         }
+        
+        String componentPrefix = inferComponentPrefix(packageName);
+        String documentationUrl = inferDocumentationUrl(packageName);
+        String displayName = inferDisplayName(packageName);
+        String description = inferDescription(packageName);
+        
+        return new LibraryInfo(packageName, displayName, componentPrefix, documentationUrl, description);
     }
     
     /**
@@ -229,21 +222,124 @@ public class DynamicLibraryManager {
      * 推断文档URL
      */
     private static String inferDocumentationUrl(String packageName) {
-        // 使用 StringNormalizer 进行标准化匹配
+        if (packageName == null || packageName.trim().isEmpty()) {
+            return "";
+        }
+        
+        try {
+            // 优先从已安装的组件库中获取文档URL模板
+            ComponentLibraryManager libraryManager = new ComponentLibraryManager();
+            List<ComponentLibrary> installedLibraries = libraryManager.getAllLibraries();
+            
+            for (ComponentLibrary library : installedLibraries) {
+                if (packageName.equals(library.getName())) {
+                    // 如果组件库有自定义的文档URL模板，使用它
+                    // 注意：ComponentLibrary 类目前没有 getDocumentationUrlTemplate 方法
+                    // 这里可以后续扩展，暂时使用智能推断
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            VueKitLogger.debug(LOG, "从已安装组件库获取文档URL失败，使用智能推断: " + e.getMessage());
+        }
+        
+        // 使用智能推断作为后备方案
         String normalizedName = StringNormalizer.normalize(packageName);
         
-        if (StringNormalizer.contains(normalizedName, "element-plus")) {
-            return "https://element-plus.org/zh-CN/component/%s.html";
-        } else if (StringNormalizer.contains(normalizedName, "element-ui")) {
-            return "https://element.eleme.cn/#/zh-CN/component/%s";
-        } else if (StringNormalizer.contains(normalizedName, "ant-design-vue")) {
+        // 基于包名模式智能推断文档URL
+        if (StringNormalizer.contains(normalizedName, "element")) {
+            if (StringNormalizer.contains(normalizedName, "plus")) {
+                return "https://element-plus.org/zh-CN/component/%s.html";
+            } else {
+                return "https://element.eleme.cn/#/zh-CN/component/%s";
+            }
+        } else if (StringNormalizer.contains(normalizedName, "ant") || StringNormalizer.contains(normalizedName, "design")) {
             return "https://antdv.com/components/%s-cn";
         } else if (StringNormalizer.contains(normalizedName, "vuetify")) {
             return "https://vuetifyjs.com/en/components/%s/";
         } else if (StringNormalizer.contains(normalizedName, "quasar")) {
             return "https://quasar.dev/vue-components/%s";
+        } else if (StringNormalizer.contains(normalizedName, "naive")) {
+            return "https://naiveui.com/zh-CN/component/%s";
+        } else if (StringNormalizer.contains(normalizedName, "prime")) {
+            return "https://primevue.org/components/%s/";
         } else {
-            return ""; // 默认无文档URL
+            // 对于未知的组件库，尝试构建通用的文档URL
+            return buildGenericDocumentationUrl(packageName);
+        }
+    }
+    
+    /**
+     * 构建通用的文档URL模板
+     */
+    private static String buildGenericDocumentationUrl(String packageName) {
+        if (packageName == null || packageName.trim().isEmpty()) {
+            return "";
+        }
+        
+        // 尝试从包名推断可能的文档URL模式
+        String normalizedName = packageName.toLowerCase().replaceAll("[^a-z0-9]", "");
+        
+        // 常见的文档URL模式
+        if (normalizedName.contains("ui") || normalizedName.contains("design")) {
+            return "https://" + packageName + ".org/components/%s";
+        } else if (normalizedName.contains("vue")) {
+            return "https://" + packageName + ".com/components/%s";
+        } else {
+            // 默认模式
+            return "https://" + packageName + ".org/docs/%s";
+        }
+    }
+    
+    /**
+     * 推断显示名称
+     */
+    private static String inferDisplayName(String packageName) {
+        if (packageName == null || packageName.trim().isEmpty()) {
+            return "未知组件库";
+        }
+        
+        // 将包名转换为更友好的显示名称
+        String[] words = packageName.split("-");
+        StringBuilder displayName = new StringBuilder();
+        
+        for (String word : words) {
+            if (!word.trim().isEmpty()) {
+                if (displayName.length() > 0) {
+                    displayName.append(" ");
+                }
+                displayName.append(word.substring(0, 1).toUpperCase())
+                          .append(word.substring(1).toLowerCase());
+            }
+        }
+        
+        return displayName.toString();
+    }
+    
+    /**
+     * 推断描述信息
+     */
+    private static String inferDescription(String packageName) {
+        if (packageName == null || packageName.trim().isEmpty()) {
+            return "组件库信息不可用";
+        }
+        
+        String normalizedName = StringNormalizer.normalize(packageName);
+        
+        if (StringNormalizer.contains(normalizedName, "element")) {
+            return "基于 Vue 的组件库";
+        } else if (StringNormalizer.contains(normalizedName, "ant") || StringNormalizer.contains(normalizedName, "design")) {
+            return "基于 Ant Design 的 Vue 组件库";
+        } else if (StringNormalizer.contains(normalizedName, "vuetify")) {
+            return "基于 Material Design 的 Vue 组件库";
+        } else if (StringNormalizer.contains(normalizedName, "quasar")) {
+            return "基于 Vue 的跨平台 UI 框架";
+        } else if (StringNormalizer.contains(normalizedName, "naive")) {
+            return "基于 Vue 3 的组件库";
+        } else if (StringNormalizer.contains(normalizedName, "prime")) {
+            return "基于 Vue 的组件库";
+        } else {
+            return "Vue 组件库";
         }
     }
     

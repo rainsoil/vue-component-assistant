@@ -1,7 +1,11 @@
 <template>
     <div>
 
-        <el-alert title=""></el-alert>
+        <el-button disabled="false">
+            <template #default>
+                <!-- 按钮内容 -->
+            </template>
+        </el-button>
     </div>
 </template>
 

@@ -14,6 +14,7 @@ public class ComponentLibrary {
     private String source;   // 来源类型（字符串形式，用于JSON反序列化）
     private String sourceUrl;       // 远程URL（如果适用）
     private String lastUpdated; // 最后更新时间
+    private String componentPrefix; // 组件前缀（如 "el-", "a-"）
     private List<ComponentInfo> components; // 组件列表
 
     public enum LibrarySource {
@@ -57,6 +58,19 @@ public class ComponentLibrary {
         this.version = version;
         this.source = source;
         this.sourceUrl = sourceUrl;
+        this.lastUpdated = java.time.LocalDateTime.now().toString();
+    }
+    
+    public ComponentLibrary(String id, String name, String displayName, String description, 
+                          String version, String source, String sourceUrl, String componentPrefix) {
+        this.id = id;
+        this.name = name;
+        this.displayName = displayName;
+        this.description = description;
+        this.version = version;
+        this.source = source;
+        this.sourceUrl = sourceUrl;
+        this.componentPrefix = componentPrefix;
         this.lastUpdated = java.time.LocalDateTime.now().toString();
     }
 
@@ -127,6 +141,14 @@ public class ComponentLibrary {
 
     public void setSourceUrl(String sourceUrl) {
         this.sourceUrl = sourceUrl;
+    }
+    
+    public String getComponentPrefix() {
+        return componentPrefix;
+    }
+    
+    public void setComponentPrefix(String componentPrefix) {
+        this.componentPrefix = componentPrefix;
     }
 
     public String getLastUpdated() {

@@ -5,6 +5,7 @@ import com.chu7.vuecomponentassistant.completion2.ElementPlusComponent;
 import com.chu7.vuecomponentassistant.completion2.ElementPlusProp;
 import com.chu7.vuecomponentassistant.completion2.ElementPlusEvent;
 import com.chu7.vuecomponentassistant.completion2.ElementPlusSlot;
+import com.chu7.vuecomponentassistant.utils.DefaultValueConverter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -117,7 +118,7 @@ public class DocumentationStyleGenerator {
                 html.append("<td>").append(prop.getDescription() != null ? prop.getDescription() : "").append("</td>");
                 html.append("<td>").append(prop.getType() != null ? prop.getType() : "").append("</td>");
                 html.append("<td>").append(prop.getOptions() != null ? String.join(" / ", prop.getOptions()) : "—").append("</td>");
-                html.append("<td>").append(prop.getDefaultValue() != null ? prop.getDefaultValue() : "—").append("</td>");
+                html.append("<td>").append(prop.getDefaultValue() != null ? DefaultValueConverter.formatForDisplay(prop.getDefaultValue()) : "—").append("</td>");
                 html.append("</tr>");
             }
             html.append("</tbody></table>");
@@ -238,7 +239,7 @@ public class DocumentationStyleGenerator {
                 String desc = prop.getDescription() != null ? prop.getDescription() : "";
                 String type = prop.getType() != null ? prop.getType() : "";
                 String options = prop.getOptions() != null ? String.join(" / ", prop.getOptions()) : "—";
-                String defaultValue = prop.getDefaultValue() != null ? prop.getDefaultValue() : "—";
+                String defaultValue = prop.getDefaultValue() != null ? DefaultValueConverter.formatForDisplay(prop.getDefaultValue()) : "—";
 
                 // 截断过长的描述
                 if (desc.length() > 18) {

@@ -133,13 +133,13 @@ public class ComponentInfo {
         private String name;
         private String type;
         private String description;
-        private String defaultValue;
+        private Object defaultValue;  // 支持多种类型：String, Boolean, Number
         private boolean required;
         private List<String> options;
 
         public ComponentProp() {}
 
-        public ComponentProp(String name, String type, String description, String defaultValue, boolean required) {
+        public ComponentProp(String name, String type, String description, Object defaultValue, boolean required) {
             this.name = name;
             this.type = type;
             this.description = description;
@@ -154,8 +154,75 @@ public class ComponentInfo {
         public void setType(String type) { this.type = type; }
         public String getDescription() { return description; }
         public void setDescription(String description) { this.description = description; }
-        public String getDefaultValue() { return defaultValue; }
-        public void setDefaultValue(String defaultValue) { this.defaultValue = defaultValue; }
+        
+        // 获取原始值
+        public Object getDefaultValue() { return defaultValue; }
+        public void setDefaultValue(Object defaultValue) { this.defaultValue = defaultValue; }
+        
+        // 获取字符串形式的默认值（用于显示）
+        public String getDefaultValueAsString() {
+            if (defaultValue == null) {
+                return "";
+            }
+            return defaultValue.toString();
+        }
+        
+        // 获取布尔形式的默认值
+        public Boolean getDefaultValueAsBoolean() {
+            if (defaultValue == null) {
+                return null;
+            }
+            if (defaultValue instanceof Boolean) {
+                return (Boolean) defaultValue;
+            }
+            if (defaultValue instanceof String) {
+                String str = ((String) defaultValue).toLowerCase().trim();
+                if ("true".equals(str) || "1".equals(str)) {
+                    return true;
+                }
+                if ("false".equals(str) || "0".equals(str)) {
+                    return false;
+                }
+            }
+            return null;
+        }
+        
+        // 获取数字形式的默认值
+        public Number getDefaultValueAsNumber() {
+            if (defaultValue == null) {
+                return null;
+            }
+            if (defaultValue instanceof Number) {
+                return (Number) defaultValue;
+            }
+            if (defaultValue instanceof String) {
+                try {
+                    String str = ((String) defaultValue).trim();
+                    if (str.contains(".")) {
+                        return Double.parseDouble(str);
+                    } else {
+                        return Long.parseLong(str);
+                    }
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            }
+            return null;
+        }
+        
+        // 检查默认值是否为特定类型
+        public boolean isDefaultValueBoolean() {
+            return defaultValue instanceof Boolean;
+        }
+        
+        public boolean isDefaultValueNumber() {
+            return defaultValue instanceof Number;
+        }
+        
+        public boolean isDefaultValueString() {
+            return defaultValue instanceof String;
+        }
+        
         public boolean isRequired() { return required; }
         public void setRequired(boolean required) { this.required = required; }
         

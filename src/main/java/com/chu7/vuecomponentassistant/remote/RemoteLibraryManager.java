@@ -430,43 +430,37 @@ public class RemoteLibraryManager {
     // 创建默认核心组件库列表
     private List<ComponentLibrary> createDefaultCoreLibraries() {
         List<ComponentLibrary> libraries = new java.util.ArrayList<>();
-
-        // Element Plus
-        ComponentLibrary elementPlusLib = new ComponentLibrary(
-                "element-plus",
-                "Element Plus",
-                "Element Plus",
-                "Vue 3 组件库",
-                "2.5.0",
-                "OFFICIAL",
-                "https://cdn.vuekit.dev/libraries/element-plus.json"
-        );
-        libraries.add(elementPlusLib);
-
-        // Element UI
-        ComponentLibrary elementUI = new ComponentLibrary(
-                "element-ui",
-                "Element UI",
-                "Element UI",
-                "Vue 2 组件库",
-                "2.15.0",
-                "OFFICIAL",
-                "https://cdn.vuekit.dev/libraries/element-ui.json"
-        );
-        libraries.add(elementUI);
-
-        // Ant Design Vue
-        ComponentLibrary antDesignVue = new ComponentLibrary(
-                "ant-design-vue",
-                "Ant Design Vue",
-                "Ant Design Vue",
-                "Vue 3 企业级UI组件库",
-                "4.0.0",
-                "OFFICIAL",
-                "https://cdn.vuekit.dev/libraries/ant-design-vue.json"
-        );
-        libraries.add(antDesignVue);
-
+        
+        try {
+            // 尝试从远程组件库管理器获取已安装的组件库
+            com.chu7.vuecomponentassistant.remote.ComponentLibraryManager libraryManager = 
+                new com.chu7.vuecomponentassistant.remote.ComponentLibraryManager();
+            java.util.List<com.chu7.vuecomponentassistant.remote.model.ComponentLibrary> installedLibraries = 
+                libraryManager.getAllLibraries();
+            
+            if (installedLibraries != null && !installedLibraries.isEmpty()) {
+                // 如果已有已安装的组件库，直接返回
+                for (com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library : installedLibraries) {
+                    ComponentLibrary remoteLib = new ComponentLibrary(
+                        library.getName(),
+                        library.getDisplayName(),
+                        library.getDisplayName(),
+                        library.getDescription() != null ? library.getDescription() : "Vue 组件库",
+                        library.getVersion() != null ? library.getVersion() : "1.0.0",
+                        "OFFICIAL",
+                        ""
+                    );
+                    libraries.add(remoteLib);
+                }
+                LOG.info("从已安装的组件库创建默认列表，共 " + libraries.size() + " 个");
+                return libraries;
+            }
+        } catch (Exception e) {
+            LOG.warn("获取已安装组件库失败，使用空列表: " + e.getMessage());
+        }
+        
+        // 如果没有已安装的组件库，返回空列表
+        LOG.info("没有找到已安装的组件库，返回空列表");
         return libraries;
     }
 } 

@@ -62,6 +62,7 @@ public class ComponentLibraryTemplateGenerator {
         template.put("version", "1.0.0");
         template.put("source", "CUSTOM_LOCAL");
         template.put("sourceUrl", "");
+        template.put("componentPrefix", "my-"); // 组件前缀，用于自动补全和识别
         template.put("lastUpdated", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         
         // 组件列表
@@ -93,10 +94,10 @@ public class ComponentLibraryTemplateGenerator {
             Arrays.asList("primary", "success", "warning", "danger", "info", "default")));
         props.add(createProp("size", "string", "按钮尺寸", "medium", false, 
             Arrays.asList("large", "medium", "small", "mini")));
-        props.add(createProp("disabled", "boolean", "是否禁用按钮", "false", false, null));
-        props.add(createProp("loading", "boolean", "是否显示加载状态", "false", false, null));
-        props.add(createProp("round", "boolean", "是否圆角按钮", "false", false, null));
-        props.add(createProp("plain", "boolean", "是否朴素按钮", "false", false, null));
+        props.add(createProp("disabled", "boolean", "是否禁用按钮", false, false, null));
+        props.add(createProp("loading", "boolean", "是否显示加载状态", false, false, null));
+        props.add(createProp("round", "boolean", "是否圆角按钮", false, false, null));
+        props.add(createProp("plain", "boolean", "是否朴素按钮", false, false, null));
         component.put("props", props);
         
         // 事件
@@ -132,11 +133,11 @@ public class ComponentLibraryTemplateGenerator {
         props.add(createProp("placeholder", "string", "输入框占位符文本", "", false, null));
         props.add(createProp("type", "string", "输入框类型", "text", false, 
             Arrays.asList("text", "password", "number", "email", "tel", "url")));
-        props.add(createProp("disabled", "boolean", "是否禁用输入框", "false", false, null));
-        props.add(createProp("readonly", "boolean", "是否只读", "false", false, null));
-        props.add(createProp("clearable", "boolean", "是否可清空", "false", false, null));
-        props.add(createProp("maxlength", "number", "最大输入长度", "", false, null));
-        props.add(createProp("minlength", "number", "最小输入长度", "", false, null));
+        props.add(createProp("disabled", "boolean", "是否禁用输入框", false, false, null));
+        props.add(createProp("readonly", "boolean", "是否只读", false, false, null));
+        props.add(createProp("clearable", "boolean", "是否可清空", false, false, null));
+        props.add(createProp("maxlength", "number", "最大输入长度", 100, false, null));
+        props.add(createProp("minlength", "number", "最小输入长度", 1, false, null));
         component.put("props", props);
         
         // 事件
@@ -203,11 +204,11 @@ public class ComponentLibraryTemplateGenerator {
         
         // 属性
         List<Map<String, Object>> props = new ArrayList<>();
-        props.add(createProp("visible", "boolean", "是否显示模态框", "false", false, null));
+        props.add(createProp("visible", "boolean", "是否显示模态框", false, false, null));
         props.add(createProp("title", "string", "模态框标题", "", false, null));
         props.add(createProp("width", "string", "模态框宽度", "50%", false, null));
-        props.add(createProp("closeOnClickMask", "boolean", "点击遮罩是否关闭", "true", false, null));
-        props.add(createProp("showClose", "boolean", "是否显示关闭按钮", "true", false, null));
+        props.add(createProp("closeOnClickMask", "boolean", "点击遮罩是否关闭", true, false, null));
+        props.add(createProp("showClose", "boolean", "是否显示关闭按钮", true, false, null));
         component.put("props", props);
         
         // 事件
@@ -230,9 +231,16 @@ public class ComponentLibraryTemplateGenerator {
     
     /**
      * 创建属性定义
+     * 
+     * @param name 属性名称
+     * @param type 属性类型 (string, boolean, number, object, array)
+     * @param description 属性描述
+     * @param defaultValue 默认值 (支持 String, Boolean, Number 类型)
+     * @param required 是否必需
+     * @param options 可选值列表
      */
     private static Map<String, Object> createProp(String name, String type, String description, 
-                                                 String defaultValue, boolean required, List<String> options) {
+                                                 Object defaultValue, boolean required, List<String> options) {
         Map<String, Object> prop = new LinkedHashMap<>();
         prop.put("name", name);
         prop.put("type", type);

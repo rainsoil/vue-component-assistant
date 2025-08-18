@@ -64,29 +64,18 @@ public class ComponentLibraryInitializer implements StartupActivity {
             List<ComponentLibrary> existingLibraries = manager.getAllLibraries();
             VueKitLogger.info(LOG, "已安装的组件库数量: " + existingLibraries.size());
             
-            // 检查 Element Plus 组件库
-            if (!hasLibrary(existingLibraries, "element-plus")) {
-                VueKitLogger.info(LOG, "Element Plus 组件库未安装，开始下载...");
-                downloadElementPlusLibrary(manager);
+            // 动态检查已安装的组件库，不再硬编码特定组件库名称
+            if (existingLibraries.isEmpty()) {
+                VueKitLogger.info(LOG, "没有发现已安装的组件库，建议从官方市场下载");
             } else {
-                VueKitLogger.info(LOG, "Element Plus 组件库已存在");
+                VueKitLogger.info(LOG, "已发现以下组件库:");
+                for (ComponentLibrary library : existingLibraries) {
+                    VueKitLogger.info(LOG, "  - " + library.getName() + " (" + library.getDisplayName() + ")");
+                }
             }
             
-            // 检查 Ant Design Vue 组件库
-            if (!hasLibrary(existingLibraries, "ant-design-vue")) {
-                VueKitLogger.info(LOG, "Ant Design Vue 组件库未安装，开始下载...");
-                downloadAntDesignVueLibrary(manager);
-            } else {
-                VueKitLogger.info(LOG, "Ant Design Vue 组件库已存在");
-            }
-            
-            // 检查 Element UI 组件库
-            if (!hasLibrary(existingLibraries, "element-ui")) {
-                VueKitLogger.info(LOG, "Element UI 组件库未安装，开始下载...");
-                downloadElementUILibrary(manager);
-            } else {
-                VueKitLogger.info(LOG, "Element UI 组件库已存在");
-            }
+            // 不再硬编码检查特定组件库，而是动态处理
+            VueKitLogger.info(LOG, "组件库初始化检查完成");
             
         } catch (Exception e) {
             VueKitLogger.error(LOG, "初始化官方组件库失败", e);
@@ -160,44 +149,37 @@ public class ComponentLibraryInitializer implements StartupActivity {
      */
     private void downloadElementUILibrary(ComponentLibraryManager manager) {
         try {
-            // 创建 Element UI 组件库
-            ComponentLibrary elementUILibrary = createElementUILibrary();
+            // 动态获取已安装的组件库，不再硬编码
+            java.util.List<ComponentLibrary> installedLibraries = manager.getAllLibraries();
             
-            // 导入组件库
-            ImportResult result = manager.importLibrary(elementUILibrary);
-            
-            if (result.isSuccess()) {
-                VueKitLogger.info(LOG, "✅ Element UI 组件库下载成功");
+            if (installedLibraries != null && !installedLibraries.isEmpty()) {
+                VueKitLogger.info(LOG, "✅ 发现已安装的组件库，共 " + installedLibraries.size() + " 个");
+                
+                // 可以选择性地导入一些组件库
+                for (ComponentLibrary library : installedLibraries) {
+                    if (library.getName().toLowerCase().contains("element")) {
+                        VueKitLogger.info(LOG, "✅ 发现 Element 相关组件库: " + library.getName());
+                    }
+                }
             } else {
-                VueKitLogger.warn(LOG, "⚠️ Element UI 组件库下载失败: " + result.getMessage());
+                VueKitLogger.info(LOG, "ℹ️ 没有发现已安装的组件库");
             }
             
         } catch (Exception e) {
-            VueKitLogger.error(LOG, "下载 Element UI 组件库失败", e);
+            VueKitLogger.error(LOG, "检查已安装组件库失败", e);
         }
     }
 
     /**
-     * 创建 Element Plus 组件库
+     * 创建 Element Plus 组件库（已废弃）
      * 
      * @return Element Plus 组件库对象
+     * @deprecated 使用动态获取替代硬编码创建
      */
+    @Deprecated
     private ComponentLibrary createElementPlusLibrary() {
-        ComponentLibrary library = new ComponentLibrary(
-            "element-plus",
-            "Element Plus",
-            "Element Plus",
-            "Element Plus 是一套为开发者、设计师和产品经理准备的基于 Vue 3 的桌面端组件库",
-            "2.5.0",
-            ComponentLibrary.LibrarySource.OFFICIAL,
-            "https://element-plus.org/"
-        );
-        
-        // 这里可以添加一些基本的 Element Plus 组件
-        // 实际项目中，这些数据应该从远程服务器或内置资源中加载
-        library.setComponents(createBasicElementPlusComponents());
-        
-        return library;
+        VueKitLogger.warn(LOG, "createElementPlusLibrary 方法已废弃，请使用动态获取");
+        return null;
     }
 
     /**
@@ -205,43 +187,28 @@ public class ComponentLibraryInitializer implements StartupActivity {
      * 
      * @return Ant Design Vue 组件库对象
      */
+    /**
+     * 创建 Ant Design Vue 组件库（已废弃）
+     * 
+     * @return Ant Design Vue 组件库对象
+     * @deprecated 使用动态获取替代硬编码创建
+     */
+    @Deprecated
     private ComponentLibrary createAntDesignVueLibrary() {
-        ComponentLibrary library = new ComponentLibrary(
-            "ant-design-vue",
-            "Ant Design Vue",
-            "Ant Design Vue",
-            "Ant Design Vue 是 Ant Design 的 Vue 实现，提供了一套企业级 UI 组件",
-            "4.0.0",
-            ComponentLibrary.LibrarySource.OFFICIAL,
-            "https://antdv.com/"
-        );
-        
-        // 这里可以添加一些基本的 Ant Design Vue 组件
-        library.setComponents(createBasicAntDesignVueComponents());
-        
-        return library;
+        VueKitLogger.warn(LOG, "createAntDesignVueLibrary 方法已废弃，请使用动态获取");
+        return null;
     }
 
     /**
-     * 创建 Element UI 组件库
+     * 创建 Element UI 组件库（已废弃）
      * 
      * @return Element UI 组件库对象
+     * @deprecated 使用动态获取替代硬编码创建
      */
+    @Deprecated
     private ComponentLibrary createElementUILibrary() {
-        ComponentLibrary library = new ComponentLibrary(
-            "element-ui",
-            "Element UI",
-            "Element UI",
-            "Element UI 是一套为开发者、设计师和产品经理准备的基于 Vue 2.0 的桌面端组件库",
-            "2.15.0",
-            ComponentLibrary.LibrarySource.OFFICIAL,
-            "https://element.eleme.cn/"
-        );
-        
-        // 这里可以添加一些基本的 Element UI 组件
-        library.setComponents(createBasicElementUIComponents());
-        
-        return library;
+        VueKitLogger.warn(LOG, "createElementUILibrary 方法已废弃，请使用动态获取");
+        return null;
     }
 
     /**
