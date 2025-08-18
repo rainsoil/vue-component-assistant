@@ -140,7 +140,7 @@ public class PackageJsonAutoDetector {
      */
     private static VirtualFile findPackageJsonFile(Project project) {
         try {
-            VirtualFile projectDir = project.getBaseDir();
+            VirtualFile projectDir = com.chu7.vuecomponentassistant.utils.ProjectPathHelper.getProjectRoot(project);
             if (projectDir == null) {
                 return null;
             }
@@ -297,7 +297,7 @@ public class PackageJsonAutoDetector {
      */
     private static VirtualFile getIdeaDirectory(Project project) {
         try {
-            VirtualFile projectDir = project.getBaseDir();
+            VirtualFile projectDir = com.chu7.vuecomponentassistant.utils.ProjectPathHelper.getProjectRoot(project);
             if (projectDir == null) {
                 return null;
             }

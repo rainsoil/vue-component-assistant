@@ -1,6 +1,7 @@
 <template>
     <div>
-        <el-button></el-button>
+
+        <el-alert title=""></el-alert>
     </div>
 </template>
 

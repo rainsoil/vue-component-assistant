@@ -1,156 +1,137 @@
 <idea-plugin>
     <id>com.chu7.vuekit</id>
     <name>VueKit</name>
-    <version>1.0.5</version>
+    <version>1.0.7</version>
     <vendor email="luyanan0718@163.com" url="https://github.com/rainsoil/vuekit">luyanan</vendor>
 
-    <description>
-        <![CDATA[
-            VueKit (Vue Development Toolkit)</h3>
-            <p>A comprehensive IntelliJ IDEA plugin for Vue.js developers, providing intelligent component completion, documentation, and advanced development assistance features.</p>
-    <h4>Main Features:</h4>
-    <ul>
-        <li><b>Smart Component Completion</b> - Supports major UI component libraries including Element Plus, Element UI, and Ant Design Vue</li>
-        <li><b>Intelligent Property Suggestions</b> - Provides smart suggestions for attributes, events, and slots based on component type</li>
-        <li><b>Real-time Documentation Display</b> - Displays detailed component documentation and usage examples on hover or selection</li>
-        <li><b>Multi-library Support</b> - Automatically detects component libraries used in projects, supports manual configuration</li>
-        <li><b>Custom Component Libraries</b> - Supports importing and managing custom component libraries</li>
-        <li><b>Right-click Documentation</b> - Quickly access detailed component/attribute/event documentation via right-click menu</li>
-        <li><b>Remote Component Library Management</b> - Download and manage component libraries from official marketplace</li>
-    </ul>
+    <description><![CDATA[
+        VueKit (Vue Development Toolkit)</h3>
+        <p>A comprehensive IntelliJ IDEA plugin for Vue.js developers, providing intelligent component completion, documentation, and advanced development assistance features.</p>
+        <h4>Main Features:</h4>
+        <ul>
+            <li><b>Smart Component Completion</b> - Supports major UI component libraries including Element Plus, Element UI, and Ant Design Vue</li>
+            <li><b>Intelligent Property Suggestions</b> - Provides smart suggestions for attributes, events, and slots based on component type</li>
+            <li><b>Real-time Documentation Display</b> - Displays detailed component documentation and usage examples on hover or selection</li>
+            <li><b>Multi-library Support</b> - Automatically detects component libraries used in projects, supports manual configuration</li>
+            <li><b>Custom Component Libraries</b> - Supports importing and managing custom component libraries</li>
+            <li><b>Right-click Documentation</b> - Quickly access detailed component/attribute/event documentation via right-click menu</li>
+            <li><b>Remote Component Library Management</b> - Download and manage component libraries from official marketplace</li>
+        </ul>
 
-    <h4>Supported Component Libraries:</h4>
-    <ul>
-        <li>Element Plus (Latest Version)</li>
-        <li>Element UI (Classic Version)</li>
-        <li>Ant Design Vue</li>
-        <li>Custom Component Libraries</li>
-        <li>Remote Component Libraries</li>
-    </ul>
+        <h4>Supported Component Libraries:</h4>
+        <ul>
+            <li>Element Plus (Latest Version)</li>
+            <li>Element UI (Classic Version)</li>
+            <li>Ant Design Vue</li>
+            <li>Custom Component Libraries</li>
+            <li>Remote Component Libraries</li>
+        </ul>
 
-    <h4>Use Cases:</h4>
-    <ul>
-        <li>Vue.js project development</li>
-        <li>Component library documentation lookup</li>
-        <li>Code completion and suggestions</li>
-        <li>Development efficiency enhancement</li>
-        <li>Remote component library management</li>
-    </ul>
-
-            ]]>
-    </description>
+        <h4>Use Cases:</h4>
+        <ul>
+            <li>Vue.js project development</li>
+            <li>Component library documentation lookup</li>
+            <li>Code completion and suggestions</li>
+            <li>Development efficiency enhancement</li>
+            <li>Remote component library management</li>
+        </ul>
+    ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.xml</depends>
     <depends>com.intellij.modules.vcs</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <!-- 注册Vue代码补全贡献者 -->
+        <!-- Vue代码补全贡献者 -->
         <completion.contributor
                 language="Vue"
                 implementationClass="com.chu7.vuecomponentassistant.completion2.ElementPlusCompletionContributor"/>
-
-        <!-- 注册HTML代码补全贡献者 -->
+        <!-- HTML代码补全贡献者 -->
         <completion.contributor
                 language="HTML"
                 implementationClass="com.chu7.vuecomponentassistant.completion2.ElementPlusCompletionContributor"/>
-
-        <!-- 注册XML文档提供者 -->
+        <!-- XML文档提供者 -->
         <lang.documentationProvider language="XML"
                                     implementationClass="com.chu7.vuecomponentassistant.documentation.ComponentDocumentationProvider"/>
-
-        <!-- 注册Vue Kit设置组 -->
+        <!-- Vue Kit设置组 -->
         <applicationConfigurable
                 parentId="tools"
                 instance="com.chu7.vuecomponentassistant.settings.VueKitSettingsGroupConfigurable"
                 id="com.chu7.vuecomponentassistant.settings.VueKitSettingsGroupConfigurable"
                 displayName="Vue Kit"/>
-
-
-
-
-
-        <!-- 注册Vue Kit工具菜单组 -->
+        <!-- Vue Kit工具菜单组 -->
         <group id="VueKit.Tools" text="Vue Kit" description="VueKit开发工具">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </group>
-
-        <!-- 注册设置服务 -->
-        <applicationService
-                serviceImplementation="com.chu7.vuecomponentassistant.settings.PluginSettings"/>
-
-        <!-- 注册远程组件库管理器服务 -->
-        <applicationService
-                serviceImplementation="com.chu7.vuecomponentassistant.remote.ComponentLibraryManager"/>
-
-        <!-- 注册官方组件库管理器服务 -->
-        <applicationService
-                serviceImplementation="com.chu7.vuecomponentassistant.remote.OfficialLibraryManager"/>
-
-        <!-- 注册本地缓存管理器服务 -->
-        <applicationService
-                serviceImplementation="com.chu7.vuecomponentassistant.remote.cache.LocalCacheManager"/>
-
-        <!-- 注册项目设置管理器服务 -->
-        <projectService
-                serviceImplementation="com.chu7.vuecomponentassistant.settings.ProjectSettingsManager"/>
-
-        <!-- 注册组件库配置管理器服务 -->
-        <projectService
-                serviceImplementation="com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager"/>
-
-        <!-- 注册组件库配置启动活动 -->
-        <postStartupActivity
-                implementation="com.chu7.vuecomponentassistant.startup.ComponentLibraryStartupActivity"/>
+        <!-- 设置服务 -->
+        <applicationService serviceImplementation="com.chu7.vuecomponentassistant.settings.PluginSettings"/>
+        <!-- 远程组件库管理器服务 -->
+        <applicationService serviceImplementation="com.chu7.vuecomponentassistant.remote.ComponentLibraryManager"/>
+        <!-- 官方组件库管理器服务 -->
+        <applicationService serviceImplementation="com.chu7.vuecomponentassistant.remote.OfficialLibraryManager"/>
+        <!-- 本地缓存管理器服务 -->
+        <applicationService serviceImplementation="com.chu7.vuecomponentassistant.remote.cache.LocalCacheManager"/>
+        <!-- 项目设置管理器服务 -->
+        <projectService serviceImplementation="com.chu7.vuecomponentassistant.settings.ProjectSettingsManager"/>
+        <!-- 组件库配置管理器服务 -->
+        <projectService serviceImplementation="com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager"/>
+        <!-- 组件库配置启动活动 -->
+        <postStartupActivity implementation="com.chu7.vuecomponentassistant.startup.ComponentLibraryStartupActivity"/>
     </extensions>
 
     <actions>
-        <!-- 注册Vue Component文档动作 -->
+        <!-- Vue Component文档动作 -->
         <action id="Component.Documentation"
                 class="com.chu7.vuecomponentassistant.action.ComponentDocumentationAction"
-                text="📚 查看组件文档"
-                description="查看当前组件的详细文档信息">
+                text="查看组件文档"
+                description="查看当前组件的详细文档信息"
+                icon="AllIcons.Actions.Preview">
             <add-to-group group-id="EditorPopupMenu" anchor="first"/>
         </action>
 
         <!-- VueKit 工具分隔符 -->
         <separator id="VueKit.Separator.Before" add-to-group="ToolsMenu" anchor="last"/>
-        
-        <!-- 注册组件库管理动作 -->
+
+        <!-- 组件库管理动作 -->
         <action id="ComponentLibrary.Management"
                 class="com.chu7.vuecomponentassistant.action.ComponentLibraryManagementAction"
-                text="🌐 组件库管理"
-                description="管理VueKit组件库">
+                text="组件库管理"
+                description="管理VueKit组件库"
+                icon="AllIcons.Nodes.Folder">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
 
-        <!-- 注册官方组件库市场动作 -->
+        <!-- 官方组件库市场动作 -->
         <action id="OfficialLibrary.Market"
                 class="com.chu7.vuecomponentassistant.action.OfficialLibraryMarketAction"
-                text="📦 官方组件库市场"
-                description="浏览和下载官方组件库">
+                text="官方组件库市场"
+                description="浏览和下载官方组件库"
+                icon="AllIcons.Nodes.PpLib">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
 
-        <!-- 注册组件库配置动作 -->
+        <!-- 组件库配置动作 -->
         <action id="ComponentLibrary.Config"
                 class="com.chu7.vuecomponentassistant.action.ComponentLibraryConfigAction"
-                text="⚙️ 组件库配置"
-                description="配置组件库启用/禁用状态">
+                text="组件库配置"
+                description="配置组件库启用/禁用状态"
+                icon="AllIcons.General.Settings">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
 
-        <!-- 注册自定义组件库管理动作 -->
+        <!-- 自定义组件库管理动作 -->
         <action id="CustomLibrary.Management"
                 class="com.chu7.vuecomponentassistant.action.CustomLibraryManagementAction"
-                text="📚 自定义组件库管理"
-                description="管理自定义组件库和组件">
+                text="自定义组件库管理"
+                description="管理自定义组件库和组件"
+                icon="AllIcons.Nodes.Module">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
+
+
 
         <!-- VueKit 工具分隔符 -->
         <separator id="VueKit.Separator.After" add-to-group="ToolsMenu" anchor="last"/>
-
     </actions>
 
     <idea-version since-build="231.0" until-build="241.*"/>

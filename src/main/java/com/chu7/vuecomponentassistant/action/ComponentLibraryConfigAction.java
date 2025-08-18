@@ -100,15 +100,7 @@ public class ComponentLibraryConfigAction extends AnAction {
         }
     }
     
-    /**
-     * 获取动作模板文本
-     * 
-     * @return 模板文本
-     */
-    @Override
-    public String getTemplateText() {
-        return "VueKit 组件库配置";
-    }
+
     
     /**
      * 获取动作描述

@@ -7,6 +7,7 @@ import com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector;
 import com.chu7.vuecomponentassistant.utils.SmartComponentFilter;
 import com.chu7.vuecomponentassistant.utils.VueKitLogger;
 import com.chu7.vuecomponentassistant.utils.ConfigMigrationUtil;
+import com.chu7.vuecomponentassistant.utils.LibraryTypeHelper;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -51,12 +52,12 @@ public class ComponentLibraryDebugAction extends AnAction {
             // 1. 检查用户配置的启用组件库
             debugInfo.append("1. 用户配置的启用组件库:\n");
             ComponentLibraryConfigManager configManager = ComponentLibraryConfigManager.getInstance(project);
-            Set<ComponentLibraryDetector.LibraryType> enabledLibraries = configManager.getEnabledLibraries(project);
+            Set<String> enabledLibraries = configManager.getEnabledLibraryNames(project);
             if (enabledLibraries.isEmpty()) {
                 debugInfo.append("   ❌ 没有启用任何组件库\n");
             } else {
-                for (ComponentLibraryDetector.LibraryType library : enabledLibraries) {
-                    debugInfo.append("   ✅ ").append(library.getDisplayName()).append(" (").append(library.name()).append(")\n");
+                for (String library : enabledLibraries) {
+                    debugInfo.append("   ✅ ").append(LibraryTypeHelper.getDisplayName(library)).append(" (").append(library).append(")\n");
                 }
             }
             debugInfo.append("\n");
@@ -64,12 +65,12 @@ public class ComponentLibraryDebugAction extends AnAction {
             // 2. 检查检测到的项目组件库
             debugInfo.append("2. 检测到的项目组件库:\n");
             SmartComponentFilter filter = new SmartComponentFilter();
-            Set<ComponentLibraryDetector.LibraryType> projectLibraries = filter.detectProjectLibraries(project);
+            Set<String> projectLibraries = filter.detectProjectLibraries(project);
             if (projectLibraries.isEmpty()) {
                 debugInfo.append("   ❌ 没有检测到项目组件库\n");
             } else {
-                for (ComponentLibraryDetector.LibraryType library : projectLibraries) {
-                    debugInfo.append("   ✅ ").append(library.getDisplayName()).append(" (").append(library.name()).append(")\n");
+                for (String library : projectLibraries) {
+                    debugInfo.append("   ✅ ").append(LibraryTypeHelper.getDisplayName(library)).append(" (").append(library).append(")\n");
                 }
             }
             debugInfo.append("\n");

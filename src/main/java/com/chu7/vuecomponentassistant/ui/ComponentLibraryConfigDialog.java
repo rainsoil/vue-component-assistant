@@ -263,28 +263,36 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
     private boolean checkAutoDetectedLibraries() {
         try {
             // 检查项目配置文件是否存在且不为空
-            VirtualFile ideaDir = project.getBaseDir().findChild(".idea");
+            VirtualFile ideaDir = com.chu7.vuecomponentassistant.utils.ProjectPathHelper.getProjectRoot(project).findChild(".idea");
             if (ideaDir == null) {
-                return false;
+                VueKitLogger.debug(LOG, project, ".idea 目录不存在，尝试自动匹配组件库");
+                return performAutoMatching();
             }
             
             VirtualFile configFile = ideaDir.findChild("vuekit-project-config.json");
             if (configFile == null || !configFile.exists()) {
-                return false;
+                VueKitLogger.debug(LOG, project, "配置文件不存在，尝试自动匹配组件库");
+                return performAutoMatching();
             }
             
             String configContent = new String(configFile.contentsToByteArray(), java.nio.charset.StandardCharsets.UTF_8);
             if (configContent.trim().isEmpty() || configContent.equals("{}") || configContent.equals("{\"enabledLibraries\":[]}")) {
-                return false;
+                VueKitLogger.debug(LOG, project, "配置文件为空，尝试自动匹配组件库");
+                return performAutoMatching();
             }
             
             // 检查是否有启用的组件库
-            Set<ComponentLibraryDetector.LibraryType> enabledLibraries = configManager.getEnabledLibraries(project);
-            return !enabledLibraries.isEmpty();
+            Set<String> enabledLibraries = configManager.getEnabledLibraryNames(project);
+            if (enabledLibraries.isEmpty()) {
+                VueKitLogger.debug(LOG, project, "没有启用的组件库，尝试自动匹配");
+                return performAutoMatching();
+            }
+            
+            return true;
             
         } catch (Exception e) {
-            VueKitLogger.debug(LOG, project, "检查自动检测状态失败", e);
-            return false;
+            VueKitLogger.debug(LOG, project, "检查自动检测状态失败，尝试自动匹配", e);
+            return performAutoMatching();
         }
     }
 
@@ -897,6 +905,150 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
         }
 
         return null;
+    }
+
+    /**
+     * 执行自动匹配组件库
+     * 根据 package.json 中的依赖自动匹配组件库
+     *
+     * @return 如果成功匹配到组件库则返回 true
+     */
+    private boolean performAutoMatching() {
+        VueKitLogger.info(LOG, project, "=== 开始自动匹配组件库 ===");
+        
+        try {
+            // 获取 package.json 中的依赖
+            Map<String, String> dependencies = getProjectDependencies(project);
+            if (dependencies == null || dependencies.isEmpty()) {
+                VueKitLogger.info(LOG, project, "package.json 中没有找到依赖");
+                return false;
+            }
+            
+            VueKitLogger.info(LOG, project, "package.json 依赖数量: " + dependencies.size());
+            VueKitLogger.info(LOG, project, "依赖列表: " + dependencies);
+            
+            // 获取可用的组件库
+            String[] availableLibraryArray = getAvailableLibraryNames();
+            Set<String> availableLibraries = new HashSet<>(Arrays.asList(availableLibraryArray));
+            VueKitLogger.info(LOG, project, "可用组件库数量: " + availableLibraries.size());
+            VueKitLogger.info(LOG, project, "可用组件库: " + availableLibraries);
+            
+            // 执行匹配
+            Set<String> matchedLibraries = new HashSet<>();
+            for (Map.Entry<String, String> entry : dependencies.entrySet()) {
+                String packageName = entry.getKey();
+                String version = entry.getValue();
+                
+                VueKitLogger.info(LOG, project, "检查依赖: " + packageName + " (版本: " + version + ")");
+                
+                // 标准化包名（转小写，替换空格）
+                String normalizedPackageName = normalizePackageName(packageName);
+                VueKitLogger.info(LOG, project, "标准化后的包名: " + normalizedPackageName);
+                
+                // 检查是否匹配任何可用组件库
+                for (String libraryName : availableLibraries) {
+                    String normalizedLibraryName = normalizePackageName(libraryName);
+                    VueKitLogger.info(LOG, project, "比较: " + normalizedPackageName + " vs " + normalizedLibraryName);
+                    
+                    if (normalizedPackageName.equals(normalizedLibraryName)) {
+                        VueKitLogger.info(LOG, project, "✅ 匹配成功: " + packageName + " -> " + libraryName);
+                        matchedLibraries.add(libraryName);
+                        break;
+                    }
+                }
+            }
+            
+            VueKitLogger.info(LOG, project, "自动匹配结果: " + matchedLibraries);
+            
+            // 如果匹配到组件库，自动启用它们
+            if (!matchedLibraries.isEmpty()) {
+                VueKitLogger.info(LOG, project, "自动启用匹配的组件库: " + matchedLibraries);
+                configManager.setProjectEnabledLibraryNames(project, matchedLibraries);
+                
+                // 更新当前配置
+                currentEnabledLibraryNames = new HashSet<>(matchedLibraries);
+                originalEnabledLibraryNames = new HashSet<>(matchedLibraries);
+                
+                // 更新复选框状态
+                if (libraryCheckBoxes != null && !libraryCheckBoxes.isEmpty()) {
+                    updateCheckBoxes();
+                }
+                
+                VueKitLogger.info(LOG, project, "自动匹配完成，启用的组件库: " + matchedLibraries);
+                return true;
+            } else {
+                VueKitLogger.info(LOG, project, "没有匹配到任何组件库");
+                return false;
+            }
+            
+        } catch (Exception e) {
+            VueKitLogger.error(LOG, project, "自动匹配组件库失败", e);
+            return false;
+        }
+    }
+
+    /**
+     * 标准化包名
+     * 转小写并替换空格
+     *
+     * @param packageName 原始包名
+     * @return 标准化后的包名
+     */
+    private String normalizePackageName(String packageName) {
+        if (packageName == null) {
+            return "";
+        }
+        return packageName.toLowerCase().replaceAll("\\s+", "");
+    }
+
+    /**
+     * 获取项目的 package.json 依赖
+     *
+     * @param project 项目对象
+     * @return 依赖映射，键为包名，值为版本
+     */
+    private Map<String, String> getProjectDependencies(Project project) {
+        Map<String, String> dependencies = new HashMap<>();
+        
+        try {
+            // 查找 package.json 文件
+            VirtualFile projectRoot = com.chu7.vuecomponentassistant.utils.ProjectPathHelper.getProjectRoot(project);
+            if (projectRoot == null) {
+                VueKitLogger.warn(LOG, project, "无法获取项目根目录");
+                return dependencies;
+            }
+            
+            VirtualFile packageJsonFile = projectRoot.findChild("package.json");
+            if (packageJsonFile == null || !packageJsonFile.exists()) {
+                VueKitLogger.debug(LOG, project, "未找到 package.json 文件");
+                return dependencies;
+            }
+            
+            // 读取并解析 package.json
+            String content = new String(packageJsonFile.contentsToByteArray(), java.nio.charset.StandardCharsets.UTF_8);
+            com.google.gson.JsonObject packageJson = com.google.gson.JsonParser.parseString(content).getAsJsonObject();
+            
+            // 检查各种依赖类型
+            String[] dependencyTypes = {"dependencies", "devDependencies", "peerDependencies"};
+            
+            for (String dependencyType : dependencyTypes) {
+                if (packageJson.has(dependencyType)) {
+                    com.google.gson.JsonObject deps = packageJson.getAsJsonObject(dependencyType);
+                    for (String packageName : deps.keySet()) {
+                        String version = deps.get(packageName).getAsString();
+                        dependencies.put(packageName, version);
+                        VueKitLogger.debug(LOG, project, "找到依赖: " + packageName + " (版本: " + version + ")");
+                    }
+                }
+            }
+            
+            VueKitLogger.info(LOG, project, "总共找到 " + dependencies.size() + " 个依赖");
+            
+        } catch (Exception e) {
+            VueKitLogger.error(LOG, project, "解析 package.json 失败", e);
+        }
+        
+        return dependencies;
     }
 
     @Override

@@ -585,13 +585,11 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
             System.out.println("getCurrentComponent - 找到组件: '" + lastComponent + "'");
         }
 
-        // 使用ComponentProvider动态检测组件库
-        if (lastComponent != null && componentProvider != null) {
-            boolean isFromCurrentLibrary = componentProvider.isComponentFromCurrentLibrary(lastComponent);
-            System.out.println("getCurrentComponent - 组件 '" + lastComponent + "' 是否来自当前库: " + isFromCurrentLibrary);
-            if (isFromCurrentLibrary) {
-                return lastComponent;
-            }
+        // 如果找到了组件名，直接返回，不再严格检查是否来自当前库
+        // 这样可以确保属性提示、事件提示等功能能够正常工作
+        if (lastComponent != null) {
+            System.out.println("getCurrentComponent - 返回组件: '" + lastComponent + "'");
+            return lastComponent;
         }
 
         System.out.println("getCurrentComponent - 返回 null");
@@ -650,21 +648,25 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
             String tagContent = beforeText.substring(lastOpenTag);
             System.out.println("标签内容: '" + tagContent + "'");
 
-            // 如果标签内容以<开头但没有完整的组件名（如<my-），则不在组件标签内
-            if (tagContent.startsWith("<") && !tagContent.contains(" ") && !tagContent.contains(">")) {
+            // 如果标签内容以<开头，检查是否包含已知的组件前缀
+            if (tagContent.startsWith("<")) {
+                // 提取组件名（第一个空格前的内容）
+                String componentName = tagContent.substring(1);
+                int spaceIndex = componentName.indexOf(' ');
+                if (spaceIndex > 0) {
+                    componentName = componentName.substring(0, spaceIndex);
+                }
+                
                 // 检查是否有完整的组件名（至少包含一个字母数字字符）
-                String afterOpenTag = tagContent.substring(1);
-                if (afterOpenTag.matches("[a-zA-Z][a-zA-Z0-9-]*")) {
+                if (componentName.matches("[a-zA-Z][a-zA-Z0-9-]*")) {
                     // 有完整的组件名，检查是否属于当前库
                     if (componentProvider != null) {
-                        boolean isCurrentLibrary = componentProvider.isComponentFromCurrentLibrary(afterOpenTag);
-                        System.out.println("组件: " + afterOpenTag + ", 是否当前库: " + isCurrentLibrary);
-                        return isCurrentLibrary;
+                        boolean isCurrentLibrary = componentProvider.isComponentFromCurrentLibrary(componentName);
+                        System.out.println("组件: " + componentName + ", 是否当前库: " + isCurrentLibrary);
+                        if (isCurrentLibrary) {
+                            return true;
+                        }
                     }
-                } else {
-                    // 没有完整的组件名，不在组件标签内
-                    System.out.println("没有完整的组件名，不在组件标签内");
-                    return false;
                 }
             }
 
@@ -673,7 +675,27 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
                                         tagContent.contains("my-") ||
                                         tagContent.contains("ant-");
             System.out.println("包含已知前缀: " + containsKnownPrefix);
-            return containsKnownPrefix;
+            
+            // 如果包含已知前缀，直接返回 true
+            if (containsKnownPrefix) {
+                return true;
+            }
+            
+            // 如果没有已知前缀，但标签内容看起来像组件标签（包含字母数字字符），也认为是组件标签
+            if (tagContent.startsWith("<")) {
+                String afterOpenTag = tagContent.substring(1);
+                int spaceIndex = afterOpenTag.indexOf(' ');
+                if (spaceIndex > 0) {
+                    afterOpenTag = afterOpenTag.substring(0, spaceIndex);
+                }
+                
+                if (afterOpenTag.matches("[a-zA-Z][a-zA-Z0-9-]*")) {
+                    System.out.println("标签内容看起来像组件标签: '" + afterOpenTag + "'");
+                    return true;
+                }
+            }
+            
+            return false;
         }
 
         System.out.println("不在组件标签内");

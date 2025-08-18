@@ -83,11 +83,12 @@ public class ComponentDocumentationProvider extends AbstractDocumentationProvide
         
         VueKitLogger.debug(LOG, "提取到组件名称: " + componentName);
 
-        // 检查是否是当前组件库的组件
-        if (!componentProvider.isComponentFromCurrentLibrary(componentName)) {
-            VueKitLogger.debug(LOG, "不是 " + componentProvider.getLibraryDisplayName() + " 组件");
-            return generateTestDocumentation(element);
-        }
+        // 检查是否是当前组件库的组件（放宽检查，确保文档功能正常工作）
+        boolean isFromCurrentLibrary = componentProvider.isComponentFromCurrentLibrary(componentName);
+        VueKitLogger.debug(LOG, "组件 " + componentName + " 是否来自当前库: " + isFromCurrentLibrary);
+        
+        // 即使不是当前库的组件，也尝试获取组件信息
+        // 这样可以确保文档功能能够正常工作
 
         VueKitLogger.debug(LOG, "检测到 " + componentProvider.getLibraryDisplayName() + " 组件: " + componentName);
 

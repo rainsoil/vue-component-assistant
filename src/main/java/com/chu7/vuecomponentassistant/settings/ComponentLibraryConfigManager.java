@@ -2,6 +2,7 @@ package com.chu7.vuecomponentassistant.settings;
 
 import com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector;
 import com.chu7.vuecomponentassistant.utils.VueKitLogger;
+import com.chu7.vuecomponentassistant.utils.LibraryTypeHelper;
 import com.chu7.vuecomponentassistant.completion2.ComponentProviderManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -56,7 +57,7 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
     private static final String GLOBAL_CONFIG_FILE = "vuekit-libraries.json";
 
     // 默认启用的组件库 - 现在动态从远程组件库管理器获取
-    private static Set<ComponentLibraryDetector.LibraryType> DEFAULT_ENABLED_LIBRARIES;
+    private static Set<String> DEFAULT_ENABLED_LIBRARIES;
     
     static {
         initializeDefaultLibraries();
@@ -73,13 +74,12 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
             java.util.List<com.chu7.vuecomponentassistant.remote.model.ComponentLibrary> installedLibraries = 
                 libraryManager.getAllLibraries();
             
-            Set<ComponentLibraryDetector.LibraryType> defaultLibraries = new HashSet<>();
+            Set<String> defaultLibraries = new HashSet<>();
             
             for (com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library : installedLibraries) {
-                ComponentLibraryDetector.LibraryType libraryType = 
-                    ComponentLibraryDetector.LibraryType.fromLibraryName(library.getName());
+                String libraryType = LibraryTypeHelper.getPackageName(library.getName());
                 
-                if (libraryType != ComponentLibraryDetector.LibraryType.UNKNOWN) {
+                if (LibraryTypeHelper.isKnownLibrary(libraryType)) {
                     defaultLibraries.add(libraryType);
                 }
             }
@@ -94,7 +94,7 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
         } catch (Exception e) {
             // 出错时使用空集合，而不是硬编码的默认列表
             VueKitLogger.error(LOG, "初始化默认组件库失败，使用空集合", e);
-            DEFAULT_ENABLED_LIBRARIES = new HashSet<>();
+            DEFAULT_ENABLED_LIBRARIES = new HashSet<String>();
         }
     }
 
@@ -241,13 +241,13 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
      *
      * @param defaultEnabledLibraries 默认启用的组件库集合
      */
-    public void setGlobalDefaultLibraries(Set<ComponentLibraryDetector.LibraryType> defaultEnabledLibraries) {
+    public void setGlobalDefaultLibraries(Set<String> defaultEnabledLibraries) {
         try {
             if (globalConfig == null) {
                 globalConfig = new GlobalConfig();
             }
 
-            globalConfig.setDefaultEnabledLibraries(defaultEnabledLibraries);
+            globalConfig.setDefaultEnabledLibraryNames(defaultEnabledLibraries);
 
             // 保存全局配置
             saveGlobalConfig();
@@ -255,10 +255,7 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
             // 通知配置变更
             notifyGlobalConfigChanged(defaultEnabledLibraries);
 
-            VueKitLogger.info(LOG, "全局默认组件库配置已更新: " +
-                    defaultEnabledLibraries.stream()
-                            .map(ComponentLibraryDetector.LibraryType::getDisplayName)
-                            .collect(java.util.stream.Collectors.joining(", ")));
+            VueKitLogger.info(LOG, "全局默认组件库配置已更新: " + String.join(", ", defaultEnabledLibraries));
 
         } catch (Exception e) {
             VueKitLogger.error(LOG, "设置全局默认组件库失败", e);
@@ -270,9 +267,9 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
      *
      * @return 默认启用的组件库集合
      */
-    public Set<ComponentLibraryDetector.LibraryType> getGlobalDefaultLibraries() {
-        if (globalConfig != null && !globalConfig.getDefaultEnabledLibraries().isEmpty()) {
-            return new HashSet<>(globalConfig.getDefaultEnabledLibraries());
+    public Set<String> getGlobalDefaultLibraries() {
+        if (globalConfig != null && !globalConfig.getDefaultEnabledLibraryNames().isEmpty()) {
+            return new HashSet<>(globalConfig.getDefaultEnabledLibraryNames());
         }
         return new HashSet<>(DEFAULT_ENABLED_LIBRARIES);
     }
@@ -283,10 +280,10 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
      * @param project 项目对象
      * @param libraryType 要启用的组件库类型
      */
-    public void enableLibrary(Project project, ComponentLibraryDetector.LibraryType libraryType) {
-        Set<ComponentLibraryDetector.LibraryType> enabledLibraries = getEnabledLibraries(project);
+    public void enableLibrary(Project project, String libraryType) {
+        Set<String> enabledLibraries = getEnabledLibraryNames(project);
         enabledLibraries.add(libraryType);
-        setProjectEnabledLibraries(project, enabledLibraries);
+        setProjectEnabledLibraryNames(project, enabledLibraries);
     }
 
     /**
@@ -295,10 +292,10 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
      * @param project 项目对象
      * @param libraryType 要禁用的组件库类型
      */
-    public void disableLibrary(Project project, ComponentLibraryDetector.LibraryType libraryType) {
-        Set<ComponentLibraryDetector.LibraryType> enabledLibraries = getEnabledLibraries(project);
+    public void disableLibrary(Project project, String libraryType) {
+        Set<String> enabledLibraries = getEnabledLibraryNames(project);
         enabledLibraries.remove(libraryType);
-        setProjectEnabledLibraries(project, enabledLibraries);
+        setProjectEnabledLibraryNames(project, enabledLibraries);
     }
 
     /**
@@ -308,8 +305,8 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
      * @param libraryType 组件库类型
      * @return 如果启用则返回 true
      */
-    public boolean isLibraryEnabled(Project project, ComponentLibraryDetector.LibraryType libraryType) {
-        Set<ComponentLibraryDetector.LibraryType> enabledLibraries = getEnabledLibraries(project);
+    public boolean isLibraryEnabled(Project project, String libraryType) {
+        Set<String> enabledLibraries = getEnabledLibraryNames(project);
         return enabledLibraries.contains(libraryType);
     }
     
@@ -338,7 +335,7 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
             saveProjectConfig(project, config);
             
             // 通知配置变更
-            notifyConfigChanged(project, config.getEnabledLibraries());
+            notifyConfigChanged(project, config.getEnabledLibraryNames());
             
             VueKitLogger.info(LOG, "项目 " + project.getName() + " 的配置已更新");
             
@@ -577,8 +574,8 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
      * @param project 项目对象
      */
     public void resetToGlobalDefault(Project project) {
-        Set<ComponentLibraryDetector.LibraryType> globalDefaults = getGlobalDefaultLibraries();
-        setProjectEnabledLibraries(project, globalDefaults);
+        Set<String> globalDefaults = getGlobalDefaultLibraries();
+        setProjectEnabledLibraryNames(project, globalDefaults);
 
         VueKitLogger.info(LOG, "项目 " + project.getName() + " 的组件库配置已重置为全局默认");
     }
@@ -625,7 +622,7 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
 
             ProjectConfig projectConfig = parseProjectConfigFromJson(configJson);
             if (projectConfig != null) {
-                setProjectEnabledLibraries(project, projectConfig.getEnabledLibraries());
+                setProjectEnabledLibraryNames(project, projectConfig.getEnabledLibraryNames());
                 VueKitLogger.info(LOG, "项目配置已从 " + importPath + " 导入");
                 return true;
             }
@@ -703,9 +700,7 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
             if (config != null) {
                 projectConfigs.put(projectId, config);
                 VueKitLogger.debug(LOG, "项目配置已加载: " + project.getName() +
-                        ", 启用的组件库: " + config.getEnabledLibraries().stream()
-                        .map(ComponentLibraryDetector.LibraryType::getDisplayName)
-                        .collect(java.util.stream.Collectors.joining(", ")));
+                        ", 启用的组件库: " + String.join(", ", config.getEnabledLibraryNames()));
             } else {
                 VueKitLogger.debug(LOG, "项目 " + project.getName() + " 没有找到配置文件，将使用默认配置");
             }
@@ -829,7 +824,7 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
      */
     private VirtualFile getIdeaDirectory(Project project) {
         try {
-            VirtualFile projectDir = project.getBaseDir();
+            VirtualFile projectDir = com.chu7.vuecomponentassistant.utils.ProjectPathHelper.getProjectRoot(project);
             VirtualFile ideaDir = projectDir.findChild(".idea");
             
             if (ideaDir != null && ideaDir.exists() && ideaDir.isDirectory()) {
@@ -874,7 +869,7 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
      * @param project 项目对象
      * @param enabledLibraries 启用的组件库
      */
-    private void notifyConfigChanged(Project project, Set<ComponentLibraryDetector.LibraryType> enabledLibraries) {
+    private void notifyConfigChanged(Project project, Set<String> enabledLibraries) {
         // 通知配置变更监听器
         for (ConfigChangeListener listener : listeners) {
             try {
@@ -914,13 +909,28 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
      *
      * @param defaultEnabledLibraries 默认启用的组件库
      */
-    private void notifyGlobalConfigChanged(Set<ComponentLibraryDetector.LibraryType> defaultEnabledLibraries) {
+    private void notifyGlobalConfigChanged(Set<String> defaultEnabledLibraries) {
         for (ConfigChangeListener listener : listeners) {
             try {
                 listener.onGlobalConfigChanged(defaultEnabledLibraries);
             } catch (Exception e) {
                 VueKitLogger.error(LOG, "通知全局配置变更监听器失败", e);
             }
+        }
+    }
+
+    /**
+     * 通知全局配置变更（使用组件库名称）
+     *
+     * @param defaultEnabledLibraries 默认启用的组件库名称
+     */
+    private void notifyGlobalConfigChangedWithNames(Set<String> defaultEnabledLibraries) {
+        // 通知 ComponentProvider 重新加载组件数据
+        try {
+            // 这里可以添加全局配置变更的通知逻辑
+            VueKitLogger.info(LOG, "全局配置已变更，启用的组件库: " + String.join(", ", defaultEnabledLibraries));
+        } catch (Exception e) {
+            VueKitLogger.error(LOG, "通知全局配置变更失败", e);
         }
     }
 
@@ -995,8 +1005,7 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
     public static class ProjectConfig {
         private String projectId;
         private String projectName;
-        private Set<String> enabledLibraryNames = new HashSet<>(); // 使用字符串存储枚举名称
-        private transient Set<ComponentLibraryDetector.LibraryType> enabledLibraries = new HashSet<>();
+        private Set<String> enabledLibraryNames = new HashSet<>(); // 使用字符串存储组件库名称
         
         // 功能开关配置
         private boolean enableComponentCompletion = true;
@@ -1033,52 +1042,7 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
             this.enabledLibraryNames = enabledLibraryNames;
         }
 
-        public Set<ComponentLibraryDetector.LibraryType> getEnabledLibraries() {
-            VueKitLogger.info(LOG, "=== ProjectConfig.getEnabledLibraries() 开始 ===");
-            VueKitLogger.info(LOG, "enabledLibraries 当前状态: " + enabledLibraries.size() + " 个");
-            VueKitLogger.info(LOG, "enabledLibraryNames 当前状态: " + enabledLibraryNames.size() + " 个");
-            VueKitLogger.info(LOG, "enabledLibraryNames 内容: " + enabledLibraryNames);
-            
-            if (enabledLibraries.isEmpty() && !enabledLibraryNames.isEmpty()) {
-                VueKitLogger.info(LOG, "需要从 enabledLibraryNames 转换为 enabledLibraries");
-                // 从字符串名称转换为枚举
-                for (String name : enabledLibraryNames) {
-                    try {
-                        VueKitLogger.info(LOG, "处理组件库名称: '" + name + "'");
-                        // 使用 fromLibraryName 方法，而不是 valueOf
-                        ComponentLibraryDetector.LibraryType type = ComponentLibraryDetector.LibraryType.fromLibraryName(name);
-                        VueKitLogger.info(LOG, "转换结果: '" + name + "' -> " + type.name() + " (" + type.getDisplayName() + ")");
-                        
-                        if (type != ComponentLibraryDetector.LibraryType.UNKNOWN) {
-                            enabledLibraries.add(type);
-                            VueKitLogger.info(LOG, "已添加到 enabledLibraries: " + type.getDisplayName());
-                        } else {
-                            VueKitLogger.warn(LOG, "无法识别的组件库类型: " + name);
-                        }
-                    } catch (Exception e) {
-                        VueKitLogger.warn(LOG, "转换组件库类型失败: " + name + ", 错误: " + e.getMessage());
-                    }
-                }
-            }
-            
-            VueKitLogger.info(LOG, "最终返回的 enabledLibraries: " + 
-                    enabledLibraries.stream()
-                            .map(ComponentLibraryDetector.LibraryType::getDisplayName)
-                            .collect(java.util.stream.Collectors.joining(", ")));
-            VueKitLogger.info(LOG, "=== ProjectConfig.getEnabledLibraries() 结束 ===");
-            
-            return enabledLibraries;
-        }
 
-        public void setEnabledLibraries(Set<ComponentLibraryDetector.LibraryType> enabledLibraries) {
-            this.enabledLibraries = enabledLibraries;
-            // 同时更新字符串名称
-            this.enabledLibraryNames.clear();
-            for (ComponentLibraryDetector.LibraryType type : enabledLibraries) {
-                // 使用 getPackageName() 而不是 name()，保持一致性
-                this.enabledLibraryNames.add(type.getPackageName());
-            }
-        }
         
         // 功能开关的 Getters and Setters
         public boolean isEnableComponentCompletion() {
@@ -1148,8 +1112,7 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
 
     // 全局配置类
     public static class GlobalConfig {
-        private Set<String> defaultEnabledLibraryNames = new HashSet<>(); // 使用字符串存储枚举名称
-        private transient Set<ComponentLibraryDetector.LibraryType> defaultEnabledLibraries = new HashSet<>();
+        private Set<String> defaultEnabledLibraryNames = new HashSet<>(); // 使用字符串存储组件库名称
 
         // Getters and Setters
         public Set<String> getDefaultEnabledLibraryNames() {
@@ -1159,42 +1122,12 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
         public void setDefaultEnabledLibraryNames(Set<String> defaultEnabledLibraryNames) {
             this.defaultEnabledLibraryNames = defaultEnabledLibraryNames;
         }
-
-        public Set<ComponentLibraryDetector.LibraryType> getDefaultEnabledLibraries() {
-            if (defaultEnabledLibraries.isEmpty() && !defaultEnabledLibraryNames.isEmpty()) {
-                // 从字符串名称转换为枚举
-                for (String name : defaultEnabledLibraryNames) {
-                    try {
-                        // 使用 fromLibraryName 方法，而不是 valueOf，保持一致性
-                        ComponentLibraryDetector.LibraryType type = ComponentLibraryDetector.LibraryType.fromLibraryName(name);
-                        if (type != ComponentLibraryDetector.LibraryType.UNKNOWN) {
-                            defaultEnabledLibraries.add(type);
-                        } else {
-                            VueKitLogger.warn(LOG, "无法识别的组件库类型: " + name);
-                        }
-                    } catch (Exception e) {
-                        VueKitLogger.warn(LOG, "转换组件库类型失败: " + name + ", 错误: " + e.getMessage());
-                    }
-                }
-            }
-            return defaultEnabledLibraries;
-        }
-
-        public void setDefaultEnabledLibraries(Set<ComponentLibraryDetector.LibraryType> defaultEnabledLibraries) {
-            this.defaultEnabledLibraries = defaultEnabledLibraries;
-            // 同时更新字符串名称
-            this.defaultEnabledLibraryNames.clear();
-            for (ComponentLibraryDetector.LibraryType type : defaultEnabledLibraries) {
-                // 使用 getPackageName() 而不是 name()，保持一致性
-                this.defaultEnabledLibraryNames.add(type.getPackageName());
-            }
-        }
     }
 
     // 配置变更监听器接口
     public interface ConfigChangeListener {
-        void onProjectConfigChanged(Project project, Set<ComponentLibraryDetector.LibraryType> enabledLibraries);
+        void onProjectConfigChanged(Project project, Set<String> enabledLibraries);
 
-        void onGlobalConfigChanged(Set<ComponentLibraryDetector.LibraryType> defaultEnabledLibraries);
+        void onGlobalConfigChanged(Set<String> defaultEnabledLibraries);
     }
 }

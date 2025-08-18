@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.chu7.vuecomponentassistant.utils.VueKitLogger;
 import com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector;
+import com.chu7.vuecomponentassistant.utils.LibraryTypeHelper;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -182,7 +183,7 @@ public class SmartComponentFilter {
      */
     private VirtualFile findPackageJson(Project project) {
         try {
-            VirtualFile projectDir = project.getBaseDir();
+            VirtualFile projectDir = com.chu7.vuecomponentassistant.utils.ProjectPathHelper.getProjectRoot(project);
             VirtualFile packageJson = projectDir.findChild("package.json");
             
             if (packageJson != null && packageJson.exists()) {
@@ -332,7 +333,7 @@ public class SmartComponentFilter {
      * @param libraries 检测到的组件库集合
      */
     private void checkDependencies(Map<String, Object> packageData, String sectionName, 
-                                 Set<ComponentLibraryDetector.LibraryType> libraries) {
+                                 Set<String> libraries) {
         
         Object depsObj = packageData.get(sectionName);
         if (depsObj instanceof Map) {
@@ -340,11 +341,11 @@ public class SmartComponentFilter {
             Map<String, String> deps = (Map<String, String>) depsObj;
             
             for (String packageName : deps.keySet()) {
-                ComponentLibraryDetector.LibraryType libraryType = PACKAGE_TO_LIBRARY.get(packageName);
-                if (libraryType != null) {
+                String libraryType = LibraryTypeHelper.getPackageName(packageName);
+                if (LibraryTypeHelper.isKnownLibrary(libraryType)) {
                     libraries.add(libraryType);
                     VueKitLogger.debug(LOG, "在 " + sectionName + " 中发现组件库: " + 
-                        packageName + " -> " + libraryType.getDisplayName());
+                        packageName + " -> " + LibraryTypeHelper.getDisplayName(libraryType));
                 }
             }
         }
@@ -356,15 +357,15 @@ public class SmartComponentFilter {
      * @param project 项目对象
      * @return 用户启用的组件库集合
      */
-    private Set<ComponentLibraryDetector.LibraryType> getUserEnabledLibraries(Project project) {
+    private Set<String> getUserEnabledLibraries(Project project) {
         try {
             // 集成用户配置管理器
             ComponentLibraryConfigManager configManager = ComponentLibraryConfigManager.getInstance(project);
-            Set<ComponentLibraryDetector.LibraryType> enabledLibraries = configManager.getEnabledLibraries(project);
+            Set<String> enabledLibraries = configManager.getEnabledLibraryNames(project);
             
             VueKitLogger.debug(LOG, "从用户配置获取启用的组件库: " + 
                 enabledLibraries.stream()
-                    .map(ComponentLibraryDetector.LibraryType::getDisplayName)
+                    .map(LibraryTypeHelper::getDisplayName)
                     .collect(Collectors.joining(", ")));
             
             return enabledLibraries;
@@ -383,7 +384,7 @@ public class SmartComponentFilter {
      * @return 如果组件来自启用的组件库则返回 true
      */
     private boolean isFromEnabledLibrary(ElementPlusComponent component, 
-                                       Set<ComponentLibraryDetector.LibraryType> enabledLibraries) {
+                                       Set<String> enabledLibraries) {
         
         // 如果没有启用任何组件库，则不显示任何组件
         if (enabledLibraries.isEmpty()) {
@@ -398,9 +399,9 @@ public class SmartComponentFilter {
         }
         
         // 检查组件是否来自启用的组件库
-        for (ComponentLibraryDetector.LibraryType libraryType : enabledLibraries) {
+        for (String libraryType : enabledLibraries) {
             if (isComponentFromLibrary(componentName, libraryType)) {
-                VueKitLogger.debug(LOG, "组件 " + componentName + " 来自启用的组件库: " + libraryType.getDisplayName());
+                VueKitLogger.debug(LOG, "组件 " + componentName + " 来自启用的组件库: " + LibraryTypeHelper.getDisplayName(libraryType));
                 return true;
             }
         }
@@ -416,24 +417,8 @@ public class SmartComponentFilter {
      * @param libraryType 组件库类型
      * @return 如果组件来自指定组件库则返回 true
      */
-    private boolean isComponentFromLibrary(String componentName, ComponentLibraryDetector.LibraryType libraryType) {
-        switch (libraryType) {
-            case ELEMENT_UI:
-            case ELEMENT_PLUS:
-                // Element UI 和 Element Plus 都使用 el- 前缀
-                return componentName.startsWith("el-");
-            case ANT_DESIGN_VUE:
-                // Ant Design Vue 使用 a- 前缀
-                return componentName.startsWith("a-");
-            case VUETIFY:
-                // Vuetify 使用 v- 前缀
-                return componentName.startsWith("v-");
-            case QUASAR:
-                // Quasar 使用 q- 前缀
-                return componentName.startsWith("q-");
-            default:
-                return false;
-        }
+    private boolean isComponentFromLibrary(String componentName, String libraryType) {
+        return LibraryTypeHelper.isComponentFromLibrary(componentName, libraryType);
     }
     
     /**
@@ -445,7 +430,7 @@ public class SmartComponentFilter {
      */
     private List<ElementPlusComponent> sortComponentsByPriority(
             List<ElementPlusComponent> components,
-            Set<ComponentLibraryDetector.LibraryType> projectLibraries) {
+            Set<String> projectLibraries) {
         
         return components.stream()
             .sorted((c1, c2) -> {
@@ -469,7 +454,7 @@ public class SmartComponentFilter {
      * @return 如果组件来自项目使用的组件库则返回 true
      */
     private boolean isFromProjectLibrary(ElementPlusComponent component,
-                                       Set<ComponentLibraryDetector.LibraryType> projectLibraries) {
+                                       Set<String> projectLibraries) {
         
         String componentName = component.getName();
         if (componentName == null) {
@@ -477,7 +462,7 @@ public class SmartComponentFilter {
         }
         
         // 根据组件名称前缀判断是否来自项目使用的组件库
-        for (ComponentLibraryDetector.LibraryType libraryType : projectLibraries) {
+        for (String libraryType : projectLibraries) {
             if (isComponentFromLibrary(componentName, libraryType)) {
                 return true;
             }
@@ -491,7 +476,13 @@ public class SmartComponentFilter {
      * 
      * @return 包名到组件库类型的映射
      */
-    public static Map<String, ComponentLibraryDetector.LibraryType> getPackageToLibraryMap() {
-        return new HashMap<>(PACKAGE_TO_LIBRARY);
+    public static Map<String, String> getPackageToLibraryMap() {
+        Map<String, String> packageToLibrary = new HashMap<>();
+        packageToLibrary.put("element-ui", "element-ui");
+        packageToLibrary.put("element-plus", "element-plus");
+        packageToLibrary.put("ant-design-vue", "ant-design-vue");
+        packageToLibrary.put("vuetify", "vuetify");
+        packageToLibrary.put("quasar", "quasar");
+        return packageToLibrary;
     }
 }

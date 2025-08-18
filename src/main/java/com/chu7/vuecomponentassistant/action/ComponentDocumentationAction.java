@@ -125,11 +125,12 @@ public class ComponentDocumentationAction extends AnAction {
             return;
         }
 
-        // 检查是否是当前组件库的组件
-        if (!componentProvider.isComponentFromCurrentLibrary(componentName)) {
-            Messages.showErrorDialog("不是 " + componentProvider.getLibraryDisplayName() + " 组件: " + componentName, "提示");
-            return;
-        }
+        // 检查是否是当前组件库的组件（放宽检查，确保文档功能正常工作）
+        boolean isFromCurrentLibrary = componentProvider.isComponentFromCurrentLibrary(componentName);
+        LOG.info("组件 " + componentName + " 是否来自当前库: " + isFromCurrentLibrary);
+        
+        // 即使不是当前库的组件，也尝试获取组件信息
+        // 这样可以确保文档功能能够正常工作
 
         // 获取组件信息
         ElementPlusComponent component = componentProvider.getComponent(componentName);
@@ -169,23 +170,34 @@ public class ComponentDocumentationAction extends AnAction {
         // 获取当前元素
         PsiElement element = e.getData(CommonDataKeys.PSI_ELEMENT);
         
-        // 检查是否是当前组件库的组件
+        // 检查是否是当前组件库的组件（放宽检查，确保文档功能正常工作）
         boolean isCurrentLibraryComponent = false;
         if (element != null) {
             String componentName = extractComponentName(element);
             if (componentName != null) {
-                // 检查组件前缀
+                // 检查组件前缀，支持更多组件库
                 String prefix = "";
                 if (componentName.startsWith("el-")) {
                     prefix = "el-";
                 } else if (componentName.startsWith("a-")) {
                     prefix = "a-";
+                } else if (componentName.startsWith("v-")) {
+                    prefix = "v-";
+                } else if (componentName.startsWith("q-")) {
+                    prefix = "q-";
+                } else if (componentName.startsWith("my-")) {
+                    prefix = "my-";
                 }
                 isCurrentLibraryComponent = !prefix.isEmpty();
+                
+                // 如果没有已知前缀，但看起来像组件名，也启用
+                if (!isCurrentLibraryComponent && componentName.matches("[a-zA-Z][a-zA-Z0-9-]*")) {
+                    isCurrentLibraryComponent = true;
+                }
             }
         }
         
-        // 只有在支持的组件库组件上才启用此动作
+        // 启用文档功能，确保用户能够查看组件信息
         e.getPresentation().setEnabledAndVisible(isCurrentLibraryComponent);
     }
 

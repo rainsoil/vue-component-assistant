@@ -3,6 +3,7 @@ package com.chu7.vuecomponentassistant.utils;
 import com.chu7.vuecomponentassistant.remote.ComponentLibraryManager;
 import com.chu7.vuecomponentassistant.remote.model.ComponentLibrary;
 import com.chu7.vuecomponentassistant.utils.VueKitLogger;
+import com.chu7.vuecomponentassistant.utils.LibraryTypeHelper;
 import com.intellij.openapi.diagnostic.Logger;
 
 import java.util.*;
@@ -156,12 +157,18 @@ public class DynamicLibraryManager {
         String normalizedName = StringNormalizer.normalize(packageName);
         
         // 检查是否匹配已知的组件库类型
-        for (ComponentLibraryDetector.LibraryType type : ComponentLibraryDetector.LibraryType.values()) {
-            if (type == ComponentLibraryDetector.LibraryType.UNKNOWN) continue;
-            
-            String normalizedPackageName = StringNormalizer.normalize(type.getPackageName());
+        String[] knownLibraries = {
+            LibraryTypeHelper.ELEMENT_UI,
+            LibraryTypeHelper.ELEMENT_PLUS,
+            LibraryTypeHelper.ANT_DESIGN_VUE,
+            LibraryTypeHelper.VUETIFY,
+            LibraryTypeHelper.QUASAR
+        };
+        
+        for (String libraryType : knownLibraries) {
+            String normalizedPackageName = StringNormalizer.normalize(libraryType);
             if (normalizedName.equals(normalizedPackageName)) {
-                return createLibraryInfoFromLibraryType(type);
+                return createLibraryInfoFromLibraryType(libraryType);
             }
         }
         
@@ -171,25 +178,25 @@ public class DynamicLibraryManager {
     /**
      * 从 LibraryType 创建 LibraryInfo
      */
-    private static LibraryInfo createLibraryInfoFromLibraryType(ComponentLibraryDetector.LibraryType type) {
+    private static LibraryInfo createLibraryInfoFromLibraryType(String type) {
         switch (type) {
-            case ELEMENT_PLUS:
+            case LibraryTypeHelper.ELEMENT_PLUS:
                 return new LibraryInfo("element-plus", "Element Plus", "el-", 
                     "https://element-plus.org/zh-CN/component/%s.html", 
                     "Element Plus - 基于 Vue 3 的组件库");
-            case ELEMENT_UI:
+            case LibraryTypeHelper.ELEMENT_UI:
                 return new LibraryInfo("element-ui", "Element UI", "el-", 
                     "https://element.eleme.cn/#/zh-CN/component/%s", 
                     "Element UI - 基于 Vue 2 的组件库");
-            case ANT_DESIGN_VUE:
+            case LibraryTypeHelper.ANT_DESIGN_VUE:
                 return new LibraryInfo("ant-design-vue", "Ant Design Vue", "a-", 
                     "https://antdv.com/components/%s-cn", 
                     "Ant Design Vue - 基于 Ant Design 的 Vue 组件库");
-            case VUETIFY:
+            case LibraryTypeHelper.VUETIFY:
                 return new LibraryInfo("vuetify", "Vuetify", "v-", 
                     "https://vuetifyjs.com/en/components/%s/", 
                     "Vuetify - 基于 Material Design 的 Vue 组件库");
-            case QUASAR:
+            case LibraryTypeHelper.QUASAR:
                 return new LibraryInfo("quasar", "Quasar", "q-", 
                     "https://quasar.dev/vue-components/%s", 
                     "Quasar - 基于 Vue 的跨平台 UI 框架");

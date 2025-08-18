@@ -57,7 +57,7 @@ public class ConfigMigrationAction extends AnAction {
                     Messages.showInfoMessage(
                         "配置迁移成功！\n\n" +
                         "新的配置文件位置：\n" +
-                        project.getBaseDir().getPath() + "/.idea/vuekit-project-config.json\n\n" +
+                        com.chu7.vuecomponentassistant.utils.ProjectPathHelper.getProjectRootPath(project) + "/.idea/vuekit-project-config.json\n\n" +
                         "旧的配置文件已被删除。",
                         "迁移完成"
                     );

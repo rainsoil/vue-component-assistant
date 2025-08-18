@@ -85,7 +85,7 @@ public class ConfigMigrationUtil {
      */
     private static boolean needMigration(Project project) {
         try {
-            VirtualFile projectDir = project.getBaseDir();
+            VirtualFile projectDir = com.chu7.vuecomponentassistant.utils.ProjectPathHelper.getProjectRoot(project);
             
             // 检查是否存在旧配置文件
             VirtualFile oldLibrariesFile = projectDir.findChild(OLD_LIBRARIES_CONFIG_FILE);
@@ -117,7 +117,7 @@ public class ConfigMigrationUtil {
      */
     private static JsonObject readOldLibrariesConfig(Project project) {
         try {
-            VirtualFile projectDir = project.getBaseDir();
+            VirtualFile projectDir = com.chu7.vuecomponentassistant.utils.ProjectPathHelper.getProjectRoot(project);
             VirtualFile oldFile = projectDir.findChild(OLD_LIBRARIES_CONFIG_FILE);
             
             if (oldFile != null && oldFile.exists()) {
@@ -140,7 +140,7 @@ public class ConfigMigrationUtil {
      */
     private static JsonObject readOldProjectSettings(Project project) {
         try {
-            VirtualFile projectDir = project.getBaseDir();
+            VirtualFile projectDir = com.chu7.vuecomponentassistant.utils.ProjectPathHelper.getProjectRoot(project);
             VirtualFile oldFile = projectDir.findChild(OLD_PROJECT_SETTINGS_FILE);
             
             if (oldFile != null && oldFile.exists()) {
@@ -238,7 +238,7 @@ public class ConfigMigrationUtil {
      */
     private static boolean saveMergedConfig(Project project, JsonObject mergedConfig) {
         try {
-            VirtualFile projectDir = project.getBaseDir();
+            VirtualFile projectDir = com.chu7.vuecomponentassistant.utils.ProjectPathHelper.getProjectRoot(project);
             VirtualFile ideaDir = projectDir.findChild(".idea");
             
             // 如果 .idea 目录不存在，创建它
@@ -272,7 +272,7 @@ public class ConfigMigrationUtil {
      */
     private static void deleteOldConfigFiles(Project project) {
         try {
-            VirtualFile projectDir = project.getBaseDir();
+            VirtualFile projectDir = com.chu7.vuecomponentassistant.utils.ProjectPathHelper.getProjectRoot(project);
             
             // 删除旧的组件库配置文件
             VirtualFile oldLibrariesFile = projectDir.findChild(OLD_LIBRARIES_CONFIG_FILE);
@@ -304,7 +304,7 @@ public class ConfigMigrationUtil {
         info.append("=== 配置文件路径信息 ===\n\n");
         
         try {
-            VirtualFile projectDir = project.getBaseDir();
+            VirtualFile projectDir = com.chu7.vuecomponentassistant.utils.ProjectPathHelper.getProjectRoot(project);
             
             // 旧配置文件
             VirtualFile oldLibrariesFile = projectDir.findChild(OLD_LIBRARIES_CONFIG_FILE);

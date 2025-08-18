@@ -9,6 +9,7 @@ import com.intellij.util.ui.JBUI;
 import com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager;
 import com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector;
 import com.chu7.vuecomponentassistant.utils.VueKitLogger;
+import com.chu7.vuecomponentassistant.utils.LibraryTypeHelper;
 import com.chu7.vuecomponentassistant.completion2.ComponentProviderManager;
 import com.intellij.openapi.diagnostic.Logger;
 
@@ -47,7 +48,7 @@ public class ComponentLibraryEnablementDialog extends DialogWrapper {
     private JButton deselectAllButton;
     
     // 组件库类型列表 - 现在动态从远程组件库管理器获取
-    private ComponentLibraryDetector.LibraryType[] libraryTypes;
+    private String[] libraryTypes;
     
     public ComponentLibraryEnablementDialog(Project project) {
         super(project);
@@ -75,36 +76,35 @@ public class ComponentLibraryEnablementDialog extends DialogWrapper {
             java.util.List<com.chu7.vuecomponentassistant.remote.model.ComponentLibrary> installedLibraries = 
                 libraryManager.getAllLibraries();
             
-            java.util.List<ComponentLibraryDetector.LibraryType> libraryTypeList = new java.util.ArrayList<>();
+            java.util.List<String> libraryTypeList = new java.util.ArrayList<>();
             
             for (com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library : installedLibraries) {
-                ComponentLibraryDetector.LibraryType libraryType = 
-                    ComponentLibraryDetector.LibraryType.fromLibraryName(library.getName());
+                String libraryType = LibraryTypeHelper.getPackageName(library.getName());
                 
-                if (libraryType != ComponentLibraryDetector.LibraryType.UNKNOWN) {
+                if (!LibraryTypeHelper.UNKNOWN.equals(libraryType)) {
                     libraryTypeList.add(libraryType);
                 }
             }
             
             // 如果没有找到任何组件库，使用默认列表
             if (libraryTypeList.isEmpty()) {
-                libraryTypeList.add(ComponentLibraryDetector.LibraryType.ELEMENT_UI);
-                libraryTypeList.add(ComponentLibraryDetector.LibraryType.ELEMENT_PLUS);
-                libraryTypeList.add(ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE);
-                libraryTypeList.add(ComponentLibraryDetector.LibraryType.VUETIFY);
-                libraryTypeList.add(ComponentLibraryDetector.LibraryType.QUASAR);
+                libraryTypeList.add(LibraryTypeHelper.ELEMENT_UI);
+                libraryTypeList.add(LibraryTypeHelper.ELEMENT_PLUS);
+                libraryTypeList.add(LibraryTypeHelper.ANT_DESIGN_VUE);
+                libraryTypeList.add(LibraryTypeHelper.VUETIFY);
+                libraryTypeList.add(LibraryTypeHelper.QUASAR);
             }
             
-            libraryTypes = libraryTypeList.toArray(new ComponentLibraryDetector.LibraryType[0]);
+            libraryTypes = libraryTypeList.toArray(new String[0]);
             
         } catch (Exception e) {
             // 出错时使用默认列表
-            libraryTypes = new ComponentLibraryDetector.LibraryType[]{
-                ComponentLibraryDetector.LibraryType.ELEMENT_UI,
-                ComponentLibraryDetector.LibraryType.ELEMENT_PLUS,
-                ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE,
-                ComponentLibraryDetector.LibraryType.VUETIFY,
-                ComponentLibraryDetector.LibraryType.QUASAR
+            libraryTypes = new String[]{
+                LibraryTypeHelper.ELEMENT_UI,
+                LibraryTypeHelper.ELEMENT_PLUS,
+                LibraryTypeHelper.ANT_DESIGN_VUE,
+                LibraryTypeHelper.VUETIFY,
+                LibraryTypeHelper.QUASAR
             };
         }
     }
@@ -181,10 +181,10 @@ public class ComponentLibraryEnablementDialog extends DialogWrapper {
         libraryInfoLabels = new JLabel[libraryTypes.length];
         
         for (int i = 0; i < libraryTypes.length; i++) {
-            ComponentLibraryDetector.LibraryType libraryType = libraryTypes[i];
+            String libraryType = libraryTypes[i];
             
             // 创建复选框
-            libraryCheckBoxes[i] = new JCheckBox(libraryType.getDisplayName());
+            libraryCheckBoxes[i] = new JCheckBox(LibraryTypeHelper.getDisplayName(libraryType));
             libraryCheckBoxes[i].setFont(new Font("Microsoft YaHei", Font.BOLD, 13));
             
             // 创建信息标签
@@ -251,17 +251,17 @@ public class ComponentLibraryEnablementDialog extends DialogWrapper {
     /**
      * 获取组件库信息
      */
-    private String getLibraryInfo(ComponentLibraryDetector.LibraryType libraryType) {
+    private String getLibraryInfo(String libraryType) {
         switch (libraryType) {
-            case ELEMENT_UI:
+            case LibraryTypeHelper.ELEMENT_UI:
                 return "Element UI - 基于 Vue 2.x 的组件库，组件前缀：el-";
-            case ELEMENT_PLUS:
+            case LibraryTypeHelper.ELEMENT_PLUS:
                 return "Element Plus - 基于 Vue 3.x 的组件库，组件前缀：el-";
-            case ANT_DESIGN_VUE:
+            case LibraryTypeHelper.ANT_DESIGN_VUE:
                 return "Ant Design Vue - 基于 Ant Design 的 Vue 组件库，组件前缀：a-";
-            case VUETIFY:
+            case LibraryTypeHelper.VUETIFY:
                 return "Vuetify - Material Design 组件库，组件前缀：v-";
-            case QUASAR:
+            case LibraryTypeHelper.QUASAR:
                 return "Quasar - 高性能 Vue.js 组件库，组件前缀：q-";
             default:
                 return "未知组件库";
@@ -273,10 +273,10 @@ public class ComponentLibraryEnablementDialog extends DialogWrapper {
      */
     private void loadCurrentConfiguration() {
         try {
-            Set<ComponentLibraryDetector.LibraryType> enabledLibraries = configManager.getEnabledLibraries(project);
+            Set<String> enabledLibraries = configManager.getEnabledLibraryNames(project);
             
             for (int i = 0; i < libraryTypes.length; i++) {
-                ComponentLibraryDetector.LibraryType libraryType = libraryTypes[i];
+                String libraryType = libraryTypes[i];
                 boolean isEnabled = enabledLibraries.contains(libraryType);
                 libraryCheckBoxes[i].setSelected(isEnabled);
                 
@@ -295,7 +295,7 @@ public class ComponentLibraryEnablementDialog extends DialogWrapper {
     /**
      * 更新组件库标签显示
      */
-    private void updateLibraryLabel(int index, ComponentLibraryDetector.LibraryType libraryType, boolean isEnabled) {
+    private void updateLibraryLabel(int index, String libraryType, boolean isEnabled) {
         String baseInfo = getLibraryInfo(libraryType);
         String status = isEnabled ? "✅ 已启用" : "❌ 已禁用";
         
@@ -319,7 +319,7 @@ public class ComponentLibraryEnablementDialog extends DialogWrapper {
     /**
      * 检查是否为项目检测到的组件库
      */
-    private boolean isProjectDetectedLibrary(ComponentLibraryDetector.LibraryType libraryType) {
+    private boolean isProjectDetectedLibrary(String libraryType) {
         try {
             // 这里可以集成 ComponentLibraryDetector 来检测项目实际使用的组件库
             // 暂时返回 false，后续可以完善
@@ -385,7 +385,7 @@ public class ComponentLibraryEnablementDialog extends DialogWrapper {
      */
     private void applyConfiguration() {
         try {
-            Set<ComponentLibraryDetector.LibraryType> enabledLibraries = new HashSet<>();
+            Set<String> enabledLibraries = new HashSet<>();
             
             for (int i = 0; i < libraryTypes.length; i++) {
                 if (libraryCheckBoxes[i].isSelected()) {
@@ -394,12 +394,9 @@ public class ComponentLibraryEnablementDialog extends DialogWrapper {
             }
             
             // 保存配置
-            configManager.setProjectEnabledLibraries(project, enabledLibraries);
+            configManager.setProjectEnabledLibraryNames(project, enabledLibraries);
             
-            VueKitLogger.info(LOG, "组件库配置已保存: " + 
-                enabledLibraries.stream()
-                    .map(ComponentLibraryDetector.LibraryType::getDisplayName)
-                    .collect(java.util.stream.Collectors.joining(", ")));
+            VueKitLogger.info(LOG, "组件库配置已保存: " + String.join(", ", enabledLibraries));
             
             // 通知 ComponentProvider 重新加载组件数据
             try {
@@ -428,7 +425,7 @@ public class ComponentLibraryEnablementDialog extends DialogWrapper {
      */
     private void updateAllLabels() {
         for (int i = 0; i < libraryTypes.length; i++) {
-            ComponentLibraryDetector.LibraryType libraryType = libraryTypes[i];
+            String libraryType = libraryTypes[i];
             boolean isEnabled = libraryCheckBoxes[i].isSelected();
             updateLibraryLabel(i, libraryType, isEnabled);
         }

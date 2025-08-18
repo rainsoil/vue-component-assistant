@@ -5,6 +5,7 @@ import com.chu7.vuecomponentassistant.remote.model.ComponentInfo;
 import com.chu7.vuecomponentassistant.remote.model.ComponentLibrary;
 import com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector;
 import com.chu7.vuecomponentassistant.utils.CustomComponentLibraryManager;
+import com.chu7.vuecomponentassistant.utils.LibraryTypeHelper;
 import com.chu7.vuecomponentassistant.utils.VueKitLogger;
 import com.chu7.vuecomponentassistant.utils.ErrorHandler;
 import com.chu7.vuecomponentassistant.utils.SmartComponentFilter;
@@ -38,7 +39,7 @@ public class ComponentProvider {
 
     private final Map<String, ElementPlusComponent> componentsMap;
     private final List<ElementPlusComponent> componentsList;
-    private final ComponentLibraryDetector.LibraryType libraryType;
+    private final String libraryType;
     private final Project project;
 
     /**
@@ -54,8 +55,9 @@ public class ComponentProvider {
 
         try {
             // 检测项目使用的组件库
-            this.libraryType = ComponentLibraryDetector.detectComponentLibrary(project);
-            VueKitLogger.debug(LOG, "检测到的组件库类型: " + this.libraryType.getDisplayName());
+            String detectedType = ComponentLibraryDetector.detectComponentLibrary(project);
+            this.libraryType = detectedType;
+            VueKitLogger.debug(LOG, "检测到的组件库类型: " + LibraryTypeHelper.getDisplayName(detectedType));
 
             loadComponents();
             VueKitLogger.debug(LOG, "=== ComponentProvider 初始化完成 ===");
@@ -78,7 +80,7 @@ public class ComponentProvider {
     private void loadComponents() {
         try {
             VueKitLogger.info(LOG, "=== 开始加载组件数据 ===");
-            VueKitLogger.info(LOG, "检测到的组件库类型: " + libraryType.getDisplayName());
+            VueKitLogger.info(LOG, "检测到的组件库类型: " + LibraryTypeHelper.getDisplayName(libraryType));
 
             // 尝试从本地缓存加载
             if (loadFromLocalCache()) {
@@ -144,16 +146,20 @@ public class ComponentProvider {
     /**
      * 根据组件库类型获取对应的组件库ID
      */
-    private String getLibraryIdByType(ComponentLibraryDetector.LibraryType libraryType) {
+    private String getLibraryIdByType(String libraryType) {
         Objects.requireNonNull(libraryType, "组件库类型不能为null");
 
         switch (libraryType) {
-            case ELEMENT_UI:
+            case "element-ui":
                 return "element-ui";
-            case ELEMENT_PLUS:
+            case "element-plus":
                 return "element-plus";
-            case ANT_DESIGN_VUE:
+            case "ant-design-vue":
                 return "ant-design-vue";
+            case "vuetify":
+                return "vuetify";
+            case "quasar":
+                return "quasar";
             default:
                 VueKitLogger.warn(LOG, "未知的组件库类型: " + libraryType);
                 return null;
@@ -352,17 +358,8 @@ public class ComponentProvider {
             return actualVersion;
         }
 
-        // 如果无法获取实际版本，返回默认版本信息
-        switch (libraryType) {
-            case ELEMENT_UI:
-                return "Element UI >=2.0.0";
-            case ELEMENT_PLUS:
-                return "Element Plus >=1.0.0";
-            case ANT_DESIGN_VUE:
-                return "Ant Design Vue >=2.0.0";
-            default:
-                return "Unknown";
-        }
+        // 如果无法获取实际版本，返回通用版本信息
+        return LibraryTypeHelper.getDisplayName(libraryType) + " (版本信息不可用)";
     }
 
     /**
@@ -379,7 +376,7 @@ public class ComponentProvider {
             // 从 package.json 中查找版本
             String version = findPackageVersion(packageName);
             if (version != null) {
-                return libraryType.getDisplayName() + " " + version;
+                return LibraryTypeHelper.getDisplayName(libraryType) + " " + version;
             }
 
         } catch (Exception e) {
@@ -394,12 +391,16 @@ public class ComponentProvider {
      */
     private String getPackageNameByLibraryType() {
         switch (libraryType) {
-            case ELEMENT_UI:
+            case "element-ui":
                 return "element-ui";
-            case ELEMENT_PLUS:
+            case "element-plus":
                 return "element-plus";
-            case ANT_DESIGN_VUE:
+            case "ant-design-vue":
                 return "ant-design-vue";
+            case "vuetify":
+                return "vuetify";
+            case "quasar":
+                return "quasar";
             default:
                 return null;
         }
@@ -411,7 +412,7 @@ public class ComponentProvider {
     private String findPackageVersion(String packageName) {
         try {
             // 查找 package.json 文件
-            com.intellij.openapi.vfs.VirtualFile projectDir = project.getBaseDir();
+            com.intellij.openapi.vfs.VirtualFile projectDir = com.chu7.vuecomponentassistant.utils.ProjectPathHelper.getProjectRoot(project);
             com.intellij.openapi.vfs.VirtualFile packageJson = projectDir.findChild("package.json");
             
             if (packageJson == null || !packageJson.exists()) {
@@ -471,7 +472,7 @@ public class ComponentProvider {
         List<ElementPlusComponent> allComponents = new ArrayList<>();
 
         // 获取项目启用的组件库配置
-        Set<ComponentLibraryDetector.LibraryType> enabledLibraries = getEnabledLibrariesForProject();
+        Set<String> enabledLibraries = getEnabledLibrariesForProject();
 
         // 如果没有启用任何组件库，返回空列表
         if (enabledLibraries.isEmpty()) {
@@ -498,14 +499,14 @@ public class ComponentProvider {
     /**
      * 获取项目启用的组件库配置
      */
-    private Set<ComponentLibraryDetector.LibraryType> getEnabledLibrariesForProject() {
+    private Set<String> getEnabledLibrariesForProject() {
         try {
             ComponentLibraryConfigManager configManager = ComponentLibraryConfigManager.getInstance(project);
-            Set<ComponentLibraryDetector.LibraryType> enabledLibraries = configManager.getEnabledLibraries(project);
+            Set<String> enabledLibraries = configManager.getEnabledLibraryNames(project);
             
             VueKitLogger.debug(LOG, "获取到项目启用的组件库: " + 
                 (enabledLibraries.isEmpty() ? "无" : enabledLibraries.stream()
-                    .map(ComponentLibraryDetector.LibraryType::getDisplayName)
+                    .map(LibraryTypeHelper::getDisplayName)
                     .collect(java.util.stream.Collectors.joining(", "))));
             
             return enabledLibraries;
@@ -528,7 +529,7 @@ public class ComponentProvider {
         String lowerPrefix = prefix.toLowerCase();
 
         // 获取项目启用的组件库配置
-        Set<ComponentLibraryDetector.LibraryType> enabledLibraries = getEnabledLibrariesForProject();
+        Set<String> enabledLibraries = getEnabledLibrariesForProject();
 
         // 从内置组件库查找
         if (enabledLibraries.contains(libraryType)) {
@@ -586,7 +587,7 @@ public class ComponentProvider {
         List<ElementPlusComponent> allComponents = new ArrayList<>();
 
         // 获取项目启用的组件库配置
-        Set<ComponentLibraryDetector.LibraryType> enabledLibraries = getEnabledLibrariesForProject();
+        Set<String> enabledLibraries = getEnabledLibrariesForProject();
 
         // 1. 添加内置组件库的组件（只添加启用的组件库）
         int builtinCount = 0;
@@ -595,7 +596,7 @@ public class ComponentProvider {
             builtinCount = componentsList.size();
             VueKitLogger.debug(LOG, "添加内置组件: " + builtinCount + " 个");
         } else {
-            VueKitLogger.debug(LOG, "跳过内置组件库 (类型: " + libraryType.getDisplayName() + " 未启用)");
+            VueKitLogger.debug(LOG, "跳过内置组件库 (类型: " + LibraryTypeHelper.getDisplayName(libraryType) + " 未启用)");
         }
 
         // 2. 添加自定义组件库的组件
@@ -639,7 +640,7 @@ public class ComponentProvider {
         VueKitLogger.debug(LOG, "开始查找组件: " + componentName);
 
         // 获取项目启用的组件库配置
-        Set<ComponentLibraryDetector.LibraryType> enabledLibraries = getEnabledLibrariesForProject();
+        Set<String> enabledLibraries = getEnabledLibrariesForProject();
 
         // 先从内置组件库查找
         if (enabledLibraries.contains(libraryType)) {
@@ -666,7 +667,7 @@ public class ComponentProvider {
 
             for (ComponentLibrary library : allLibraries) {
                 // 检查该组件库是否在项目的启用列表中
-                ComponentLibraryDetector.LibraryType libraryType = getLibraryTypeByName(library.getName());
+                String libraryType = getLibraryTypeByName(library.getName());
                 if (libraryType == null || !enabledLibraries.contains(libraryType)) {
                     continue; // 跳过未启用的组件库
                 }
@@ -690,7 +691,7 @@ public class ComponentProvider {
     /**
      * 添加自定义组件到组件列表中
      */
-    private void addCustomComponents(List<ElementPlusComponent> allComponents, Set<ComponentLibraryDetector.LibraryType> enabledLibraries) {
+    private void addCustomComponents(List<ElementPlusComponent> allComponents, Set<String> enabledLibraries) {
         if (allComponents == null) {
             throw new IllegalArgumentException("目标组件列表不能为 null");
         }
@@ -725,7 +726,7 @@ public class ComponentProvider {
     /**
      * 添加从官方组件库市场下载的组件库
      */
-    private void addDownloadedOfficialComponents(List<ElementPlusComponent> allComponents, Set<ComponentLibraryDetector.LibraryType> enabledLibraries) {
+    private void addDownloadedOfficialComponents(List<ElementPlusComponent> allComponents, Set<String> enabledLibraries) {
         if (allComponents == null) {
             throw new IllegalArgumentException("目标组件列表不能为 null");
         }
@@ -742,7 +743,7 @@ public class ComponentProvider {
 
             for (ComponentLibrary library : allLibraries) {
                 // 检查该组件库是否在项目的启用列表中
-                ComponentLibraryDetector.LibraryType libraryType = getLibraryTypeByName(library.getName());
+                String libraryType = getLibraryTypeByName(library.getName());
                 if (libraryType == null || !enabledLibraries.contains(libraryType)) {
                     VueKitLogger.debug(LOG, "跳过未启用的官方组件库: " + library.getName());
                     continue;
@@ -856,7 +857,7 @@ public class ComponentProvider {
     /**
      * 获取当前检测到的组件库类型
      */
-    public ComponentLibraryDetector.LibraryType getLibraryType() {
+    public String getLibraryType() {
         return libraryType;
     }
 
@@ -864,21 +865,21 @@ public class ComponentProvider {
      * 获取当前组件库的显示名称
      */
     public String getLibraryDisplayName() {
-        return libraryType.getDisplayName();
+        return LibraryTypeHelper.getDisplayName(libraryType);
     }
 
     /**
      * 获取组件前缀
      */
     public String getComponentPrefix() {
-        return ComponentLibraryDetector.getComponentPrefix(libraryType);
+        return LibraryTypeHelper.getComponentPrefix(libraryType);
     }
 
     /**
      * 获取文档 URL 模板
      */
     public String getDocumentationUrlTemplate() {
-        return ComponentLibraryDetector.getDocumentationUrlTemplate(libraryType);
+        return LibraryTypeHelper.getDocumentationUrlTemplate(libraryType);
     }
 
     /**
@@ -886,7 +887,7 @@ public class ComponentProvider {
      */
     public boolean isComponentFromCurrentLibrary(String componentName) {
         // 检查是否是内置组件库的组件
-        if (ComponentLibraryDetector.isComponentFromLibrary(componentName, libraryType)) {
+        if (LibraryTypeHelper.isComponentFromLibrary(componentName, libraryType)) {
             return true;
         }
 
@@ -936,8 +937,8 @@ public class ComponentProvider {
         }
 
         // 检查是否是内置组件库的组件
-        if (ComponentLibraryDetector.isComponentFromLibrary(componentName, libraryType)) {
-            return libraryType.getDisplayName();
+        if (LibraryTypeHelper.isComponentFromLibrary(componentName, libraryType)) {
+            return LibraryTypeHelper.getDisplayName(libraryType);
         }
 
         // 检查是否来自其他官方组件库
@@ -947,7 +948,7 @@ public class ComponentProvider {
 
             for (ComponentLibrary library : allLibraries) {
                 // 检查该组件库是否在项目的启用列表中
-                ComponentLibraryDetector.LibraryType libraryType = getLibraryTypeByName(library.getName());
+                String libraryType = getLibraryTypeByName(library.getName());
                 if (libraryType == null || !getEnabledLibrariesForProject().contains(libraryType)) {
                     continue; // 跳过未启用的组件库
                 }
@@ -984,7 +985,7 @@ public class ComponentProvider {
         }
 
         // 检查是否是内置组件库的组件
-        if (ComponentLibraryDetector.isComponentFromLibrary(componentName, libraryType)) {
+        if (LibraryTypeHelper.isComponentFromLibrary(componentName, libraryType)) {
             return getComponentVersionInfo();
         }
 
@@ -995,7 +996,7 @@ public class ComponentProvider {
 
             for (ComponentLibrary library : allLibraries) {
                 // 检查该组件库是否在项目的启用列表中
-                ComponentLibraryDetector.LibraryType libraryType = getLibraryTypeByName(library.getName());
+                String libraryType = getLibraryTypeByName(library.getName());
                 if (libraryType == null || !getEnabledLibrariesForProject().contains(libraryType)) {
                     continue; // 跳过未启用的组件库
                 }
@@ -1016,13 +1017,13 @@ public class ComponentProvider {
     }
 
     /**
-     * 根据组件库名称获取对应的 LibraryType
-     * 现在从远程组件库管理器动态获取，不再写死
+     * 根据组件库名称获取对应的组件库类型
+     * 现在直接返回字符串包名
      * 
      * @param libraryName 组件库名称
-     * @return 对应的 LibraryType，如果找不到则返回 null
+     * @return 对应的组件库类型字符串，如果找不到则返回 null
      */
-    private ComponentLibraryDetector.LibraryType getLibraryTypeByName(String libraryName) {
+    private String getLibraryTypeByName(String libraryName) {
         if (libraryName == null || libraryName.trim().isEmpty()) {
             return null;
         }
@@ -1030,7 +1031,7 @@ public class ComponentProvider {
         // 移除版本号部分，只保留组件库名称
         String cleanName = libraryName.replaceAll("\\s*\\([^)]*\\)\\s*$", "").trim();
         
-        // 使用动态方法获取 LibraryType
-        return ComponentLibraryDetector.LibraryType.fromLibraryName(cleanName);
+        // 直接返回包名
+        return LibraryTypeHelper.getPackageName(cleanName);
     }
 }

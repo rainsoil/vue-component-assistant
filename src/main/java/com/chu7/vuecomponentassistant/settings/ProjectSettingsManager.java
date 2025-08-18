@@ -203,7 +203,7 @@ public final class ProjectSettingsManager {
      */
     private VirtualFile getIdeaDirectory(Project project) {
         try {
-            VirtualFile projectDir = project.getBaseDir();
+            VirtualFile projectDir = com.chu7.vuecomponentassistant.utils.ProjectPathHelper.getProjectRoot(project);
             VirtualFile ideaDir = projectDir.findChild(".idea");
             
             if (ideaDir != null && ideaDir.exists() && ideaDir.isDirectory()) {

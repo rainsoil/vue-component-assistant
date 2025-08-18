@@ -7,6 +7,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
+import com.chu7.vuecomponentassistant.utils.LibraryTypeHelper;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -253,8 +254,8 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
             // 获取当前项目的组件库配置
             com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager configManager = 
                 com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager.getInstance(currentProject);
-            java.util.Set<com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType> enabledLibraries = 
-                configManager.getEnabledLibraries(currentProject);
+            java.util.Set<String> enabledLibraries = 
+                configManager.getEnabledLibraryNames(currentProject);
             
             // 为每个已安装的组件库创建复选框
             for (com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library : installedLibraries) {
@@ -269,8 +270,7 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
                     (library.getDescription() != null ? "\n描述: " + library.getDescription() : ""));
                 
                 // 检查该组件库是否在当前项目中启用
-                com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType libraryType = 
-                    getLibraryTypeByName(library.getName());
+                String libraryType = getLibraryTypeByName(library.getName());
                 if (libraryType != null) {
                     boolean isEnabled = enabledLibraries.contains(libraryType);
                     checkBox.setSelected(isEnabled);
@@ -288,10 +288,10 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
     }
     
     /**
-     * 根据组件库名称获取对应的 LibraryType
+     * 根据组件库名称获取对应的组件库类型
      * 现在从远程组件库管理器动态获取，不再写死
      */
-    private com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType getLibraryTypeByName(String libraryName) {
+    private String getLibraryTypeByName(String libraryName) {
         if (libraryName == null || libraryName.trim().isEmpty()) {
             return null;
         }
@@ -309,7 +309,7 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
             // 查找匹配的组件库
             for (com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library : installedLibraries) {
                 if (cleanName.equalsIgnoreCase(library.getName())) {
-                    // 根据组件库名称动态创建 LibraryType
+                    // 根据组件库名称动态创建组件库类型
                     return createLibraryTypeFromName(library.getName());
                 }
             }
@@ -322,24 +322,24 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
     }
     
     /**
-     * 根据组件库名称动态创建 LibraryType
+     * 根据组件库名称动态创建组件库类型
      * 这是一个简化的实现，实际应该从组件库的元数据中获取
      */
-    private com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType createLibraryTypeFromName(String libraryName) {
+    private String createLibraryTypeFromName(String libraryName) {
         // 这里应该从组件库的JSON配置文件中读取类型信息
         // 暂时使用名称匹配作为后备方案
         String lowerName = libraryName.toLowerCase();
         
         if (lowerName.contains("element-plus")) {
-            return com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType.ELEMENT_PLUS;
+            return LibraryTypeHelper.ELEMENT_PLUS;
         } else if (lowerName.contains("element-ui")) {
-            return com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType.ELEMENT_UI;
+            return LibraryTypeHelper.ELEMENT_UI;
         } else if (lowerName.contains("ant-design-vue")) {
-            return com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType.ANT_DESIGN_VUE;
+            return LibraryTypeHelper.ANT_DESIGN_VUE;
         } else if (lowerName.contains("vuetify")) {
-            return com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType.VUETIFY;
+            return LibraryTypeHelper.VUETIFY;
         } else if (lowerName.contains("quasar")) {
-            return com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType.QUASAR;
+            return LibraryTypeHelper.QUASAR;
         }
         
         return null;
@@ -435,9 +435,9 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
         if (libraryCheckBoxes != null && currentProject != null) {
             com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager configManager = 
                 com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager.getInstance(currentProject);
-            java.util.Set<com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType> savedEnabledLibraries = 
-                configManager.getEnabledLibraries(currentProject);
-            java.util.Set<com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType> currentEnabledLibraries = 
+            java.util.Set<String> savedEnabledLibraries = 
+                configManager.getEnabledLibraryNames(currentProject);
+            java.util.Set<String> currentEnabledLibraries = 
                 new java.util.HashSet<>();
             
             for (java.util.Map.Entry<String, JBCheckBox> entry : libraryCheckBoxes.entrySet()) {
@@ -445,8 +445,7 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
                 JBCheckBox checkBox = entry.getValue();
                 
                 if (checkBox.isSelected()) {
-                    com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType libraryType = 
-                        getLibraryTypeByName(libraryName);
+                    String libraryType = getLibraryTypeByName(libraryName);
                     if (libraryType != null) {
                         currentEnabledLibraries.add(libraryType);
                     }
@@ -483,7 +482,7 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
         if (libraryCheckBoxes != null && currentProject != null) {
             com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager configManager = 
                 com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager.getInstance(currentProject);
-            java.util.Set<com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType> enabledLibraries = 
+            java.util.Set<String> enabledLibraries = 
                 new java.util.HashSet<>();
             
             for (java.util.Map.Entry<String, JBCheckBox> entry : libraryCheckBoxes.entrySet()) {
@@ -491,8 +490,7 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
                 JBCheckBox checkBox = entry.getValue();
                 
                 if (checkBox.isSelected()) {
-                    com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType libraryType = 
-                        getLibraryTypeByName(libraryName);
+                    String libraryType = getLibraryTypeByName(libraryName);
                     if (libraryType != null) {
                         enabledLibraries.add(libraryType);
                     }
@@ -500,11 +498,8 @@ public class VueKitSettingsGroupConfigurable implements Configurable {
             }
             
             // 保存配置
-            configManager.setProjectEnabledLibraries(currentProject, enabledLibraries);
-            System.out.println("组件库配置已保存，启用的组件库: " + 
-                enabledLibraries.stream()
-                    .map(com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector.LibraryType::getDisplayName)
-                    .collect(java.util.stream.Collectors.joining(", ")));
+            configManager.setProjectEnabledLibraryNames(currentProject, enabledLibraries);
+            System.out.println("组件库配置已保存，启用的组件库: " + String.join(", ", enabledLibraries));
         }
     }
 

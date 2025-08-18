@@ -275,28 +275,19 @@ public class ComponentLibraryConfigSettingsConfigurable implements Configurable 
             Project currentProject = getCurrentProject();
             if (currentProject != null) {
                 ComponentLibraryConfigManager configManager = ComponentLibraryConfigManager.getInstance(currentProject);
-                Set<ComponentLibraryDetector.LibraryType> enabledLibraries = configManager.getEnabledLibraries(currentProject);
+                Set<String> enabledLibraries = configManager.getEnabledLibraryNames(currentProject);
                 
                 System.out.println("初始化配置，启用的组件库: " + 
-                    enabledLibraries.stream()
-                        .map(ComponentLibraryDetector.LibraryType::getDisplayName)
-                        .collect(java.util.stream.Collectors.joining(", ")));
+                    String.join(", ", enabledLibraries));
                 
                 for (Map.Entry<String, JCheckBox> entry : libraryCheckBoxes.entrySet()) {
                     String libraryName = entry.getKey();
                     JCheckBox checkBox = entry.getValue();
                     
-                    // 将组件库名称映射到 LibraryType
-                    ComponentLibraryDetector.LibraryType libraryType = getLibraryTypeByName(libraryName);
-                    if (libraryType != null) {
-                        boolean isEnabled = enabledLibraries.contains(libraryType);
-                        checkBox.setSelected(isEnabled);
-                        System.out.println("设置 " + libraryName + " 为 " + (isEnabled ? "选中" : "未选中"));
-                    } else {
-                        // 如果找不到对应的 LibraryType，默认不选中
-                        checkBox.setSelected(false);
-                        System.out.println("未找到 " + libraryName + " 对应的 LibraryType，设置为未选中");
-                    }
+                    // 直接使用字符串比较
+                    boolean isEnabled = enabledLibraries.contains(libraryName);
+                    checkBox.setSelected(isEnabled);
+                    System.out.println("设置 " + libraryName + " 为 " + (isEnabled ? "选中" : "未选中"));
                 }
             } else {
                 System.out.println("当前项目为空，无法加载配置");
@@ -435,18 +426,15 @@ public class ComponentLibraryConfigSettingsConfigurable implements Configurable 
     private boolean isLibraryConfigModified(Project currentProject) {
         if (libraryCheckBoxes != null) {
             ComponentLibraryConfigManager configManager = ComponentLibraryConfigManager.getInstance(currentProject);
-            Set<ComponentLibraryDetector.LibraryType> savedEnabledLibraries = configManager.getEnabledLibraries(currentProject);
-            Set<ComponentLibraryDetector.LibraryType> currentEnabledLibraries = new HashSet<>();
+            Set<String> savedEnabledLibraries = configManager.getEnabledLibraryNames(currentProject);
+            Set<String> currentEnabledLibraries = new HashSet<>();
             
             for (Map.Entry<String, JCheckBox> entry : libraryCheckBoxes.entrySet()) {
                 String libraryName = entry.getKey();
                 JCheckBox checkBox = entry.getValue();
                 
                 if (checkBox.isSelected()) {
-                    ComponentLibraryDetector.LibraryType libraryType = getLibraryTypeByName(libraryName);
-                    if (libraryType != null) {
-                        currentEnabledLibraries.add(libraryType);
-                    }
+                    currentEnabledLibraries.add(libraryName);
                 }
             }
             
@@ -533,23 +521,7 @@ public class ComponentLibraryConfigSettingsConfigurable implements Configurable 
         }
     }
     
-    /**
-     * 根据组件库名称获取对应的 LibraryType
-     * 
-     * @param libraryName 组件库名称
-     * @return 对应的 LibraryType，如果找不到则返回 null
-     */
-    private ComponentLibraryDetector.LibraryType getLibraryTypeByName(String libraryName) {
-        if (libraryName == null || libraryName.trim().isEmpty()) {
-            return null;
-        }
-        
-        // 移除版本号部分，只保留组件库名称
-        String cleanName = libraryName.replaceAll("\\s*\\([^)]*\\)\\s*$", "").trim();
-        
-        // 使用动态方法获取 LibraryType
-        return ComponentLibraryDetector.LibraryType.fromLibraryName(cleanName);
-    }
+
     
     /**
      * 保存当前配置
@@ -586,27 +558,21 @@ public class ComponentLibraryConfigSettingsConfigurable implements Configurable 
     private void saveComponentLibraryConfig(Project currentProject) {
         if (libraryCheckBoxes != null) {
             ComponentLibraryConfigManager configManager = ComponentLibraryConfigManager.getInstance(currentProject);
-            Set<ComponentLibraryDetector.LibraryType> enabledLibraries = new HashSet<>();
+            Set<String> enabledLibraries = new HashSet<>();
             
             for (Map.Entry<String, JCheckBox> entry : libraryCheckBoxes.entrySet()) {
                 String libraryName = entry.getKey();
                 JCheckBox checkBox = entry.getValue();
                 
                 if (checkBox.isSelected()) {
-                    ComponentLibraryDetector.LibraryType libraryType = getLibraryTypeByName(libraryName);
-                    if (libraryType != null) {
-                        enabledLibraries.add(libraryType);
-                    }
+                    enabledLibraries.add(libraryName);
                 }
             }
             
             // 保存配置
-            configManager.setProjectEnabledLibraries(currentProject, enabledLibraries);
+            configManager.setProjectEnabledLibraryNames(currentProject, enabledLibraries);
             
-            System.out.println("组件库配置已保存，启用的组件库: " + 
-                enabledLibraries.stream()
-                    .map(ComponentLibraryDetector.LibraryType::getDisplayName)
-                    .collect(java.util.stream.Collectors.joining(", ")));
+            System.out.println("组件库配置已保存，启用的组件库: " + String.join(", ", enabledLibraries));
         }
     }
     

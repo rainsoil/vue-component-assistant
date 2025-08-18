@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.diagnostic.Logger;
+import com.chu7.vuecomponentassistant.utils.LibraryTypeHelper;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -153,7 +154,7 @@ public class ComponentLibraryDetector {
      * @return 检测到的组件库类型，如果未检测到则返回 UNKNOWN
      * @throws IllegalArgumentException 如果项目对象为 null
      */
-    public static LibraryType detectComponentLibrary(Project project) {
+    public static String detectComponentLibrary(Project project) {
         // 参数验证
         if (project == null) {
             throw new IllegalArgumentException("项目对象不能为 null");
@@ -165,7 +166,7 @@ public class ComponentLibraryDetector {
         VirtualFile projectDir = ProjectUtil.guessProjectDir(project);
         if (projectDir == null) {
             VueKitLogger.warn(LOG, "无法获取项目根目录，返回 UNKNOWN");
-            return LibraryType.UNKNOWN;
+            return LibraryTypeHelper.UNKNOWN;
         }
 
         VueKitLogger.debug(LOG, "项目目录: " + projectDir.getPath());
@@ -174,7 +175,7 @@ public class ComponentLibraryDetector {
         VirtualFile packageJsonFile = projectDir.findChild("package.json");
         if (packageJsonFile == null) {
             VueKitLogger.warn(LOG, "未找到 package.json 文件，返回 UNKNOWN");
-            return LibraryType.UNKNOWN;
+            return LibraryTypeHelper.UNKNOWN;
         }
 
         VueKitLogger.debug(LOG, "找到 package.json 文件: " + packageJsonFile.getPath());
@@ -184,7 +185,7 @@ public class ComponentLibraryDetector {
             String packageJsonContent = readFileContent(packageJsonFile);
             if (packageJsonContent == null || packageJsonContent.trim().isEmpty()) {
                 VueKitLogger.warn(LOG, "package.json 内容为空，返回 UNKNOWN");
-                return LibraryType.UNKNOWN;
+                return LibraryTypeHelper.UNKNOWN;
             }
 
             VueKitLogger.debug(LOG, "package.json 内容长度: " + packageJsonContent.length());
@@ -194,34 +195,34 @@ public class ComponentLibraryDetector {
             
             // 优先检查 dependencies，然后检查 devDependencies
             VueKitLogger.debug(LOG, "检查 dependencies...");
-            LibraryType result = checkDependencies(packageJson, "dependencies");
-            if (result != LibraryType.UNKNOWN) {
-                VueKitLogger.info(LOG, "在 dependencies 中检测到: " + result.getDisplayName());
+            String result = checkDependencies(packageJson, "dependencies");
+            if (!LibraryTypeHelper.UNKNOWN.equals(result)) {
+                VueKitLogger.info(LOG, "在 dependencies 中检测到: " + LibraryTypeHelper.getDisplayName(result));
                 return result;
             }
 
             // 检查 devDependencies
             VueKitLogger.debug(LOG, "检查 devDependencies...");
             result = checkDependencies(packageJson, "devDependencies");
-            if (result != LibraryType.UNKNOWN) {
-                VueKitLogger.info(LOG, "在 devDependencies 中检测到: " + result.getDisplayName());
+            if (!LibraryTypeHelper.UNKNOWN.equals(result)) {
+                VueKitLogger.info(LOG, "在 devDependencies 中检测到: " + LibraryTypeHelper.getDisplayName(result));
                 return result;
             }
 
             // 检查 peerDependencies
             VueKitLogger.debug(LOG, "检查 peerDependencies...");
             result = checkDependencies(packageJson, "peerDependencies");
-            if (result != LibraryType.UNKNOWN) {
-                VueKitLogger.info(LOG, "在 peerDependencies 中检测到: " + result.getDisplayName());
+            if (!LibraryTypeHelper.UNKNOWN.equals(result)) {
+                VueKitLogger.info(LOG, "在 peerDependencies 中检测到: " + LibraryTypeHelper.getDisplayName(result));
                 return result;
             }
 
             VueKitLogger.info(LOG, "未检测到任何支持的组件库，返回 UNKNOWN");
-            return LibraryType.UNKNOWN;
+            return LibraryTypeHelper.UNKNOWN;
 
         } catch (Exception e) {
             VueKitLogger.error(LOG, "检测组件库时出错: " + e.getMessage(), e);
-            return LibraryType.UNKNOWN;
+            return LibraryTypeHelper.UNKNOWN;
         }
     }
 
@@ -238,10 +239,10 @@ public class ComponentLibraryDetector {
      * @param dependencyType 依赖类型（dependencies、devDependencies、peerDependencies）
      * @return 检测到的组件库类型，如果未检测到则返回 UNKNOWN
      */
-    private static LibraryType checkDependencies(JsonObject packageJson, String dependencyType) {
+    private static String checkDependencies(JsonObject packageJson, String dependencyType) {
         if (!packageJson.has(dependencyType)) {
             VueKitLogger.debug(LOG, "  " + dependencyType + " 不存在");
-            return LibraryType.UNKNOWN;
+            return LibraryTypeHelper.UNKNOWN;
         }
 
         JsonObject dependencies = packageJson.getAsJsonObject(dependencyType);
@@ -260,7 +261,7 @@ public class ComponentLibraryDetector {
                 if (dependencies.has(packageName)) {
                     String version = dependencies.get(packageName).getAsString();
                     VueKitLogger.info(LOG, "    找到 " + packageName + ": " + version);
-                    return LibraryType.fromLibraryName(packageName);
+                    return LibraryTypeHelper.getPackageName(packageName);
                 }
             }
             
@@ -268,20 +269,25 @@ public class ComponentLibraryDetector {
             VueKitLogger.debug(LOG, "动态检查组件库失败，使用静态检查: " + e.getMessage());
             
             // 后备方案：使用已知的组件库类型进行静态检查
-            for (LibraryType type : LibraryType.values()) {
-                if (type == LibraryType.UNKNOWN) continue;
-                
-                String packageName = type.getPackageName();
+            String[] knownLibraries = {
+                LibraryTypeHelper.ELEMENT_UI,
+                LibraryTypeHelper.ELEMENT_PLUS,
+                LibraryTypeHelper.ANT_DESIGN_VUE,
+                LibraryTypeHelper.VUETIFY,
+                LibraryTypeHelper.QUASAR
+            };
+            
+            for (String packageName : knownLibraries) {
                 if (dependencies.has(packageName)) {
                     String version = dependencies.get(packageName).getAsString();
                     VueKitLogger.info(LOG, "    找到 " + packageName + ": " + version);
-                    return type;
+                    return packageName;
                 }
             }
         }
 
         VueKitLogger.debug(LOG, "  在 " + dependencyType + " 中未找到支持的组件库");
-        return LibraryType.UNKNOWN;
+        return LibraryTypeHelper.UNKNOWN;
     }
 
     /**
@@ -459,10 +465,10 @@ public class ComponentLibraryDetector {
         VueKitLogger.info(LOG, "项目名称: " + project.getName());
         
         try {
-            LibraryType detectedType = detectComponentLibrary(project);
-            VueKitLogger.info(LOG, "检测到的组件库: " + detectedType.getDisplayName());
-            VueKitLogger.info(LOG, "组件前缀: " + getComponentPrefix(detectedType));
-            VueKitLogger.info(LOG, "文档模板: " + getDocumentationUrlTemplate(detectedType));
+            String detectedType = detectComponentLibrary(project);
+            VueKitLogger.info(LOG, "检测到的组件库: " + LibraryTypeHelper.getDisplayName(detectedType));
+            VueKitLogger.info(LOG, "组件前缀: " + LibraryTypeHelper.getComponentPrefix(detectedType));
+            VueKitLogger.info(LOG, "文档模板: " + LibraryTypeHelper.getDocumentationUrlTemplate(detectedType));
             VueKitLogger.info(LOG, "数据来源: 远程组件库管理器");
         } catch (Exception e) {
             VueKitLogger.error(LOG, "检测组件库时发生错误", e);

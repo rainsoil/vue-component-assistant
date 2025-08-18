@@ -3,6 +3,7 @@ package com.chu7.vuecomponentassistant.test;
 import com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager;
 import com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector;
 import com.chu7.vuecomponentassistant.utils.VueKitLogger;
+import com.chu7.vuecomponentassistant.utils.LibraryTypeHelper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 
@@ -33,11 +34,11 @@ public class ComponentLibraryConfigDebugTest {
             ComponentLibraryConfigManager configManager = ComponentLibraryConfigManager.getInstance(project);
             
             // 2. 获取当前启用的组件库
-            Set<ComponentLibraryDetector.LibraryType> enabledLibraries = configManager.getEnabledLibraries(project);
+            Set<String> enabledLibraries = configManager.getEnabledLibraryNames(project);
             
             VueKitLogger.info(LOG, "当前启用的组件库数量: " + enabledLibraries.size());
-            for (ComponentLibraryDetector.LibraryType libraryType : enabledLibraries) {
-                VueKitLogger.info(LOG, "- " + libraryType.name() + " (" + libraryType.getDisplayName() + ")");
+            for (String libraryType : enabledLibraries) {
+                VueKitLogger.info(LOG, "- " + libraryType + " (" + LibraryTypeHelper.getDisplayName(libraryType) + ")");
             }
             
             // 3. 测试 fromLibraryName 方法
@@ -64,29 +65,27 @@ public class ComponentLibraryConfigDebugTest {
     }
     
     /**
-     * 测试 fromLibraryName 方法
+     * 测试 getPackageName 方法
      */
     private static void testFromLibraryName(String libraryName) {
         try {
-            ComponentLibraryDetector.LibraryType type = ComponentLibraryDetector.LibraryType.fromLibraryName(libraryName);
-            VueKitLogger.info(LOG, "fromLibraryName('" + libraryName + "') -> " + type.name() + " (" + type.getDisplayName() + ")");
+            String type = LibraryTypeHelper.getPackageName(libraryName);
+            VueKitLogger.info(LOG, "getPackageName('" + libraryName + "') -> " + type + " (" + LibraryTypeHelper.getDisplayName(type) + ")");
         } catch (Exception e) {
-            VueKitLogger.error(LOG, "测试 fromLibraryName('" + libraryName + "') 失败", e);
+            VueKitLogger.error(LOG, "测试 getPackageName('" + libraryName + "') 失败", e);
         }
     }
     
     /**
-     * 测试 inferLibraryType 方法（通过反射调用私有方法）
+     * 测试 getDisplayName 方法
      */
     private static void testInferLibraryType(String libraryName) {
         try {
-            // 使用反射调用私有方法
-            java.lang.reflect.Method method = ComponentLibraryDetector.LibraryType.class.getDeclaredMethod("inferLibraryType", String.class);
-            method.setAccessible(true);
-            ComponentLibraryDetector.LibraryType type = (ComponentLibraryDetector.LibraryType) method.invoke(null, libraryName);
-            VueKitLogger.info(LOG, "inferLibraryType('" + libraryName + "') -> " + type.name() + " (" + type.getDisplayName() + ")");
+            String type = LibraryTypeHelper.getPackageName(libraryName);
+            String displayName = LibraryTypeHelper.getDisplayName(type);
+            VueKitLogger.info(LOG, "getDisplayName('" + libraryName + "') -> " + type + " (" + displayName + ")");
         } catch (Exception e) {
-            VueKitLogger.error(LOG, "测试 inferLibraryType('" + libraryName + "') 失败", e);
+            VueKitLogger.error(LOG, "测试 getDisplayName('" + libraryName + "') 失败", e);
         }
     }
 } 
