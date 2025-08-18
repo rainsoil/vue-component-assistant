@@ -169,6 +169,40 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
             return new HashSet<>();
         }
     }
+    
+    /**
+     * 检查项目配置文件是否存在且有效
+     *
+     * @param project 项目对象
+     * @return 如果配置文件存在且有效则返回 true
+     */
+    public boolean hasValidProjectConfig(Project project) {
+        try {
+            VirtualFile ideaDir = getIdeaDirectory(project);
+            if (ideaDir == null) {
+                return false;
+            }
+            
+            VirtualFile configFile = ideaDir.findChild(PROJECT_CONFIG_FILE);
+            if (configFile == null || !configFile.exists()) {
+                return false;
+            }
+            
+            // 检查文件内容是否有效
+            String configContent = new String(configFile.contentsToByteArray(), StandardCharsets.UTF_8);
+            if (configContent.trim().isEmpty() || configContent.equals("{}") || configContent.equals("{\"enabledLibraries\":[]}")) {
+                return false;
+            }
+            
+            // 尝试解析配置
+            ProjectConfig config = parseProjectConfigFromJson(configContent);
+            return config != null && !config.getEnabledLibraryNames().isEmpty();
+            
+        } catch (Exception e) {
+            VueKitLogger.debug(LOG, "检查项目配置文件有效性失败", e);
+            return false;
+        }
+    }
 
     /**
      * 获取项目启用的组件库（向后兼容）
@@ -751,22 +785,33 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
             
             VirtualFile configFile = ideaDir.findChild(PROJECT_CONFIG_FILE);
             
-            // 在写操作上下文中执行文件写入
-            ApplicationManager.getApplication().runWriteAction(() -> {
-                try {
-                    VirtualFile targetFile = configFile;
-                    if (targetFile == null) {
-                        targetFile = ideaDir.createChildData(this, PROJECT_CONFIG_FILE);
+            // 使用异步方式执行文件写入，避免死锁
+            ApplicationManager.getApplication().invokeLater(() -> {
+                ApplicationManager.getApplication().runWriteAction(() -> {
+                    try {
+                        VirtualFile targetFile = configFile;
+                        if (targetFile == null) {
+                            targetFile = ideaDir.createChildData(this, PROJECT_CONFIG_FILE);
+                        }
+                        targetFile.setBinaryContent(configJson.getBytes(StandardCharsets.UTF_8));
+                        
+                        // 验证文件是否写入成功
+                        if (targetFile.exists() && targetFile.getLength() > 0) {
+                            VueKitLogger.info(LOG, "项目配置已保存到: " + targetFile.getPath() + " (大小: " + targetFile.getLength() + " 字节)");
+                        } else {
+                            VueKitLogger.error(LOG, "配置文件写入失败：文件不存在或为空");
+                        }
+                    } catch (Exception e) {
+                        VueKitLogger.error(LOG, "写入项目配置文件失败", e);
                     }
-                    targetFile.setBinaryContent(configJson.getBytes(StandardCharsets.UTF_8));
-                    VueKitLogger.info(LOG, "项目配置已保存到: " + targetFile.getPath());
-                } catch (Exception e) {
-                    VueKitLogger.error(LOG, "写入项目配置文件失败", e);
-                }
+                });
             });
+            
+            VueKitLogger.info(LOG, "项目配置保存请求已提交");
             
         } catch (Exception e) {
             VueKitLogger.error(LOG, "保存项目配置失败", e);
+            throw new RuntimeException("保存项目配置失败: " + e.getMessage(), e);
         }
     }
 
@@ -826,20 +871,22 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
                 return ideaDir;
             }
             
-            // 如果 .idea 目录不存在，尝试创建它
-            ApplicationManager.getApplication().runWriteAction(() -> {
-                try {
-                    projectDir.createChildDirectory(this, ".idea");
-                } catch (Exception e) {
-                    VueKitLogger.error(LOG, "创建 .idea 目录失败", e);
-                }
+            // 如果 .idea 目录不存在，尝试创建它（异步方式，避免死锁）
+            ApplicationManager.getApplication().invokeLater(() -> {
+                ApplicationManager.getApplication().runWriteAction(() -> {
+                    try {
+                        VirtualFile createdIdeaDir = projectDir.createChildDirectory(this, ".idea");
+                        VueKitLogger.info(LOG, ".idea 目录创建成功: " + createdIdeaDir.getPath());
+                    } catch (Exception e) {
+                        VueKitLogger.error(LOG, "创建 .idea 目录失败", e);
+                    }
+                });
             });
             
-            // 重新获取 .idea 目录
-            ideaDir = projectDir.findChild(".idea");
-            if (ideaDir != null && ideaDir.exists() && ideaDir.isDirectory()) {
-                return ideaDir;
-            }
+            VueKitLogger.info(LOG, ".idea 目录创建请求已提交");
+            
+            // 由于使用异步方式，无法立即返回创建的目录，返回 null
+            // 下次调用时会重新检查
             
         } catch (Exception e) {
             VueKitLogger.error(LOG, "获取 .idea 目录失败", e);
@@ -937,7 +984,58 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
      */
     public void onProjectStarted(Project project) {
         VueKitLogger.info(LOG, "项目启动，加载组件库配置: " + project.getName());
-        loadProjectConfig(project);
+        
+        try {
+            // 确保 .idea 目录存在
+            ensureIdeaDirectoryExists(project);
+            
+            // 加载项目配置
+            loadProjectConfig(project);
+            
+            VueKitLogger.info(LOG, "✅ 项目配置加载完成");
+            
+        } catch (Exception e) {
+            VueKitLogger.error(LOG, "项目启动时加载配置失败", e);
+        }
+    }
+    
+    /**
+     * 确保 .idea 目录存在
+     * 
+     * @param project 项目对象
+     */
+    private void ensureIdeaDirectoryExists(Project project) {
+        try {
+            VirtualFile projectDir = com.chu7.vuecomponentassistant.utils.ProjectPathHelper.getProjectRoot(project);
+            if (projectDir == null) {
+                VueKitLogger.warn(LOG, "无法获取项目根目录");
+                return;
+            }
+            
+            VirtualFile ideaDir = projectDir.findChild(".idea");
+            if (ideaDir == null || !ideaDir.exists() || !ideaDir.isDirectory()) {
+                VueKitLogger.info(LOG, ".idea 目录不存在，尝试创建...");
+                
+                // 使用异步方式创建目录，避免死锁
+                ApplicationManager.getApplication().invokeLater(() -> {
+                    ApplicationManager.getApplication().runWriteAction(() -> {
+                        try {
+                            VirtualFile createdIdeaDir = projectDir.createChildDirectory(this, ".idea");
+                            VueKitLogger.info(LOG, ".idea 目录创建成功: " + createdIdeaDir.getPath());
+                        } catch (Exception e) {
+                            VueKitLogger.error(LOG, "创建 .idea 目录失败", e);
+                        }
+                    });
+                });
+                
+                VueKitLogger.info(LOG, "✅ .idea 目录创建请求已提交");
+            } else {
+                VueKitLogger.debug(LOG, ".idea 目录已存在");
+            }
+            
+        } catch (Exception e) {
+            VueKitLogger.error(LOG, "确保 .idea 目录存在时发生错误", e);
+        }
     }
 
     // JSON 转换方法（使用 Gson 实现）

@@ -592,8 +592,8 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
             VueKitLogger.info(LOG, project, "- currentEnabledLibraryNames 内容: " + String.join(", ", currentEnabledLibraryNames));
 
             // 检查是否需要自动匹配组件库
-            if (currentEnabledLibraryNames.isEmpty()) {
-                VueKitLogger.info(LOG, project, "没有启用的组件库，尝试自动匹配...");
+            if (currentEnabledLibraryNames.isEmpty() && !configManager.hasValidProjectConfig(project)) {
+                VueKitLogger.info(LOG, project, "没有启用的组件库且配置文件无效，尝试自动匹配...");
                 boolean autoMatchSuccess = performAutoMatching();
                 if (autoMatchSuccess) {
                     VueKitLogger.info(LOG, project, "自动匹配成功，重新获取配置...");
@@ -604,6 +604,8 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
                 } else {
                     VueKitLogger.info(LOG, project, "自动匹配失败或没有匹配到组件库");
                 }
+            } else if (currentEnabledLibraryNames.isEmpty()) {
+                VueKitLogger.info(LOG, project, "没有启用的组件库，但配置文件存在，跳过自动匹配");
             }
 
             // 更新复选框状态（只有在界面创建完成后才更新）

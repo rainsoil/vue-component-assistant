@@ -58,9 +58,12 @@ public class PackageJsonAutoDetector {
             
             // 检查项目配置文件是否为空
             if (!isProjectConfigEmpty(project)) {
-                VueKitLogger.info(LOG, "项目配置文件已存在，跳过自动检测");
+                VueKitLogger.info(LOG, "项目配置文件已存在且有效，跳过自动检测");
                 return false;
             }
+            
+            // 确保 .idea 目录存在
+            ensureIdeaDirectoryExists(project);
             
             // 读取 package.json 文件
             VirtualFile packageJsonFile = findPackageJsonFile(project);
@@ -179,6 +182,45 @@ public class PackageJsonAutoDetector {
     }
     
     /**
+     * 确保 .idea 目录存在
+     * 
+     * @param project 项目对象
+     */
+    private static void ensureIdeaDirectoryExists(Project project) {
+        try {
+            VirtualFile projectDir = com.chu7.vuecomponentassistant.utils.ProjectPathHelper.getProjectRoot(project);
+            if (projectDir == null) {
+                VueKitLogger.warn(LOG, "无法获取项目根目录");
+                return;
+            }
+            
+            VirtualFile ideaDir = projectDir.findChild(".idea");
+            if (ideaDir == null || !ideaDir.exists() || !ideaDir.isDirectory()) {
+                VueKitLogger.info(LOG, ".idea 目录不存在，尝试创建...");
+                
+                // 避免在读取操作中调用 invokeAndWait，改用异步方式
+                com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater(() -> {
+                    com.intellij.openapi.application.ApplicationManager.getApplication().runWriteAction(() -> {
+                        try {
+                            VirtualFile createdIdeaDir = projectDir.createChildDirectory(PackageJsonAutoDetector.class, ".idea");
+                            VueKitLogger.info(LOG, ".idea 目录创建成功: " + createdIdeaDir.getPath());
+                        } catch (Exception e) {
+                            VueKitLogger.error(LOG, "创建 .idea 目录失败", e);
+                        }
+                    });
+                });
+                
+                VueKitLogger.info(LOG, "✅ .idea 目录创建请求已提交");
+            } else {
+                VueKitLogger.debug(LOG, ".idea 目录已存在");
+            }
+            
+        } catch (Exception e) {
+            VueKitLogger.error(LOG, "确保 .idea 目录存在时发生错误", e);
+        }
+    }
+    
+    /**
      * 从依赖项中动态检测组件库
      * 
      * 检测逻辑：
@@ -274,11 +316,18 @@ public class PackageJsonAutoDetector {
             
             VueKitLogger.info(LOG, "✅ 已设置启用的组件库: " + String.join(", ", enabledLibraryNames));
             
-            // 同时更新项目设置管理器中的组件库配置
-            ProjectSettingsManager projectSettingsManager = ProjectSettingsManager.getInstance(project);
-            ProjectSettingsManager.ProjectSettings projectSettings = projectSettingsManager.getProjectSettings(project);
-            projectSettings.setEnabledLibraryNames(enabledLibraryNames);
-            projectSettingsManager.saveProjectSettings(project, projectSettings);
+            // 异步更新项目设置管理器中的组件库配置，避免死锁
+            com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater(() -> {
+                try {
+                    ProjectSettingsManager projectSettingsManager = ProjectSettingsManager.getInstance(project);
+                    ProjectSettingsManager.ProjectSettings projectSettings = projectSettingsManager.getProjectSettings(project);
+                    projectSettings.setEnabledLibraryNames(enabledLibraryNames);
+                    projectSettingsManager.saveProjectSettings(project, projectSettings);
+                    VueKitLogger.info(LOG, "✅ 项目设置已异步更新");
+                } catch (Exception e) {
+                    VueKitLogger.error(LOG, "异步更新项目设置失败", e);
+                }
+            });
             
             VueKitLogger.info(LOG, "✅ 已启用组件库: " + String.join(", ", enabledLibraryNames));
             return true;

@@ -8,6 +8,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * 组件库配置启动活动
  * 
@@ -38,6 +41,9 @@ public class ComponentLibraryStartupActivity implements StartupActivity {
             // 触发项目启动时的配置加载
             configManager.onProjectStarted(project);
             
+            // 检查并确保配置文件存在
+            ensureProjectConfigFileExists(project);
+            
             // 自动检测并启用项目中的组件库
             boolean autoDetected = PackageJsonAutoDetector.autoDetectAndEnableLibraries(project);
             if (autoDetected) {
@@ -52,6 +58,55 @@ public class ComponentLibraryStartupActivity implements StartupActivity {
             String errorMsg = "启动时加载组件库配置失败";
             VueKitLogger.error(LOG, errorMsg, e);
             // 启动失败不应该阻止项目正常加载，所以只记录日志
+        }
+    }
+    
+    /**
+     * 确保项目配置文件存在
+     * 
+     * @param project 项目对象
+     */
+    private void ensureProjectConfigFileExists(Project project) {
+        try {
+            VueKitLogger.info(LOG, "检查项目配置文件是否存在...");
+            
+            // 检查配置文件是否存在且有效
+            ComponentLibraryConfigManager configManager = ComponentLibraryConfigManager.getInstance(project);
+            if (!configManager.hasValidProjectConfig(project)) {
+                VueKitLogger.info(LOG, "项目配置文件不存在或无效，尝试生成...");
+                
+                // 尝试自动检测并生成配置文件
+                boolean success = PackageJsonAutoDetector.autoDetectAndEnableLibraries(project);
+                if (success) {
+                    VueKitLogger.info(LOG, "✅ 项目配置文件生成成功");
+                } else {
+                    VueKitLogger.info(LOG, "⚠️ 项目配置文件生成失败，将使用默认配置");
+                    // 创建空的配置文件，确保后续操作正常进行
+                    createEmptyProjectConfig(project);
+                }
+            } else {
+                VueKitLogger.info(LOG, "✅ 项目配置文件已存在且有效");
+            }
+            
+        } catch (Exception e) {
+            VueKitLogger.error(LOG, "确保项目配置文件存在时发生错误", e);
+        }
+    }
+    
+    /**
+     * 创建空的项目配置文件
+     * 
+     * @param project 项目对象
+     */
+    private void createEmptyProjectConfig(Project project) {
+        try {
+            ComponentLibraryConfigManager configManager = ComponentLibraryConfigManager.getInstance(project);
+            // 创建空的配置
+            Set<String> emptyConfig = new HashSet<>();
+            configManager.setProjectEnabledLibraryNames(project, emptyConfig);
+            VueKitLogger.info(LOG, "已创建空的项目配置文件");
+        } catch (Exception e) {
+            VueKitLogger.error(LOG, "创建空项目配置文件失败", e);
         }
     }
 }

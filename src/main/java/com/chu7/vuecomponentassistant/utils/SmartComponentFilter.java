@@ -99,6 +99,9 @@ public class SmartComponentFilter {
         try {
             VueKitLogger.debug(LOG, "开始智能过滤组件，项目: " + project.getName());
             
+            // 确保项目配置文件存在
+            ensureProjectConfigFileExists(project);
+            
             // 1. 检测项目使用的组件库
             Set<String> projectLibraries = detectProjectLibraries(project);
             VueKitLogger.info(LOG, "检测到项目使用的组件库: " + String.join(", ", projectLibraries));
@@ -502,5 +505,54 @@ public class SmartComponentFilter {
         }
         
         return packageToLibrary;
+    }
+    
+    /**
+     * 确保项目配置文件存在
+     * 
+     * @param project 项目对象
+     */
+    private void ensureProjectConfigFileExists(Project project) {
+        try {
+            VueKitLogger.debug(LOG, "检查项目配置文件是否存在...");
+            
+            // 检查配置文件是否存在且有效
+            ComponentLibraryConfigManager configManager = ComponentLibraryConfigManager.getInstance(project);
+            if (!configManager.hasValidProjectConfig(project)) {
+                VueKitLogger.info(LOG, "项目配置文件不存在或无效，尝试生成...");
+                
+                // 尝试自动检测并生成配置文件
+                boolean success = PackageJsonAutoDetector.autoDetectAndEnableLibraries(project);
+                if (success) {
+                    VueKitLogger.info(LOG, "✅ 项目配置文件生成成功");
+                } else {
+                    VueKitLogger.info(LOG, "⚠️ 项目配置文件生成失败，将使用默认配置");
+                    // 创建空的配置文件，确保后续操作正常进行
+                    createEmptyProjectConfig(project);
+                }
+            } else {
+                VueKitLogger.debug(LOG, "✅ 项目配置文件已存在且有效");
+            }
+            
+        } catch (Exception e) {
+            VueKitLogger.error(LOG, "确保项目配置文件存在时发生错误", e);
+        }
+    }
+    
+    /**
+     * 创建空的项目配置文件
+     * 
+     * @param project 项目对象
+     */
+    private void createEmptyProjectConfig(Project project) {
+        try {
+            ComponentLibraryConfigManager configManager = ComponentLibraryConfigManager.getInstance(project);
+            // 创建空的配置
+            Set<String> emptyConfig = new HashSet<>();
+            configManager.setProjectEnabledLibraryNames(project, emptyConfig);
+            VueKitLogger.info(LOG, "已创建空的项目配置文件");
+        } catch (Exception e) {
+            VueKitLogger.error(LOG, "创建空项目配置文件失败", e);
+        }
     }
 }
