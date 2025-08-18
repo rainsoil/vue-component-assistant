@@ -72,13 +72,13 @@ public class OfficialLibraryManager {
                 // 下载组件库
                 ComponentLibrary library = remoteManager.downloadLibrary(officialLibrary.getDownloadUrl()).get();
                 
-                // 设置官方来源信息
-                library.setSource("OFFICIAL");
+                // 设置官方组件库信息（不直接设置source，让ComponentLibraryManager处理）
                 library.setId(officialLibrary.getId());
                 library.setName(officialLibrary.getName());
                 library.setDisplayName(officialLibrary.getDisplayName());
                 library.setDescription(officialLibrary.getDescription());
                 library.setVersion(officialLibrary.getVersion());
+                LOG.info("设置官方组件库信息完成");
                 
                 LOG.info("官方组件库下载完成: " + library.getName());
                 return library;

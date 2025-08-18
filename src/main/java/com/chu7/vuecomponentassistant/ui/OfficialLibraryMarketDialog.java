@@ -1,6 +1,7 @@
 package com.chu7.vuecomponentassistant.ui;
 
 import com.chu7.vuecomponentassistant.remote.ComponentLibraryManager;
+import com.chu7.vuecomponentassistant.remote.model.ImportResult;
 import com.chu7.vuecomponentassistant.remote.model.OfficialLibrary;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -293,19 +294,44 @@ public class OfficialLibraryMarketDialog extends DialogWrapper {
                 // 执行异步下载
                 libraryManager.getOfficialManager().downloadOfficialLibrary(library.getId())
                     .thenAccept(downloadedLibrary -> {
-                                                 // 在EDT中更新UI
-                         SwingUtilities.invokeLater(() -> {
-                             // 在EDT线程中关闭对话框
-                             close(OK_EXIT_CODE);
-                             // 在EDT线程中显示成功消息
-                             SwingUtilities.invokeLater(() -> {
-                                 Messages.showInfoMessage(
-                                     "组件库 '" + library.getDisplayName() + "' 下载成功！\n" +
-                                     "已添加到组件库列表，现在可以使用了。",
-                                     "下载成功"
-                                 );
-                             });
-                         });
+                        // 导入到组件库管理器（指定为官方来源）
+                        ImportResult importResult = libraryManager.importLibrary(downloadedLibrary, "OFFICIAL");
+                        
+                        if (importResult.isSuccess()) {
+                            // 在EDT中更新UI
+                            SwingUtilities.invokeLater(() -> {
+                                // 在EDT线程中关闭对话框
+                                close(OK_EXIT_CODE);
+                                // 在EDT线程中显示成功消息
+                                SwingUtilities.invokeLater(() -> {
+                                    Messages.showInfoMessage(
+                                        "组件库 '" + library.getDisplayName() + "' 下载成功！\n" +
+                                        "已添加到组件库列表，现在可以使用了。",
+                                        "下载成功"
+                                    );
+                                });
+                            });
+                        } else {
+                            // 导入失败
+                            SwingUtilities.invokeLater(() -> {
+                                // 恢复下载按钮状态
+                                downloadButton.setText("📥 下载");
+                                downloadButton.setEnabled(true);
+                                
+                                // 恢复对话框标题
+                                setTitle("🌐 官方组件库市场 - VueKit");
+                                
+                                // 显示导入失败信息
+                                detailArea.setText("导入失败: " + importResult.getMessage() + "\n\n请重试。");
+                                
+                                SwingUtilities.invokeLater(() -> {
+                                    Messages.showErrorDialog(
+                                        "导入失败: " + importResult.getMessage(),
+                                        "导入错误"
+                                    );
+                                });
+                            });
+                        }
                     })
                     .exceptionally(throwable -> {
                         // 在EDT中更新UI

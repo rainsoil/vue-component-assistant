@@ -2,6 +2,7 @@ package com.chu7.vuecomponentassistant.utils;
 
 import com.chu7.vuecomponentassistant.completion2.ElementPlusComponent;
 import com.chu7.vuecomponentassistant.remote.model.ComponentLibrary;
+import com.chu7.vuecomponentassistant.remote.model.ComponentInfo;
 import com.chu7.vuecomponentassistant.remote.ComponentLibraryManager;
 import com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager;
 import com.intellij.openapi.project.Project;
@@ -421,7 +422,35 @@ public class SmartComponentFilter {
      * @return 如果组件来自指定组件库则返回 true
      */
     private boolean isComponentFromLibrary(String componentName, String libraryType) {
-        return LibraryTypeHelper.isComponentFromLibrary(componentName, libraryType);
+        // 首先尝试使用 LibraryTypeHelper
+        if (LibraryTypeHelper.isComponentFromLibrary(componentName, libraryType)) {
+            return true;
+        }
+        
+        // 如果 LibraryTypeHelper 无法识别，尝试从已安装的组件库中查找
+        try {
+            ComponentLibraryManager libraryManager = new ComponentLibraryManager();
+            List<ComponentLibrary> libraries = libraryManager.getAllLibraries();
+            
+            for (ComponentLibrary library : libraries) {
+                if (libraryType.equals(library.getName()) || libraryType.equals(library.getId())) {
+                    // 检查组件是否属于这个组件库
+                    if (library.getComponents() != null) {
+                        for (ComponentInfo component : library.getComponents()) {
+                            if (componentName.equals(component.getName())) {
+                                VueKitLogger.debug(LOG, "组件 " + componentName + " 属于组件库: " + library.getName());
+                                return true;
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            VueKitLogger.debug(LOG, "从已安装组件库检查组件归属失败: " + e.getMessage());
+        }
+        
+        return false;
     }
     
     /**

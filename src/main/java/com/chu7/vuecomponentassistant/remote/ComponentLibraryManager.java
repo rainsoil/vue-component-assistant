@@ -29,6 +29,8 @@ public class ComponentLibraryManager {
         
         // 初始化时加载所有已存在的组件库
         loadExistingLibraries();
+        
+        // 注意：不再需要修复已存在组件库的 source 字段，因为现在通过导入上下文判断
     }
     
     /**
@@ -51,6 +53,13 @@ public class ComponentLibraryManager {
      * 导入组件库
      */
     public ImportResult importLibrary(ComponentLibrary library) {
+        return importLibrary(library, null);
+    }
+    
+    /**
+     * 导入组件库（带来源类型）
+     */
+    public ImportResult importLibrary(ComponentLibrary library, String sourceType) {
         try {
             String normalizedName = normalizeLibraryName(library.getName());
             
@@ -64,9 +73,40 @@ public class ComponentLibraryManager {
                 );
             }
             
+            // 根据导入来源设置 source 字段
+            LOG.info("检查组件库source字段 - 当前值: " + library.getSource() + ", 组件库: " + library.getName() + ", 导入来源: " + sourceType);
+            
+            if (sourceType != null && !sourceType.trim().isEmpty()) {
+                // 如果明确指定了来源类型，直接使用
+                library.setSource(sourceType);
+                LOG.info("使用指定的来源类型: " + library.getName() + " -> " + sourceType);
+            } else if (library.getSource() == null || library.getSource().trim().isEmpty()) {
+                // 如果没有指定来源类型且source为空，则根据sourceUrl判断
+                String sourceUrl = library.getSourceUrl();
+                if (sourceUrl != null && !sourceUrl.trim().isEmpty()) {
+                    if (sourceUrl.startsWith("http://") || sourceUrl.startsWith("https://")) {
+                        library.setSource("CUSTOM_REMOTE");
+                    } else {
+                        library.setSource("CUSTOM_LOCAL");
+                    }
+                } else {
+                    // 默认为本地自定义组件库
+                    library.setSource("CUSTOM_LOCAL");
+                }
+                LOG.info("根据sourceUrl自动设置组件库来源: " + library.getName() + " -> " + library.getSource());
+            }
+            
             // 保存组件库
             cacheManager.saveLibrary(library);
             existingLibraries.put(normalizedName, library);
+            
+            // 刷新动态配置管理器
+            try {
+                com.chu7.vuecomponentassistant.utils.DynamicLibraryConfigManager.getInstance().refreshConfiguration();
+                LOG.info("已刷新动态配置管理器");
+            } catch (Exception e) {
+                LOG.warn("刷新动态配置管理器失败: " + e.getMessage());
+            }
             
             // 通知所有 ComponentProvider 重新加载组件数据
             try {
@@ -318,6 +358,8 @@ public class ComponentLibraryManager {
         }
         return name.toLowerCase().trim();
     }
+    
+
     
     // Getter方法
     public RemoteLibraryManager getRemoteManager() {

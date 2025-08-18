@@ -150,6 +150,17 @@ public class ComponentProvider {
     private String getLibraryIdByType(String libraryType) {
         Objects.requireNonNull(libraryType, "组件库类型不能为null");
 
+        // 首先尝试直接匹配（对于自定义组件库）
+        ComponentLibraryManager manager = new ComponentLibraryManager();
+        List<ComponentLibrary> libraries = manager.getAllLibraries();
+        
+        for (ComponentLibrary library : libraries) {
+            if (libraryType.equals(library.getName()) || libraryType.equals(library.getId())) {
+                VueKitLogger.info(LOG, "直接匹配到组件库: " + library.getName() + " (ID: " + library.getId() + ")");
+                return library.getId();
+            }
+        }
+        
         // 使用动态配置管理器获取组件库ID
         DynamicLibraryConfigManager configManager = DynamicLibraryConfigManager.getInstance();
         String libraryId = configManager.getLibraryIdByPackageName(libraryType);
@@ -601,6 +612,10 @@ public class ComponentProvider {
         addDownloadedOfficialComponents(allComponents, enabledLibraries);
         int officialCount = allComponents.size() - beforeOfficial;
         VueKitLogger.debug(LOG, "添加官方组件: " + officialCount + " 个");
+        
+        // 调试：显示所有启用的组件库
+        VueKitLogger.debug(LOG, "启用的组件库: " + String.join(", ", enabledLibraries));
+        VueKitLogger.debug(LOG, "总组件数量: " + allComponents.size());
 
         if (prefix == null || prefix.isEmpty()) {
             VueKitLogger.debug(LOG, "前缀为空，返回所有 " + allComponents.size() + " 个组件");
@@ -651,7 +666,7 @@ public class ComponentProvider {
             VueKitLogger.warn(LOG, "从自定义组件库查找组件时出错: " + e.getMessage());
         }
 
-        // 从下载的官方组件库查找
+        // 从下载的组件库查找（包括官方和自定义）
         try {
             ComponentLibraryManager libraryManager = new ComponentLibraryManager();
             List<ComponentLibrary> allLibraries = libraryManager.getAllLibraries();
@@ -663,16 +678,18 @@ public class ComponentProvider {
                     continue; // 跳过未启用的组件库
                 }
 
-                if ("OFFICIAL".equals(library.getSource()) && library.getComponents() != null) {
+                // 查找所有启用的组件库（包括官方和自定义）
+                if (library.getComponents() != null) {
                     for (ComponentInfo info : library.getComponents()) {
                         if (componentName.equals(info.getName())) {
+                            VueKitLogger.debug(LOG, "找到组件: " + componentName + " 在组件库: " + library.getName() + " (类型: " + library.getSource() + ")");
                             return convertToElementPlusComponent(info);
                         }
                     }
                 }
             }
         } catch (Exception e) {
-            VueKitLogger.error(LOG, "从下载的官方组件库查找组件失败: " + e.getMessage(), e);
+            VueKitLogger.error(LOG, "从组件库查找组件失败: " + e.getMessage(), e);
         }
 
         VueKitLogger.debug(LOG, "未找到组件: " + componentName);
@@ -736,24 +753,26 @@ public class ComponentProvider {
                 // 检查该组件库是否在项目的启用列表中
                 String libraryType = getLibraryTypeByName(library.getName());
                 if (libraryType == null || !enabledLibraries.contains(libraryType)) {
-                    VueKitLogger.debug(LOG, "跳过未启用的官方组件库: " + library.getName());
+                    VueKitLogger.debug(LOG, "跳过未启用的组件库: " + library.getName() + " (类型: " + library.getSource() + ")");
                     continue;
                 }
 
-                if ("OFFICIAL".equals(library.getSource()) && library.getComponents() != null) {
-                    VueKitLogger.debug(LOG, "添加启用的官方组件库: " + library.getName() + " (版本: " + library.getVersion() + ")");
+                // 添加所有启用的组件库（包括官方和自定义）
+                if (library.getComponents() != null) {
+                    VueKitLogger.debug(LOG, "添加启用的组件库: " + library.getName() + " (类型: " + library.getSource() + ", 版本: " + library.getVersion() + ")");
                     for (ComponentInfo componentInfo : library.getComponents()) {
                         try {
                             ElementPlusComponent convertedComponent = convertToElementPlusComponent(componentInfo);
                             allComponents.add(convertedComponent);
+                            VueKitLogger.debug(LOG, "  添加组件: " + componentInfo.getName());
                         } catch (Exception e) {
-                            VueKitLogger.warn(LOG, "转换官方组件失败: " + componentInfo.getName());
+                            VueKitLogger.warn(LOG, "转换组件失败: " + componentInfo.getName());
                         }
                     }
                 }
             }
         } catch (Exception e) {
-            VueKitLogger.error(LOG, "加载下载的官方组件库失败: " + e.getMessage(), e);
+            VueKitLogger.error(LOG, "加载组件库失败: " + e.getMessage(), e);
         }
     }
 
@@ -1022,7 +1041,14 @@ public class ComponentProvider {
         // 移除版本号部分，只保留组件库名称
         String cleanName = libraryName.replaceAll("\\s*\\([^)]*\\)\\s*$", "").trim();
         
-        // 直接返回包名
-        return LibraryTypeHelper.getPackageName(cleanName);
+        // 对于自定义组件库，直接返回组件库名称
+        // 对于官方组件库，尝试使用 LibraryTypeHelper
+        String packageName = LibraryTypeHelper.getPackageName(cleanName);
+        if (packageName != null && !packageName.equals("unknown")) {
+            return packageName;
+        }
+        
+        // 如果 LibraryTypeHelper 无法识别，直接返回组件库名称
+        return cleanName;
     }
 }

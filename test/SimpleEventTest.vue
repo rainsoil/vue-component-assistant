@@ -2,8 +2,18 @@
     <div>
 
 
-        <el-button disabled="false"></el-button>
+        <el-input disabled="false">
+            <template #append>
+                <!-- 输入框后置内容 -->
+            </template>
+        </el-input>
 
+        <my-button type="default"></my-button>
+        <my-input placeholder="" @clear="handleClear">
+            <template #append>
+                <!-- 输入框后置内容 -->
+            </template>
+        </my-input>
 
     </div>
 </template>

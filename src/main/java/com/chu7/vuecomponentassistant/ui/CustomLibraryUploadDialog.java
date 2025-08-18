@@ -471,12 +471,10 @@ public class CustomLibraryUploadDialog extends DialogWrapper {
                     return;
                 }
                 
-                // 设置来源信息
+                // 设置来源URL（source 字段将由 ComponentLibraryManager 自动设置）
                 if (localFileRadio.isSelected()) {
-                    library.setSource("CUSTOM_LOCAL");
                     library.setSourceUrl(filePathField.getText().trim());
                 } else {
-                    library.setSource("CUSTOM_REMOTE");
                     library.setSourceUrl(urlField.getText().trim());
                 }
                 

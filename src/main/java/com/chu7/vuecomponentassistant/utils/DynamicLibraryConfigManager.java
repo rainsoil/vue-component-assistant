@@ -337,6 +337,28 @@ public class DynamicLibraryConfigManager {
     }
     
     /**
+     * 强制刷新配置
+     * 重新从已安装的组件库中加载配置
+     */
+    public void refreshConfiguration() {
+        try {
+            LOG.info("开始强制刷新组件库配置");
+            
+            // 清空现有配置
+            libraryConfigs.clear();
+            packageToLibraryMap.clear();
+            
+            // 重新加载配置
+            loadDefaultConfiguration();
+            buildPackageToLibraryMap();
+            
+            LOG.info("组件库配置刷新完成，当前配置数量: " + libraryConfigs.size());
+        } catch (Exception e) {
+            LOG.error("刷新组件库配置失败", e);
+        }
+    }
+    
+    /**
      * 从下载的组件库中自动推断配置
      * 当下载的组件库不在预定义配置中时，自动创建配置
      * 
