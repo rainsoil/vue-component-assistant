@@ -182,7 +182,8 @@ public class DocumentationStyleGenerator {
         // 文档链接
         html.append("<div class='ep-section'>");
         html.append("<div class='ep-section-title'>📖 相关文档</div>");
-        html.append("<a href='https://element-plus.org/zh-CN/component/").append(component.getName().substring(3)).append(".html' class='ep-link' target='_blank'>");
+        String docUrl = generateDocumentationUrl(component.getName());
+        html.append("<a href='").append(docUrl).append("' class='ep-link' target='_blank'>");
         html.append("🌐 查看官方文档");
         html.append("</a>");
         html.append("</div>");
@@ -327,12 +328,102 @@ public class DocumentationStyleGenerator {
         // 文档链接
         text.append("📖 相关文档:\n");
         text.append("-".repeat(80)).append("\n");
-        text.append("官方文档: https://element-plus.org/zh-CN/component/")
-                .append(component.getName().substring(3)).append(".html\n");
+        String docUrl = generateDocumentationUrl(component.getName());
+        if (!docUrl.isEmpty()) {
+            text.append("官方文档: ").append(docUrl).append("\n");
+        } else {
+            text.append("官方文档: 暂无可用\n");
+        }
 
-        return text.toString();
+                return text.toString();
     }
-
+    
+    /**
+     * 生成组件文档URL
+     */
+    private static String generateDocumentationUrl(String componentName) {
+        if (componentName == null || componentName.trim().isEmpty()) {
+            return "";
+        }
+        
+        // 优先从已安装的组件库中获取文档URL模板
+        try {
+            com.chu7.vuecomponentassistant.remote.ComponentLibraryManager libraryManager = 
+                new com.chu7.vuecomponentassistant.remote.ComponentLibraryManager();
+            java.util.List<com.chu7.vuecomponentassistant.remote.model.ComponentLibrary> installedLibraries = 
+                libraryManager.getAllLibraries();
+            
+            for (com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library : installedLibraries) {
+                // 检查组件是否属于该组件库
+                if (isComponentFromLibrary(componentName, library)) {
+                    // 如果组件库有自定义的文档URL模板，使用它
+                    // 注意：ComponentLibrary 类目前没有 getDocumentationUrlTemplate 方法
+                    // 这里可以后续扩展，暂时使用智能推断
+                    return inferDocumentationUrl(componentName, library.getName());
+                }
+            }
+        } catch (Exception e) {
+            // 如果获取失败，使用智能推断
+        }
+        
+        // 使用智能推断作为后备方案
+        return inferDocumentationUrl(componentName, null);
+    }
+    
+    /**
+     * 检查组件是否属于指定的组件库
+     */
+    private static boolean isComponentFromLibrary(String componentName, com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library) {
+        if (componentName == null || library == null) {
+            return false;
+        }
+        
+        // 根据组件库提供的前缀或从名称智能推断，避免硬编码
+        String prefix = library.getComponentPrefix();
+        if (prefix == null || prefix.trim().isEmpty()) {
+            String libName = library.getName();
+            if (libName == null) return false;
+            // 简单智能推断：库名第一段的前两位 + "-"
+            String[] parts = libName.split("-");
+            if (parts.length > 0) {
+                String first = parts[0].toLowerCase();
+                prefix = first.length() >= 2 ? first.substring(0, 2) + "-" : first + "-";
+            }
+        }
+        return prefix != null && !prefix.isEmpty() && componentName.startsWith(prefix);
+    }
+    
+    /**
+     * 推断文档URL
+     */
+    private static String inferDocumentationUrl(String componentName, String libraryName) {
+        if (componentName == null || componentName.trim().isEmpty()) {
+            return "";
+        }
+        
+        // 移除组件前缀
+        String componentKey = componentName;
+        String[] prefixes = {"el-", "a-", "v-", "q-", "n-", "p-"};
+        for (String prefix : prefixes) {
+            if (componentName.startsWith(prefix)) {
+                componentKey = componentName.substring(prefix.length());
+                break;
+            }
+        }
+        
+        // 根据组件库推断文档URL
+        if (libraryName != null) {
+            // 优先使用组件信息中自带的 docUrl（如果未来模型支持）或构建通用 URL
+            String base = com.chu7.vuecomponentassistant.utils.DynamicLibraryInfoProvider.getDocumentationBaseUrlFromName(libraryName);
+            if (base != null && !base.isEmpty()) {
+                return base + componentKey;
+            }
+        }
+        
+        // 默认返回空字符串
+        return "";
+    }
+    
     /**
      * 生成 HTML 格式的组件文档（用于悬浮提示）- ElementPlusComponent 重载
      *

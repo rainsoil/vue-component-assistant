@@ -265,34 +265,34 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
             // 检查项目配置文件是否存在且不为空
             VirtualFile ideaDir = com.chu7.vuecomponentassistant.utils.ProjectPathHelper.getProjectRoot(project).findChild(".idea");
             if (ideaDir == null) {
-                VueKitLogger.debug(LOG, project, ".idea 目录不存在，尝试自动匹配组件库");
-                return performAutoMatching();
+                VueKitLogger.debug(LOG, project, ".idea 目录不存在，将在界面加载完成后尝试自动匹配");
+                return false; // 不在这里执行自动匹配，避免时序问题
             }
             
             VirtualFile configFile = ideaDir.findChild("vuekit-project-config.json");
             if (configFile == null || !configFile.exists()) {
-                VueKitLogger.debug(LOG, project, "配置文件不存在，尝试自动匹配组件库");
-                return performAutoMatching();
+                VueKitLogger.debug(LOG, project, "配置文件不存在，将在界面加载完成后尝试自动匹配");
+                return false; // 不在这里执行自动匹配，避免时序问题
             }
             
             String configContent = new String(configFile.contentsToByteArray(), java.nio.charset.StandardCharsets.UTF_8);
             if (configContent.trim().isEmpty() || configContent.equals("{}") || configContent.equals("{\"enabledLibraries\":[]}")) {
-                VueKitLogger.debug(LOG, project, "配置文件为空，尝试自动匹配组件库");
-                return performAutoMatching();
+                VueKitLogger.debug(LOG, project, "配置文件为空，将在界面加载完成后尝试自动匹配");
+                return false; // 不在这里执行自动匹配，避免时序问题
             }
             
             // 检查是否有启用的组件库
             Set<String> enabledLibraries = configManager.getEnabledLibraryNames(project);
             if (enabledLibraries.isEmpty()) {
-                VueKitLogger.debug(LOG, project, "没有启用的组件库，尝试自动匹配");
-                return performAutoMatching();
+                VueKitLogger.debug(LOG, project, "没有启用的组件库，将在界面加载完成后尝试自动匹配");
+                return false; // 不在这里执行自动匹配，避免时序问题
             }
             
             return true;
             
         } catch (Exception e) {
-            VueKitLogger.debug(LOG, project, "检查自动检测状态失败，尝试自动匹配", e);
-            return performAutoMatching();
+            VueKitLogger.debug(LOG, project, "检查自动检测状态失败", e);
+            return false; // 不在这里执行自动匹配，避免时序问题
         }
     }
 
@@ -591,6 +591,21 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
             VueKitLogger.info(LOG, project, "- currentEnabledLibraryNames 数量: " + currentEnabledLibraryNames.size());
             VueKitLogger.info(LOG, project, "- currentEnabledLibraryNames 内容: " + String.join(", ", currentEnabledLibraryNames));
 
+            // 检查是否需要自动匹配组件库
+            if (currentEnabledLibraryNames.isEmpty()) {
+                VueKitLogger.info(LOG, project, "没有启用的组件库，尝试自动匹配...");
+                boolean autoMatchSuccess = performAutoMatching();
+                if (autoMatchSuccess) {
+                    VueKitLogger.info(LOG, project, "自动匹配成功，重新获取配置...");
+                    // 重新获取配置
+                    currentEnabledLibraryNames = configManager.getEnabledLibraryNames(project);
+                    originalEnabledLibraryNames = new HashSet<>(currentEnabledLibraryNames);
+                    VueKitLogger.info(LOG, project, "自动匹配后的配置: " + String.join(", ", currentEnabledLibraryNames));
+                } else {
+                    VueKitLogger.info(LOG, project, "自动匹配失败或没有匹配到组件库");
+                }
+            }
+
             // 更新复选框状态（只有在界面创建完成后才更新）
             if (libraryCheckBoxes != null && !libraryCheckBoxes.isEmpty()) {
                 VueKitLogger.info(LOG, project, "libraryCheckBoxes 已初始化，开始更新复选框状态...");
@@ -834,26 +849,59 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
     }
     
     /**
-     * 动态生成组件库描述
+     * 动态生成组件库描述（智能推断，避免硬编码）
      *
      * @param libraryName 组件库名称
      * @return 生成的描述
      */
     private String generateLibraryDescription(String libraryName) {
-        // 根据组件库名称动态生成描述
-        if (StringNormalizer.contains(libraryName, "element")) {
-            if (StringNormalizer.contains(libraryName, "plus")) {
+        if (libraryName == null || libraryName.trim().isEmpty()) {
+            return "Vue 组件库";
+        }
+        
+        // 优先从已安装的组件库中获取描述
+        try {
+            com.chu7.vuecomponentassistant.remote.ComponentLibraryManager libraryManager = 
+                new com.chu7.vuecomponentassistant.remote.ComponentLibraryManager();
+            java.util.List<com.chu7.vuecomponentassistant.remote.model.ComponentLibrary> installedLibraries = 
+                libraryManager.getAllLibraries();
+            
+            for (com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library : installedLibraries) {
+                if (libraryName.equals(library.getName())) {
+                    // 如果组件库有自定义的描述，使用它
+                    String description = library.getDescription();
+                    if (description != null && !description.trim().isEmpty()) {
+                        return libraryName + " - " + description;
+                    }
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            // 如果获取失败，使用智能推断
+        }
+        
+        // 使用智能推断作为后备方案，避免硬编码特定组件库
+        String normalizedName = libraryName.toLowerCase();
+        
+        // 基于组件库名称模式智能推断描述
+        if (StringNormalizer.contains(normalizedName, "element")) {
+            if (StringNormalizer.contains(normalizedName, "plus")) {
                 return libraryName + " - 基于 Vue 3.x 的桌面端组件库";
             } else {
                 return libraryName + " - 基于 Vue 2.x 的桌面端组件库";
             }
-        } else if (StringNormalizer.contains(libraryName, "ant")) {
+        } else if (StringNormalizer.contains(normalizedName, "ant") || StringNormalizer.contains(normalizedName, "design")) {
             return libraryName + " - 基于 Ant Design 设计体系的 Vue 组件库";
-        } else if (StringNormalizer.contains(libraryName, "vuetify")) {
+        } else if (StringNormalizer.contains(normalizedName, "vuetify")) {
             return libraryName + " - 基于 Material Design 的 Vue 组件库";
-        } else if (StringNormalizer.contains(libraryName, "quasar")) {
+        } else if (StringNormalizer.contains(normalizedName, "quasar")) {
             return libraryName + " - 基于 Vue 的跨平台 UI 框架";
+        } else if (StringNormalizer.contains(normalizedName, "naive")) {
+            return libraryName + " - 基于 Vue 3.x 的 TypeScript 组件库";
+        } else if (StringNormalizer.contains(normalizedName, "prime")) {
+            return libraryName + " - 基于 Vue 的丰富 UI 组件库";
         } else {
+            // 对于未知的组件库，生成通用描述
             return libraryName + " - Vue 组件库";
         }
     }
@@ -963,7 +1011,26 @@ public class ComponentLibraryConfigDialog extends DialogWrapper {
             // 如果匹配到组件库，自动启用它们
             if (!matchedLibraries.isEmpty()) {
                 VueKitLogger.info(LOG, project, "自动启用匹配的组件库: " + matchedLibraries);
-                configManager.setProjectEnabledLibraryNames(project, matchedLibraries);
+                
+                // 确保配置保存是同步的
+                try {
+                    configManager.setProjectEnabledLibraryNames(project, matchedLibraries);
+                    
+                    // 等待一小段时间确保文件写入完成
+                    Thread.sleep(100);
+                    
+                    // 验证配置是否已保存
+                    Set<String> savedLibraries = configManager.getEnabledLibraryNames(project);
+                    if (savedLibraries.containsAll(matchedLibraries)) {
+                        VueKitLogger.info(LOG, project, "配置保存成功，验证通过");
+                    } else {
+                        VueKitLogger.warn(LOG, project, "配置保存可能不完整，期望: " + matchedLibraries + ", 实际: " + savedLibraries);
+                    }
+                    
+                } catch (Exception e) {
+                    VueKitLogger.error(LOG, project, "保存自动匹配的配置失败", e);
+                    return false;
+                }
                 
                 // 更新当前配置
                 currentEnabledLibraryNames = new HashSet<>(matchedLibraries);

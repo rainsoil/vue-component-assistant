@@ -25,7 +25,7 @@
     "vue",
     "admin",
     "dashboard",
-    "element-plus",
+    "element-ui",
     "boilerplate",
     "admin-template",
     "management-system"
@@ -45,7 +45,7 @@
     "core-js": "^3.19.1",
     "css-loader": "^3.5.3",
     "echarts": "4.9.0",
-    "element-plus": "2.15.10",
+    "element-ui": "2.15.10",
     "file-saver": "2.0.5",
     "fuse.js": "6.4.3",
     "highlight.js": "9.18.5",

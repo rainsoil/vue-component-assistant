@@ -2,9 +2,8 @@
   "projectId": "your-project-id",
   "projectName": "Your Project Name",
   "enabledLibraries": [
-    "element-plus",
-    "ant-design-vue",
-    "vuetify"
+    "your-component-library-1",
+    "your-component-library-2"
   ],
   "description": "VueKit 组件库配置文件",
   "version": "1.0.0",
@@ -12,13 +11,10 @@
   "notes": [
     "enabledLibraries: 启用的组件库包名列表",
     "支持的组件库类型:",
-    "  - element-plus: Element Plus (Vue 3.x)",
-    "  - ant-design-vue: Ant Design Vue",
-    "  - vuetify: Vuetify",
-    "  - quasar: Quasar",
-    "  - naive-ui: Naive UI",
-    "  - primevue: PrimeVue",
-    "  - 自定义组件库: 使用包名或自定义标识符"
+    "  - 官方组件库: 从官方市场下载的组件库",
+    "  - 自定义组件库: 用户上传的组件库",
+    "  - 动态检测: 根据 package.json 自动检测的组件库",
+    "  - 示例: element-plus, ant-design-vue, vuetify, quasar, naive-ui, primevue 等"
   ],
   "usage": {
     "import": "将此文件复制到项目根目录，重命名为 .vuekit-libraries.json",

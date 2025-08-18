@@ -178,9 +178,9 @@ public class ElementPlusContextAnalyzer {
     }
     
     /**
-     * 检查是否是Element Plus项目
+     * 检查是否是Vue组件库项目（动态检测，避免硬编码）
      */
-    public boolean isElementPlusProject(PsiElement element) {
+    public boolean isVueComponentLibraryProject(PsiElement element) {
         if (element == null) {
             return false;
         }
@@ -193,13 +193,21 @@ public class ElementPlusContextAnalyzer {
             
             String fileText = file.getText();
             
-            // 检查是否包含Element Plus相关的导入或使用
-            return fileText.contains("element-plus") || 
-                   fileText.contains("El") ||
-                   fileText.contains("el-");
+            // 动态检测Vue组件库的使用，避免硬编码特定组件库
+            // 检查常见的组件前缀模式
+            String[] componentPrefixes = {"el-", "a-", "v-", "q-", "n-", "p-"};
+            for (String prefix : componentPrefixes) {
+                if (fileText.contains(prefix)) {
+                    return true;
+                }
+            }
+            
+            // 检查是否包含Vue相关的导入或使用
+            return fileText.contains("import") && 
+                   (fileText.contains("from") || fileText.contains("require"));
             
         } catch (Exception e) {
-            LOG.warn("Error checking if Element Plus project", e);
+            LOG.warn("Error checking if Vue component library project", e);
         }
         
         return false;

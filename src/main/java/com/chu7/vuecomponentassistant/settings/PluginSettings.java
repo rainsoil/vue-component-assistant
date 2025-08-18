@@ -27,8 +27,8 @@ import org.jetbrains.annotations.Nullable;
 )
 public class PluginSettings implements PersistentStateComponent<PluginSettings> {
     
-    // 默认组件库设置
-    private String defaultComponentLibrary = "element-plus";
+    // 默认组件库设置 - 动态获取，避免硬编码
+    private String defaultComponentLibrary = null;
     
     // 补全功能设置
     private boolean enableComponentCompletion = true;
@@ -94,6 +94,26 @@ public class PluginSettings implements PersistentStateComponent<PluginSettings> 
     // ==================== 默认组件库设置 ====================
     
     public String getDefaultComponentLibrary() {
+        // 如果还没有设置默认组件库，动态获取第一个可用的组件库
+        if (defaultComponentLibrary == null || defaultComponentLibrary.trim().isEmpty()) {
+            try {
+                // 从已安装的组件库中获取第一个作为默认值
+                com.chu7.vuecomponentassistant.remote.ComponentLibraryManager libraryManager = 
+                    new com.chu7.vuecomponentassistant.remote.ComponentLibraryManager();
+                java.util.List<com.chu7.vuecomponentassistant.remote.model.ComponentLibrary> installedLibraries = 
+                    libraryManager.getAllLibraries();
+                
+                if (installedLibraries != null && !installedLibraries.isEmpty()) {
+                    defaultComponentLibrary = installedLibraries.get(0).getName();
+                } else {
+                    // 如果没有已安装的组件库，返回空字符串
+                    defaultComponentLibrary = "";
+                }
+            } catch (Exception e) {
+                // 如果获取失败，返回空字符串
+                defaultComponentLibrary = "";
+            }
+        }
         return defaultComponentLibrary;
     }
     
@@ -329,7 +349,21 @@ public class PluginSettings implements PersistentStateComponent<PluginSettings> 
      * 重置为默认设置
      */
     public void resetToDefaults() {
-        defaultComponentLibrary = "element-plus";
+        // 动态获取默认组件库，避免硬编码
+        try {
+            com.chu7.vuecomponentassistant.remote.ComponentLibraryManager libraryManager = 
+                new com.chu7.vuecomponentassistant.remote.ComponentLibraryManager();
+            java.util.List<com.chu7.vuecomponentassistant.remote.model.ComponentLibrary> installedLibraries = 
+                libraryManager.getAllLibraries();
+            
+            if (installedLibraries != null && !installedLibraries.isEmpty()) {
+                defaultComponentLibrary = installedLibraries.get(0).getName();
+            } else {
+                defaultComponentLibrary = "";
+            }
+        } catch (Exception e) {
+            defaultComponentLibrary = "";
+        }
         enableComponentCompletion = true;
         enableAttributeCompletion = true;
         enableEventCompletion = true;

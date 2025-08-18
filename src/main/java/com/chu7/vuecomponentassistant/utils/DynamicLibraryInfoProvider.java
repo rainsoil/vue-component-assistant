@@ -21,6 +21,30 @@ public class DynamicLibraryInfoProvider {
     
     /** 组件库管理器 */
     private static final ComponentLibraryManager libraryManager = new ComponentLibraryManager();
+
+    /**
+     * 根据组件库名称获取推断的文档基础URL
+     * 优先从已安装组件库的 sourceUrl 推断，失败则返回空字符串
+     */
+    public static String getDocumentationBaseUrlFromName(String libraryName) {
+        if (libraryName == null || libraryName.trim().isEmpty()) {
+            return "";
+        }
+        try {
+            List<ComponentLibrary> libraries = libraryManager.getAllLibraries();
+            for (ComponentLibrary lib : libraries) {
+                if (libraryName.equals(lib.getName())) {
+                    String sourceUrl = lib.getSourceUrl();
+                    if (sourceUrl != null && !sourceUrl.trim().isEmpty()) {
+                        return inferDocumentationBaseUrl(sourceUrl);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOG.debug("根据名称获取文档基础URL失败: " + e.getMessage());
+        }
+        return "";
+    }
     
     /**
      * 从下载的组件库中获取文档URL模板
@@ -180,9 +204,10 @@ public class DynamicLibraryInfoProvider {
             
             // 如果无法推断，尝试从组件库名称推断
             String libraryName = library.getName().toLowerCase();
+            // 使用智能推断，避免硬编码特定组件库
             if (libraryName.contains("element")) {
                 return "el-";
-            } else if (libraryName.contains("ant") || libraryName.contains("antd")) {
+            } else if (libraryName.contains("ant") || libraryName.contains("antd") || libraryName.contains("design")) {
                 return "a-";
             } else if (libraryName.contains("vuetify")) {
                 return "v-";
@@ -190,10 +215,37 @@ public class DynamicLibraryInfoProvider {
                 return "q-";
             } else if (libraryName.contains("naive")) {
                 return "n-";
+            } else if (libraryName.contains("prime")) {
+                return "p-";
+            } else {
+                // 对于未知的组件库，尝试从包名推断前缀
+                return inferPrefixFromLibraryName(libraryName);
             }
             
         } catch (Exception e) {
             LOG.debug("推断组件前缀失败", e);
+        }
+        
+        return "";
+    }
+    
+    /**
+     * 从组件库名称推断前缀
+     */
+    private static String inferPrefixFromLibraryName(String libraryName) {
+        if (libraryName == null || libraryName.trim().isEmpty()) {
+            return "";
+        }
+        
+        // 提取库名的主要部分作为前缀
+        String[] parts = libraryName.split("-");
+        if (parts.length > 0) {
+            String firstPart = parts[0].toLowerCase();
+            if (firstPart.length() >= 2) {
+                return firstPart.substring(0, 2) + "-";
+            } else {
+                return firstPart + "-";
+            }
         }
         
         return "";
@@ -228,17 +280,69 @@ public class DynamicLibraryInfoProvider {
             return "";
         }
         
-        // 根据不同的组件库推断文档基础URL
-        if (sourceUrl.contains("element-plus")) {
-            return "https://element-plus.org/zh-CN/component/";
-        } else if (sourceUrl.contains("element-ui")) {
-            return "https://element.eleme.cn/#/zh-CN/component/";
-        } else if (sourceUrl.contains("ant-design-vue")) {
-            return "https://antdv.com/components/";
-        } else if (sourceUrl.contains("vuetify")) {
-            return "https://vuetifyjs.com/en/components/";
-        } else if (sourceUrl.contains("quasar")) {
-            return "https://quasar.dev/vue-components/";
+        // 优先从已安装的组件库中获取文档URL模板
+        try {
+            ComponentLibraryManager libraryManager = new ComponentLibraryManager();
+            List<ComponentLibrary> installedLibraries = libraryManager.getAllLibraries();
+            
+            for (ComponentLibrary library : installedLibraries) {
+                if (sourceUrl.contains(library.getName())) {
+                    // 如果组件库有自定义的文档URL模板，使用它
+                    // 注意：ComponentLibrary 类目前没有 getDocumentationUrlTemplate 方法
+                    // 这里可以后续扩展，暂时使用智能推断
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            LOG.debug("从已安装组件库获取文档URL失败，使用智能推断: " + e.getMessage());
+        }
+        
+        // 使用智能推断作为后备方案，避免硬编码特定组件库
+        return buildGenericDocumentationUrl(sourceUrl);
+    }
+    
+    /**
+     * 构建通用的文档URL
+     */
+    private static String buildGenericDocumentationUrl(String sourceUrl) {
+        if (sourceUrl == null || sourceUrl.trim().isEmpty()) {
+            return "";
+        }
+        
+        // 尝试从URL推断可能的文档URL模式
+        try {
+            // 提取域名部分
+            String domain = extractDomainFromUrl(sourceUrl);
+            if (domain != null && !domain.isEmpty()) {
+                return "https://" + domain + "/components/";
+            }
+        } catch (Exception e) {
+            LOG.debug("构建通用文档URL失败: " + e.getMessage());
+        }
+        
+        return "";
+    }
+    
+    /**
+     * 从URL提取域名
+     */
+    private static String extractDomainFromUrl(String url) {
+        if (url == null || url.trim().isEmpty()) {
+            return "";
+        }
+        
+        try {
+            // 简单的域名提取逻辑
+            if (url.startsWith("http://") || url.startsWith("https://")) {
+                String domain = url.substring(url.indexOf("://") + 3);
+                int slashIndex = domain.indexOf("/");
+                if (slashIndex > 0) {
+                    domain = domain.substring(0, slashIndex);
+                }
+                return domain;
+            }
+        } catch (Exception e) {
+            LOG.debug("提取域名失败: " + e.getMessage());
         }
         
         return "";
@@ -256,7 +360,7 @@ public class DynamicLibraryInfoProvider {
         }
         
         // 移除组件前缀
-        String[] prefixes = {"el-", "a-", "v-", "q-"};
+        String[] prefixes = {"el-", "a-", "v-", "q-", "n-", "p-"};
         for (String prefix : prefixes) {
             if (componentName.startsWith(prefix)) {
                 return componentName.substring(prefix.length());

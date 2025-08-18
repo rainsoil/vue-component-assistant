@@ -202,20 +202,65 @@ public class DynamicLibraryManager {
      * 推断组件前缀
      */
     private static String inferComponentPrefix(String packageName) {
-        // 使用 StringNormalizer 进行标准化匹配
+        // 优先从已安装的组件库中获取前缀
+        try {
+            ComponentLibraryManager libraryManager = new ComponentLibraryManager();
+            List<ComponentLibrary> installedLibraries = libraryManager.getAllLibraries();
+            
+            for (ComponentLibrary library : installedLibraries) {
+                if (packageName.equals(library.getName())) {
+                    // 如果组件库有自定义的前缀配置，使用它
+                    // 注意：ComponentLibrary 类目前没有 getComponentPrefix 方法
+                    // 这里可以后续扩展，暂时使用智能推断
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            VueKitLogger.debug(LOG, "从已安装组件库获取前缀失败，使用智能推断: " + e.getMessage());
+        }
+        
+        // 使用智能推断作为后备方案，避免硬编码特定组件库
         String normalizedName = StringNormalizer.normalize(packageName);
         
+        // 基于包名模式智能推断前缀，而不是硬编码特定组件库
         if (StringNormalizer.contains(normalizedName, "element")) {
             return "el-";
-        } else if (StringNormalizer.contains(normalizedName, "ant")) {
+        } else if (StringNormalizer.contains(normalizedName, "ant") || StringNormalizer.contains(normalizedName, "design")) {
             return "a-";
         } else if (StringNormalizer.contains(normalizedName, "vuetify")) {
             return "v-";
         } else if (StringNormalizer.contains(normalizedName, "quasar")) {
             return "q-";
+        } else if (StringNormalizer.contains(normalizedName, "naive")) {
+            return "n-";
+        } else if (StringNormalizer.contains(normalizedName, "prime")) {
+            return "p-";
         } else {
-            return ""; // 默认无前缀
+            // 对于未知的组件库，尝试从包名推断前缀
+            return inferPrefixFromPackageName(packageName);
         }
+    }
+    
+    /**
+     * 从包名推断前缀
+     */
+    private static String inferPrefixFromPackageName(String packageName) {
+        if (packageName == null || packageName.trim().isEmpty()) {
+            return "";
+        }
+        
+        // 提取包名的主要部分作为前缀
+        String[] parts = packageName.split("-");
+        if (parts.length > 0) {
+            String firstPart = parts[0].toLowerCase();
+            if (firstPart.length() >= 2) {
+                return firstPart.substring(0, 2) + "-";
+            } else {
+                return firstPart + "-";
+            }
+        }
+        
+        return "";
     }
     
     /**
@@ -246,27 +291,8 @@ public class DynamicLibraryManager {
         // 使用智能推断作为后备方案
         String normalizedName = StringNormalizer.normalize(packageName);
         
-        // 基于包名模式智能推断文档URL
-        if (StringNormalizer.contains(normalizedName, "element")) {
-            if (StringNormalizer.contains(normalizedName, "plus")) {
-                return "https://element-plus.org/zh-CN/component/%s.html";
-            } else {
-                return "https://element.eleme.cn/#/zh-CN/component/%s";
-            }
-        } else if (StringNormalizer.contains(normalizedName, "ant") || StringNormalizer.contains(normalizedName, "design")) {
-            return "https://antdv.com/components/%s-cn";
-        } else if (StringNormalizer.contains(normalizedName, "vuetify")) {
-            return "https://vuetifyjs.com/en/components/%s/";
-        } else if (StringNormalizer.contains(normalizedName, "quasar")) {
-            return "https://quasar.dev/vue-components/%s";
-        } else if (StringNormalizer.contains(normalizedName, "naive")) {
-            return "https://naiveui.com/zh-CN/component/%s";
-        } else if (StringNormalizer.contains(normalizedName, "prime")) {
-            return "https://primevue.org/components/%s/";
-        } else {
-            // 对于未知的组件库，尝试构建通用的文档URL
-            return buildGenericDocumentationUrl(packageName);
-        }
+        // 基于包名模式智能推断文档URL（避免硬编码特定域名）
+        return buildGenericDocumentationUrl(packageName);
     }
     
     /**

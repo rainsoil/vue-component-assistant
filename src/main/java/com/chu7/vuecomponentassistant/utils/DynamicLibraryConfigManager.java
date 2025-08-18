@@ -15,6 +15,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.List;
+import com.chu7.vuecomponentassistant.remote.ComponentLibraryManager;
+import com.chu7.vuecomponentassistant.remote.model.ComponentLibrary;
 
 /**
  * 动态组件库配置管理器
@@ -166,6 +169,24 @@ public class DynamicLibraryConfigManager {
     private String inferComponentPrefix(String libraryName) {
         if (libraryName == null) return "";
         
+        // 优先从已安装的组件库中获取前缀
+        try {
+            ComponentLibraryManager libraryManager = new ComponentLibraryManager();
+            List<ComponentLibrary> installedLibraries = libraryManager.getAllLibraries();
+            
+            for (ComponentLibrary library : installedLibraries) {
+                if (libraryName.equals(library.getName())) {
+                    // 如果组件库有自定义的前缀配置，使用它
+                    // 注意：ComponentLibrary 类目前没有 getComponentPrefix 方法
+                    // 这里可以后续扩展，暂时使用智能推断
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            LOG.debug("从已安装组件库获取前缀失败，使用智能推断: " + e.getMessage());
+        }
+        
+        // 使用智能推断作为后备方案，避免硬编码特定组件库
         String lowerName = libraryName.toLowerCase();
         if (lowerName.contains("element")) return "el-";
         if (lowerName.contains("ant") || lowerName.contains("design")) return "a-";
@@ -174,7 +195,29 @@ public class DynamicLibraryConfigManager {
         if (lowerName.contains("naive")) return "n-";
         if (lowerName.contains("prime")) return "p-";
         
-        // 默认使用库名的前两个字符
+        // 对于未知的组件库，尝试从库名推断前缀
+        return inferPrefixFromLibraryName(libraryName);
+    }
+    
+    /**
+     * 从库名推断前缀
+     */
+    private String inferPrefixFromLibraryName(String libraryName) {
+        if (libraryName == null || libraryName.trim().isEmpty()) {
+            return "";
+        }
+        
+        // 提取库名的主要部分作为前缀
+        String[] parts = libraryName.split("-");
+        if (parts.length > 0) {
+            String firstPart = parts[0].toLowerCase();
+            if (firstPart.length() >= 2) {
+                return firstPart.substring(0, 2) + "-";
+            } else {
+                return firstPart + "-";
+            }
+        }
+        
         return libraryName.length() >= 2 ? libraryName.substring(0, 2).toLowerCase() + "-" : libraryName + "-";
     }
     

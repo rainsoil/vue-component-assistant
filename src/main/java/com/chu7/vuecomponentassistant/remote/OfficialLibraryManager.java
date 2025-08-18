@@ -269,77 +269,16 @@ public class OfficialLibraryManager {
         return DEFAULT_OFFICIAL_REGISTRY_URL;
     }
     
-    // 创建默认官方组件库列表
+    /**
+     * 创建默认官方组件库列表（当远程获取失败时的备用方案）
+     * 注意：这个方法现在只作为备用方案，主要依赖远程配置
+     */
     private List<OfficialLibrary> createDefaultOfficialLibraries() {
         List<OfficialLibrary> libraries = new java.util.ArrayList<>();
         
-        // Element Plus
-        OfficialLibrary elementPlusLib = new OfficialLibrary(
-            "element-plus",
-            "Element Plus",
-            "Element Plus",
-            "Vue 3 组件库",
-            "2.5.0",
-            "vue3",
-            "UI Framework",
-            "Element Plus Team",
-            "https://element-plus.org",
-            "https://cdn.vuekit.dev/libraries/element-plus.json"
-        );
-        elementPlusLib.setDownloadCount(50000);
-        elementPlusLib.setRating(4.9);
-        libraries.add(elementPlusLib);
-        
-        // Vuetify
-        OfficialLibrary vuetify = new OfficialLibrary(
-            "vuetify",
-            "Vuetify",
-            "Vuetify",
-            "Material Design component framework",
-            "3.4.0",
-            "vue3",
-            "UI Framework",
-            "Vuetify Team",
-            "https://vuetifyjs.com",
-            "https://cdn.vuekit.dev/libraries/vuetify.json"
-        );
-        vuetify.setDownloadCount(15000);
-        vuetify.setRating(4.8);
-        libraries.add(vuetify);
-        
-        // Naive UI
-        OfficialLibrary naiveUI = new OfficialLibrary(
-            "naive-ui",
-            "Naive UI",
-            "Naive UI",
-            "A Vue 3 Component Library",
-            "2.35.0",
-            "vue3",
-            "UI Framework",
-            "Naive UI Team",
-            "https://naiveui.com",
-            "https://cdn.vuekit.dev/libraries/naive-ui.json"
-        );
-        naiveUI.setDownloadCount(8000);
-        naiveUI.setRating(4.6);
-        libraries.add(naiveUI);
-        
-        // Ant Design Vue
-        OfficialLibrary antDesignVue = new OfficialLibrary(
-            "ant-design-vue",
-            "Ant Design Vue",
-            "Ant Design Vue",
-            "Vue 3 企业级UI组件库",
-            "4.0.0",
-            "vue3",
-            "UI Framework",
-            "Ant Design Vue Team",
-            "https://antdv.com",
-            "https://cdn.vuekit.dev/libraries/ant-design-vue.json"
-        );
-        antDesignVue.setDownloadCount(25000);
-        antDesignVue.setRating(4.7);
-        libraries.add(antDesignVue);
+        // 当远程配置获取失败时，返回空列表，避免硬编码
+        // 这样可以确保所有组件库都来自动态配置
+        LOG.warn("远程官方组件库配置获取失败，返回空列表以避免硬编码");
         
         return libraries;
     }
