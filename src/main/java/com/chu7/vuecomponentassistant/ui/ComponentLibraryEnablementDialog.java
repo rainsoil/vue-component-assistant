@@ -22,15 +22,44 @@ import java.util.List;
 
 /**
  * 组件库启用/禁用管理对话框
- * 
- * 功能说明：
- * - 显示所有可用的组件库
- * - 允许用户启用/禁用特定的组件库
- * - 显示组件库的详细信息
- * - 支持重置为默认配置
- * 
+ *
+ * <p>功能说明：</p>
+ * <ul>
+ *   <li>显示所有可用的组件库</li>
+ *   <li>允许用户启用/禁用特定的组件库</li>
+ *   <li>显示组件库的详细信息和状态</li>
+ *   <li>支持重置为默认配置</li>
+ *   <li>提供全选/全不选功能</li>
+ *   <li>自动检测项目依赖的组件库</li>
+ *   <li>实时更新组件库状态显示</li>
+ * </ul>
+ *
+ * <p>设计特点：</p>
+ * <ul>
+ *   <li>动态获取已安装的组件库列表</li>
+ *   <li>直观的复选框界面设计</li>
+ *   <li>支持滚动查看大量组件库</li>
+ *   <li>智能的项目检测组件库识别</li>
+ *   <li>完整的配置保存和加载机制</li>
+ *   <li>用户友好的操作反馈</li>
+ * </ul>
+ *
+ * <p>使用场景：</p>
+ * <ul>
+ *   <li>项目初始化时的组件库配置</li>
+ *   <li>开发过程中动态调整组件库启用状态</li>
+ *   <li>团队项目配置的统一管理</li>
+ *   <li>性能优化时的组件库精简</li>
+ *   <li>调试特定组件库功能</li>
+ * </ul>
+ *
  * @author VueKit Team
  * @version 1.0.0
+ * @since 1.0.0
+ * @see com.intellij.openapi.ui.DialogWrapper
+ * @see com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager
+ * @see com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector
+ * @see com.chu7.vuecomponentassistant.completion2.ComponentProviderManager
  */
 public class ComponentLibraryEnablementDialog extends DialogWrapper {
     
@@ -50,8 +79,40 @@ public class ComponentLibraryEnablementDialog extends DialogWrapper {
     // 组件库类型列表 - 现在动态从远程组件库管理器获取
     private String[] libraryTypes;
     
+    /**
+     * 构造函数
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>初始化组件库启用管理对话框</li>
+     *   <li>动态获取已安装的组件库列表</li>
+     *   <li>设置对话框基本属性和样式</li>
+     *   <li>初始化配置管理器</li>
+     * </ul>
+     *
+     * <p>初始化流程：</p>
+     * <ol>
+     *   <li>调用父类构造函数，传入项目实例</li>
+     *   <li>初始化项目实例和配置管理器</li>
+     *   <li>动态获取已安装的组件库列表</li>
+     *   <li>设置对话框标题、尺寸和可调整性</li>
+     *   <li>调用init()方法完成初始化</li>
+     * </ol>
+     *
+     * @param project 当前项目实例，用于获取项目配置和组件库信息，不能为null
+     * @throws IllegalArgumentException 如果project参数为null
+     * @see #initializeLibraryTypes()
+     * @see #init()
+     */
     public ComponentLibraryEnablementDialog(Project project) {
+        // 调用父类构造函数，传入项目实例
         super(project);
+        
+        // 参数验证
+        if (project == null) {
+            throw new IllegalArgumentException("项目实例不能为null");
+        }
+        
         this.project = project;
         this.configManager = ComponentLibraryConfigManager.getInstance(project);
         
@@ -67,6 +128,33 @@ public class ComponentLibraryEnablementDialog extends DialogWrapper {
     
     /**
      * 动态初始化组件库类型列表
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>从远程组件库管理器获取已安装的组件库</li>
+     *   <li>动态构建组件库类型列表</li>
+     *   <li>避免硬编码特定组件库</li>
+     *   <li>支持运行时组件库扩展</li>
+     * </ul>
+     *
+     * <p>执行流程：</p>
+     * <ol>
+     *   <li>创建远程组件库管理器实例</li>
+     *   <li>获取所有已安装的组件库</li>
+     *   <li>遍历组件库并提取类型信息</li>
+     *   <li>过滤掉未知类型的组件库</li>
+     *   <li>转换为数组格式存储</li>
+     * </ol>
+     *
+     * <p>错误处理：</p>
+     * <ul>
+     *   <li>获取失败时使用空列表</li>
+     *   <li>记录详细的错误日志</li>
+     *   <li>确保界面不会崩溃</li>
+     * </ul>
+     *
+     * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager
+     * @see com.chu7.vuecomponentassistant.utils.LibraryTypeHelper
      */
     private void initializeLibraryTypes() {
         try {
@@ -383,6 +471,32 @@ public class ComponentLibraryEnablementDialog extends DialogWrapper {
     
     /**
      * 应用配置
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>收集当前选中的组件库配置</li>
+     *   <li>保存配置到项目设置</li>
+     *   <li>通知组件提供者重新加载数据</li>
+     *   <li>提供用户操作反馈</li>
+     * </ul>
+     *
+     * <p>执行流程：</p>
+     * <ol>
+     *   <li>遍历所有复选框，收集选中的组件库</li>
+     *   <li>调用配置管理器保存项目设置</li>
+     *   <li>通知ComponentProvider重新加载组件数据</li>
+     *   <li>显示成功消息并关闭对话框</li>
+     * </ol>
+     *
+     * <p>错误处理：</p>
+     * <ul>
+     *   <li>配置保存失败时显示错误对话框</li>
+     *   <li>组件提供者通知失败时记录日志</li>
+     *   <li>确保用户了解操作结果</li>
+     * </ul>
+     *
+     * @see com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager#setProjectEnabledLibraryNames(Project, Set)
+     * @see com.chu7.vuecomponentassistant.completion2.ComponentProviderManager#notifyProviderReload(Project)
      */
     private void applyConfiguration() {
         try {

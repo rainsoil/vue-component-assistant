@@ -26,21 +26,41 @@ import com.intellij.openapi.vfs.VirtualFile;
 /**
  * 组件库配置管理器
  *
- * 功能说明：
- * - 管理项目级和全局级组件库配置
- * - 支持组件库启用/禁用开关
- * - 配置导入/导出功能
- * - 自动检测项目依赖的组件库
- * - 配置持久化存储
+ * <p>功能说明：</p>
+ * <ul>
+ *   <li>管理项目级和全局级组件库配置</li>
+ *   <li>支持组件库启用/禁用开关</li>
+ *   <li>配置导入/导出功能</li>
+ *   <li>自动检测项目依赖的组件库</li>
+ *   <li>配置持久化存储</li>
+ *   <li>支持配置变更监听和通知</li>
+ * </ul>
  *
- * 特性：
- * - 项目级配置：每个项目可以有不同的组件库配置
- * - 全局默认配置：设置默认启用的组件库
- * - 智能检测：自动检测项目使用的组件库
- * - 配置同步：项目配置与全局配置的智能同步
+ * <p>特性：</p>
+ * <ul>
+ *   <li>项目级配置：每个项目可以有不同的组件库配置</li>
+ *   <li>全局默认配置：设置默认启用的组件库</li>
+ *   <li>智能检测：自动检测项目使用的组件库</li>
+ *   <li>配置同步：项目配置与全局配置的智能同步</li>
+ *   <li>动态配置：支持运行时配置更新</li>
+ *   <li>配置验证：确保配置数据的有效性</li>
+ * </ul>
+ * 
+ * <p>设计特点：</p>
+ * <ul>
+ *   <li>使用IntelliJ IDEA的持久化组件机制</li>
+ *   <li>支持项目级和全局级配置隔离</li>
+ *   <li>线程安全的配置管理</li>
+ *   <li>完善的配置变更通知机制</li>
+ *   <li>支持配置的导入导出</li>
+ * </ul>
  *
  * @author VueKit Team
  * @version 2.0.0
+ * @since 1.0.0
+ * @see com.intellij.openapi.components.PersistentStateComponent
+ * @see com.chu7.vuecomponentassistant.utils.VueKitLogger
+ * @see com.chu7.vuecomponentassistant.utils.LibraryTypeHelper
  */
 @Service
 @State(
@@ -49,21 +69,59 @@ import com.intellij.openapi.vfs.VirtualFile;
 )
 public final class ComponentLibraryConfigManager implements PersistentStateComponent<ComponentLibraryConfigManager.ConfigState> {
 
+    /**
+     * 日志记录器
+     * 用于记录配置管理过程中的关键信息和错误
+     */
     private static final Logger LOG = VueKitLogger.getLogger(ComponentLibraryConfigManager.class);
 
-    // 配置文件名
+    /**
+     * 项目配置文件名称
+     * 存储在项目的.idea目录下
+     */
     private static final String PROJECT_CONFIG_FILE = "vuekit-project-config.json";
+    
+    /**
+     * 全局配置文件名称
+     * 存储在插件的配置目录下
+     */
     private static final String GLOBAL_CONFIG_FILE = "vuekit-libraries.json";
 
-    // 默认启用的组件库 - 现在动态从远程组件库管理器获取
+    /**
+     * 默认启用的组件库集合
+     * 动态从远程组件库管理器获取，避免硬编码
+     */
     private static Set<String> DEFAULT_ENABLED_LIBRARIES;
     
+    /**
+     * 静态初始化块
+     * 在类加载时初始化默认启用的组件库
+     */
     static {
         initializeDefaultLibraries();
     }
     
     /**
      * 动态初始化默认启用的组件库
+     * 
+     * <p>该方法会执行以下操作：</p>
+     * <ol>
+     *   <li>从远程组件库管理器获取已安装的组件库</li>
+     *   <li>过滤出已知的组件库类型</li>
+     *   <li>设置默认启用的组件库集合</li>
+     *   <li>处理异常情况，使用空集合作为后备</li>
+     * </ol>
+     * 
+     * <p>设计考虑：</p>
+     * <ul>
+     *   <li>避免硬编码默认组件库列表</li>
+     *   <li>支持动态组件库发现</li>
+     *   <li>完善的异常处理机制</li>
+     *   <li>使用空集合而不是null作为默认值</li>
+     * </ul>
+     * 
+     * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager
+     * @see com.chu7.vuecomponentassistant.utils.LibraryTypeHelper
      */
     private static void initializeDefaultLibraries() {
         try {
@@ -97,29 +155,66 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
         }
     }
 
-    // 项目级配置缓存
+    /**
+     * 项目级配置缓存
+     * 使用ConcurrentHashMap确保线程安全，支持多项目环境
+     */
     private final Map<String, ProjectConfig> projectConfigs = new ConcurrentHashMap<>();
 
-    // 全局配置
+    /**
+     * 全局配置对象
+     * 存储插件的全局默认配置
+     */
     private GlobalConfig globalConfig;
 
-    // 配置变更监听器
+    /**
+     * 配置变更监听器列表
+     * 用于通知配置变更事件
+     */
     private final List<ConfigChangeListener> listeners = new ArrayList<>();
 
     /**
      * 获取组件库配置管理器实例
+     * 
+     * <p>该方法用于获取项目级别的配置管理器实例，
+     * 每个项目都有独立的配置管理。</p>
+     * 
+     * <p>获取方式：</p>
+     * <ul>
+     *   <li>通过项目服务获取</li>
+     *   <li>支持项目级别的配置隔离</li>
+     *   <li>自动创建和管理实例</li>
+     * </ul>
      *
-     * @param project 项目对象
+     * @param project 项目对象，不能为null
      * @return 配置管理器实例
+     * @throws IllegalArgumentException 如果project为null
+     * 
+     * @see com.intellij.openapi.project.Project#getService(Class)
      */
     public static ComponentLibraryConfigManager getInstance(Project project) {
+        if (project == null) {
+            throw new IllegalArgumentException("项目对象不能为null");
+        }
         return project.getService(ComponentLibraryConfigManager.class);
     }
 
     /**
      * 获取全局配置管理器实例
+     * 
+     * <p>该方法用于获取应用级别的全局配置管理器实例，
+     * 用于管理插件的全局默认配置。</p>
+     * 
+     * <p>获取方式：</p>
+     * <ul>
+     *   <li>通过应用服务获取</li>
+     *   <li>支持全局级别的配置管理</li>
+     *   <li>与项目级配置管理器分离</li>
+     * </ul>
      *
      * @return 全局配置管理器实例
+     * 
+     * @see com.intellij.openapi.application.ApplicationManager#getApplication()
      */
     public static ComponentLibraryConfigManager getGlobalInstance() {
         return ApplicationManager.getApplication().getService(ComponentLibraryConfigManager.class);
@@ -127,6 +222,23 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
 
     /**
      * 构造函数
+     * 
+     * <p>初始化配置管理器，执行以下操作：</p>
+     * <ol>
+     *   <li>加载全局配置</li>
+     *   <li>初始化项目监听器</li>
+     *   <li>设置默认配置值</li>
+     * </ol>
+     * 
+     * <p>初始化流程：</p>
+     * <ul>
+     *   <li>调用loadGlobalConfig()加载全局配置</li>
+     *   <li>调用initializeProjectListener()设置项目监听</li>
+     *   <li>确保配置管理器的正确初始化</li>
+     * </ul>
+     * 
+     * @see #loadGlobalConfig()
+     * @see #initializeProjectListener()
      */
     public ComponentLibraryConfigManager() {
         loadGlobalConfig();
@@ -135,11 +247,33 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
 
     /**
      * 获取项目启用的组件库名称
+     * 
+     * <p>该方法会按照优先级顺序获取启用的组件库：</p>
+     * <ol>
+     *   <li>项目级配置（最高优先级）</li>
+     *   <li>全局配置（中等优先级）</li>
+     *   <li>默认配置（最低优先级）</li>
+     * </ol>
+     * 
+     * <p>配置优先级说明：</p>
+     * <ul>
+     *   <li>项目级配置：覆盖全局配置，项目特定设置</li>
+     *   <li>全局配置：插件的默认设置，影响所有项目</li>
+     *   <li>默认配置：系统内置的默认值，作为后备方案</li>
+     * </ul>
      *
-     * @param project 项目对象
-     * @return 启用的组件库名称集合
+     * @param project 项目对象，不能为null
+     * @return 启用的组件库名称集合，如果获取失败则返回空集合
+     * @throws IllegalArgumentException 如果project为null
+     * 
+     * @see #getProjectConfig(Project)
+     * @see #DEFAULT_ENABLED_LIBRARIES
      */
     public Set<String> getEnabledLibraryNames(Project project) {
+        if (project == null) {
+            throw new IllegalArgumentException("项目对象不能为null");
+        }
+        
         try {
             String projectId = getProjectId(project);
 
@@ -172,11 +306,35 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
     
     /**
      * 检查项目配置文件是否存在且有效
+     * 
+     * <p>该方法会执行以下验证：</p>
+     * <ol>
+     *   <li>检查.idea目录是否存在</li>
+     *   <li>检查配置文件是否存在</li>
+     *   <li>验证文件内容是否有效</li>
+     *   <li>尝试解析配置文件</li>
+     * </ol>
+     * 
+     * <p>有效性检查：</p>
+     * <ul>
+     *   <li>文件不为空</li>
+     *   <li>内容不是空JSON对象</li>
+     *   <li>包含有效的配置数据</li>
+     *   <li>启用的组件库列表不为空</li>
+     * </ul>
      *
-     * @param project 项目对象
-     * @return 如果配置文件存在且有效则返回 true
+     * @param project 项目对象，不能为null
+     * @return 如果配置文件存在且有效则返回true，否则返回false
+     * @throws IllegalArgumentException 如果project为null
+     * 
+     * @see #PROJECT_CONFIG_FILE
+     * @see #parseProjectConfigFromJson(String)
      */
     public boolean hasValidProjectConfig(Project project) {
+        if (project == null) {
+            throw new IllegalArgumentException("项目对象不能为null");
+        }
+        
         try {
             VirtualFile ideaDir = getIdeaDirectory(project);
             if (ideaDir == null) {
@@ -199,7 +357,7 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
             return config != null && !config.getEnabledLibraryNames().isEmpty();
             
         } catch (Exception e) {
-            VueKitLogger.debug(LOG, "检查项目配置文件有效性失败", e);
+            VueKitLogger.warn(LOG, "检查项目配置文件有效性时发生错误", e);
             return false;
         }
     }

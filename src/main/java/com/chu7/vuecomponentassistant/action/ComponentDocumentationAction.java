@@ -27,37 +27,77 @@ import java.util.List;
 /**
  * Vue Component 文档查看动作
  * 
- * 功能说明：
- * - 右键菜单动作，用于查看组件的详细文档
- * - 弹框显示组件的完整信息，包括属性、事件、插槽等
- * - 提供更好的用户体验，比悬浮提示更详细
+ * <p>功能说明：</p>
+ * <ul>
+ *   <li>右键菜单动作，用于查看组件的详细文档</li>
+ *   <li>弹框显示组件的完整信息，包括属性、事件、插槽等</li>
+ *   <li>提供更好的用户体验，比悬浮提示更详细</li>
+ *   <li>支持多种组件库的文档查看</li>
+ *   <li>提供文档内容的复制和分享功能</li>
+ * </ul>
  * 
- * 使用场景：
- * - 在Vue文件中右键点击组件标签
- * - 需要查看组件的完整文档信息
- * - 需要复制组件文档内容
- * - 需要打开组件的官方文档
+ * <p>触发方式：</p>
+ * <ul>
+ *   <li>在Vue文件中右键点击组件标签</li>
+ *   <li>支持多种组件库前缀（el-、a-、v-、q-、my-等）</li>
+ *   <li>自动识别组件类型和库</li>
+ * </ul>
  * 
- * 支持的操作：
- * - 查看组件属性列表和说明
- * - 查看组件事件列表和参数
- * - 查看组件插槽列表和作用域
- * - 复制文档内容到剪贴板
- * - 打开组件的官方文档链接
+ * <p>使用场景：</p>
+ * <ul>
+ *   <li>在Vue文件中右键点击组件标签</li>
+ *   <li>需要查看组件的完整文档信息</li>
+ *   <li>需要复制组件文档内容</li>
+ *   <li>需要打开组件的官方文档</li>
+ *   <li>学习和了解组件用法</li>
+ * </ul>
+ * 
+ * <p>支持的操作：</p>
+ * <ul>
+ *   <li>查看组件属性列表和说明</li>
+ *   <li>查看组件事件列表和参数</li>
+ *   <li>查看组件插槽列表和作用域</li>
+ *   <li>复制文档内容到剪贴板</li>
+ *   <li>打开组件的官方文档链接</li>
+ *   <li>支持多种文档格式和样式</li>
+ * </ul>
+ * 
+ * <p>设计特点：</p>
+ * <ul>
+ *   <li>支持项目级和全局级设置控制</li>
+ *   <li>动态组件提供者管理</li>
+ *   <li>智能组件识别和验证</li>
+ *   <li>完善的错误处理和用户提示</li>
+ * </ul>
  * 
  * @author VueKit Team
  * @version 1.0.0
+ * @since 1.0.0
+ * @see com.chu7.vuecomponentassistant.completion2.ComponentProviderManager
+ * @see com.chu7.vuecomponentassistant.ui.ComponentDocumentationDialog
+ * @see com.chu7.vuecomponentassistant.documentation.DocumentationStyleGenerator
  */
 public class ComponentDocumentationAction extends AnAction {
 
+    /**
+     * 日志记录器
+     * 用于记录组件文档查看过程中的关键信息和错误
+     */
     private static final com.intellij.openapi.diagnostic.Logger LOG = 
         com.intellij.openapi.diagnostic.Logger.getInstance(ComponentDocumentationAction.class);
 
     /**
      * 构造函数
      * 
-     * 初始化右键菜单动作，组件提供者将在actionPerformed中根据项目动态创建，
-     * 确保每个项目都有独立的组件数据管理。
+     * <p>初始化右键菜单动作，组件提供者将在actionPerformed中根据项目动态创建，
+     * 确保每个项目都有独立的组件数据管理。</p>
+     * 
+     * <p>设计考虑：</p>
+     * <ul>
+     *   <li>延迟初始化组件提供者</li>
+     *   <li>支持多项目环境</li>
+     *   <li>确保数据隔离和安全性</li>
+     * </ul>
      */
     public ComponentDocumentationAction() {
         // 组件提供者将在 actionPerformed 中根据项目动态创建
@@ -66,19 +106,41 @@ public class ComponentDocumentationAction extends AnAction {
     /**
      * 动作执行方法
      * 
-     * 当用户在Vue文件中右键点击组件标签时触发此方法。
-     * 执行流程：
-     * 1. 检查功能开关设置
-     * 2. 获取当前项目和编辑器信息
-     * 3. 提取组件名称
-     * 4. 验证组件是否支持
-     * 5. 生成文档内容
-     * 6. 显示文档对话框
+     * <p>当用户在Vue文件中右键点击组件标签时触发此方法。</p>
      * 
-     * @param e 动作事件，包含当前上下文信息
+     * <p>执行流程：</p>
+     * <ol>
+     *   <li>检查功能开关设置（项目级优先于全局级）</li>
+     *   <li>获取当前项目和编辑器信息</li>
+     *   <li>提取组件名称和类型</li>
+     *   <li>验证组件是否支持</li>
+     *   <li>获取组件详细信息</li>
+     *   <li>生成格式化文档内容</li>
+     *   <li>显示文档对话框</li>
+     * </ol>
+     * 
+     * <p>错误处理：</p>
+     * <ul>
+     *   <li>项目信息缺失时显示错误对话框</li>
+     *   <li>编辑器信息缺失时显示错误对话框</li>
+     *   <li>组件识别失败时显示错误对话框</li>
+     *   <li>组件信息缺失时显示错误对话框</li>
+     * </ul>
+     * 
+     * @param e 动作事件，包含当前上下文信息，不能为null
+     * @throws IllegalArgumentException 如果事件对象为null
+     * 
+     * @see #isRightClickDocumentationEnabled(Project)
+     * @see #extractComponentName(PsiElement)
+     * @see #generateDocumentation(ElementPlusComponent)
+     * @see #showDocumentationDialog(Project, String, String)
      */
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
+        if (e == null) {
+            throw new IllegalArgumentException("动作事件对象不能为null");
+        }
+        
         // 获取当前项目
         Project project = e.getProject();
         if (project == null) {
@@ -147,13 +209,39 @@ public class ComponentDocumentationAction extends AnAction {
     /**
      * 更新动作状态
      * 
-     * 根据当前上下文动态更新右键菜单项的可见性和启用状态。
-     * 只有在支持的组件库组件上才显示此菜单项。
+     * <p>根据当前上下文动态更新右键菜单项的可见性和启用状态。
+     * 只有在支持的组件库组件上才显示此菜单项。</p>
      * 
-     * @param e 动作事件
+     * <p>更新逻辑：</p>
+     * <ol>
+     *   <li>检查项目有效性</li>
+     *   <li>验证右键文档功能是否启用</li>
+     *   <li>识别当前组件类型</li>
+     *   <li>判断是否支持该组件库</li>
+     *   <li>设置菜单项的可见性和启用状态</li>
+     * </ol>
+     * 
+     * <p>支持的组件库前缀：</p>
+     * <ul>
+     *   <li>el-：Element Plus/Element UI</li>
+     *   <li>a-：Ant Design Vue</li>
+     *   <li>v-：Vuetify</li>
+     *   <li>q-：Quasar</li>
+     *   <li>my-：自定义组件</li>
+     * </ul>
+     * 
+     * @param e 动作事件，包含当前上下文信息，不能为null
+     * @throws IllegalArgumentException 如果事件对象为null
+     * 
+     * @see #isRightClickDocumentationEnabled(Project)
+     * @see #extractComponentName(PsiElement)
      */
     @Override
     public void update(@NotNull AnActionEvent e) {
+        if (e == null) {
+            throw new IllegalArgumentException("动作事件对象不能为null");
+        }
+        
         // 获取当前项目
         Project project = e.getProject();
         if (project == null) {
@@ -204,15 +292,35 @@ public class ComponentDocumentationAction extends AnAction {
     /**
      * 从 PSI 元素中提取组件名称
      * 
-     * 递归解析PSI元素树，提取组件标签名称。
-     * 支持多种元素类型：XML标签、文本元素等。
+     * <p>递归解析PSI元素树，提取组件标签名称。
+     * 支持多种元素类型：XML标签、文本元素等。</p>
      * 
-     * @param element PSI 元素
+     * <p>提取策略：</p>
+     * <ol>
+     *   <li>优先检查当前元素是否为XML标签</li>
+     *   <li>如果是文本元素，尝试解析标签内容</li>
+     *   <li>递归检查父元素</li>
+     *   <li>返回第一个有效的组件名称</li>
+     * </ol>
+     * 
+     * <p>支持的格式：</p>
+     * <ul>
+     *   <li>标准XML标签：&lt;el-button&gt;</li>
+     *   <li>自闭合标签：&lt;el-input /&gt;</li>
+     *   <li>带属性的标签：&lt;el-table data="..."&gt;</li>
+     *   <li>嵌套标签结构</li>
+     * </ul>
+     * 
+     * @param element PSI 元素，不能为null
      * @return 组件名称，如果无法提取则返回null
+     * @throws IllegalArgumentException 如果element为null
+     * 
+     * @see com.intellij.psi.xml.XmlTag
+     * @see com.intellij.psi.PsiElement#getParent()
      */
     private String extractComponentName(PsiElement element) {
         if (element == null) {
-            return null;
+            throw new IllegalArgumentException("PSI元素不能为null");
         }
 
         // 如果是 XML 标签
@@ -247,11 +355,22 @@ public class ComponentDocumentationAction extends AnAction {
     /**
      * 检查是否是支持的组件库组件
      * 
-     * 通过组件名称前缀判断是否支持该组件库。
-     * 目前支持：Element Plus (el-)、Ant Design Vue (a-)
+     * <p>通过组件名称前缀判断是否支持该组件库。
+     * 目前支持：Element Plus (el-)、Ant Design Vue (a-)</p>
      * 
-     * @param componentName 组件名称
+     * <p>支持的前缀：</p>
+     * <ul>
+     *   <li>el-：Element Plus/Element UI组件</li>
+     *   <li>a-：Ant Design Vue组件</li>
+     *   <li>v-：Vuetify组件</li>
+     *   <li>q-：Quasar组件</li>
+     *   <li>my-：自定义组件</li>
+     * </ul>
+     * 
+     * @param componentName 组件名称，可以为null
      * @return 是否是支持的组件库组件
+     * 
+     * @see #update(AnActionEvent)
      */
     private boolean isSupportedComponent(String componentName) {
         return componentName != null && (componentName.startsWith("el-") || componentName.startsWith("a-"));
@@ -260,25 +379,64 @@ public class ComponentDocumentationAction extends AnAction {
     /**
      * 生成文档内容
      * 
-     * 使用DocumentationStyleGenerator将组件信息转换为HTML格式的文档。
+     * <p>使用DocumentationStyleGenerator将组件信息转换为HTML格式的文档。
+     * 生成的文档包含组件的完整信息。</p>
      * 
-     * @param component 组件信息对象
+     * <p>文档内容：</p>
+     * <ul>
+     *   <li>组件基本信息（名称、描述、版本等）</li>
+     *   <li>属性列表和说明</li>
+     *   <li>事件列表和参数</li>
+     *   <li>插槽列表和作用域</li>
+     *   <li>使用示例和最佳实践</li>
+     * </ul>
+     * 
+     * @param component 组件信息对象，不能为null
      * @return 格式化的HTML文档内容
+     * @throws IllegalArgumentException 如果component为null
+     * 
+     * @see com.chu7.vuecomponentassistant.documentation.DocumentationStyleGenerator#generateHtmlDocumentation(ElementPlusComponent)
      */
     private String generateDocumentation(ElementPlusComponent component) {
+        if (component == null) {
+            throw new IllegalArgumentException("组件对象不能为null");
+        }
         return DocumentationStyleGenerator.generateHtmlDocumentation(component);
     }
 
     /**
      * 显示文档对话框
      * 
-     * 创建并显示组件文档对话框，提供完整的组件信息展示。
+     * <p>创建并显示组件文档对话框，提供完整的组件信息展示。
+     * 对话框支持多种交互操作。</p>
      * 
-     * @param project 当前项目实例
-     * @param componentName 组件名称
-     * @param documentation HTML格式的文档内容
+     * <p>对话框功能：</p>
+     * <ul>
+     *   <li>显示格式化的HTML文档内容</li>
+     *   <li>支持文档内容的复制</li>
+     *   <li>提供官方文档链接</li>
+     *   <li>支持文档样式的自定义</li>
+     *   <li>响应式布局设计</li>
+     * </ul>
+     * 
+     * @param project 当前项目实例，不能为null
+     * @param componentName 组件名称，不能为null
+     * @param documentation HTML格式的文档内容，不能为null
+     * @throws IllegalArgumentException 如果任何参数为null
+     * 
+     * @see com.chu7.vuecomponentassistant.ui.ComponentDocumentationDialog
      */
     private void showDocumentationDialog(Project project, String componentName, String documentation) {
+        if (project == null) {
+            throw new IllegalArgumentException("项目对象不能为null");
+        }
+        if (componentName == null) {
+            throw new IllegalArgumentException("组件名称不能为null");
+        }
+        if (documentation == null) {
+            throw new IllegalArgumentException("文档内容不能为null");
+        }
+        
         ComponentDocumentationDialog dialog = new ComponentDocumentationDialog(
             project, componentName, documentation
         );
@@ -287,12 +445,37 @@ public class ComponentDocumentationAction extends AnAction {
 
     /**
      * 检查右键文档功能是否启用
-     * 项目级设置优先于全局设置，如果项目级设置为false则明确禁用
      * 
-     * @param project 项目对象
-     * @return 是否启用右键文档
+     * <p>项目级设置优先于全局设置，如果项目级设置为false则明确禁用。
+     * 支持多级配置管理。</p>
+     * 
+     * <p>配置优先级：</p>
+     * <ol>
+     *   <li>项目级设置（最高优先级）</li>
+     *   <li>全局设置（默认优先级）</li>
+     *   <li>默认值false（最低优先级）</li>
+     * </ol>
+     * 
+     * <p>配置逻辑：</p>
+     * <ul>
+     *   <li>如果项目级设置为false，明确禁用功能</li>
+     *   <li>如果项目级设置为true，启用功能</li>
+     *   <li>如果没有项目级设置，使用全局设置</li>
+     *   <li>如果配置获取失败，使用默认值false</li>
+     * </ul>
+     * 
+     * @param project 项目对象，不能为null
+     * @return 是否启用右键文档功能
+     * @throws IllegalArgumentException 如果project为null
+     * 
+     * @see com.chu7.vuecomponentassistant.settings.ProjectSettingsManager
+     * @see com.chu7.vuecomponentassistant.settings.PluginSettings
      */
     private boolean isRightClickDocumentationEnabled(Project project) {
+        if (project == null) {
+            throw new IllegalArgumentException("项目对象不能为null");
+        }
+        
         try {
             // 首先尝试获取项目级设置
             ProjectSettingsManager projectSettingsManager = ProjectSettingsManager.getInstance(project);

@@ -30,22 +30,82 @@ import java.util.HashMap;
 /**
  * 自定义组件库管理动作
  *
- * 功能说明：
- * - 首先展示所有组件（内置 + 自定义）
- * - 提供组件库上传功能
- * - 提供组件库导出功能
- * - 提供组件库删除功能（内置组件库不可删除）
- * - 提供导出模板功能
+ * <p>功能说明：</p>
+ * <ul>
+ *   <li>展示所有组件（内置 + 自定义）的详细信息</li>
+ *   <li>提供组件库上传功能，支持自定义组件库导入</li>
+ *   <li>提供组件库导出功能，支持JSON格式导出</li>
+ *   <li>提供组件库删除功能（内置组件库不可删除）</li>
+ *   <li>提供导出模板功能，便于组件库共享</li>
+ *   <li>支持组件库的批量管理和操作</li>
+ * </ul>
+ *
+ * <p>设计特点：</p>
+ * <ul>
+ *   <li>集成到 IntelliJ IDEA 菜单系统</li>
+ *   <li>支持项目上下文感知和状态管理</li>
+ *   <li>用户友好的管理界面和操作流程</li>
+ *   <li>完整的组件库生命周期管理</li>
+ *   <li>支持多种文件格式的导入导出</li>
+ *   <li>智能的组件库分类和识别</li>
+ * </ul>
+ *
+ * <p>使用场景：</p>
+ * <ul>
+ *   <li>用户需要查看所有可用组件的详细信息</li>
+ *   <li>团队需要共享自定义组件库</li>
+ *   <li>项目需要导入第三方组件库</li>
+ *   <li>组件库的备份和迁移</li>
+ *   <li>自定义组件库的管理和维护</li>
+ * </ul>
  *
  * @author VueKit Team
- * @version 1.0.0
+ * @version 2.0.0
+ * @since 1.0.0
+ * @see com.chu7.vuecomponentassistant.ui.CustomLibraryUploadDialog
+ * @see com.chu7.vuecomponentassistant.utils.CustomComponentLibraryManager
+ * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager
+ * @see com.chu7.vuecomponentassistant.remote.model.ComponentLibrary
  */
 public class CustomLibraryManagementAction extends AnAction {
 
+    /**
+     * 构造函数
+     *
+     * <p>初始化自定义组件库管理动作的基本信息：</p>
+     * <ul>
+     *   <li>动作名称：自定义组件库管理</li>
+     *   <li>动作描述：管理所有组件库和组件</li>
+     *   <li>图标：使用默认图标</li>
+     * </ul>
+     */
     public CustomLibraryManagementAction() {
         super("自定义组件库管理", "管理所有组件库和组件", null);
     }
 
+    /**
+     * 动作执行方法
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>验证项目上下文的有效性</li>
+     *   <li>展示所有可用组件的详细信息</li>
+     *   <li>提供组件库管理选项菜单</li>
+     *   <li>支持多种管理操作</li>
+     * </ul>
+     *
+     * <p>执行流程：</p>
+     * <ol>
+     *   <li>获取当前项目上下文</li>
+     *   <li>验证项目信息的有效性</li>
+     *   <li>展示所有组件信息</li>
+     *   <li>显示管理选项菜单</li>
+     *   <li>执行用户选择的操作</li>
+     * </ol>
+     *
+     * @param e 动作事件，包含执行上下文和项目信息
+     * @throws RuntimeException 当无法获取项目信息时抛出
+     */
     @Override
     public void actionPerformed(AnActionEvent e) {
         Project project = e.getData(CommonDataKeys.PROJECT);
@@ -62,7 +122,25 @@ public class CustomLibraryManagementAction extends AnAction {
     }
 
     /**
-     * 展示所有组件
+     * 展示所有组件信息
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>获取所有组件库中的组件信息</li>
+     *   <li>按组件库分组显示组件</li>
+     *   <li>提供组件数量和描述信息</li>
+     *   <li>使用友好的界面展示组件信息</li>
+     * </ul>
+     *
+     * <p>显示内容：</p>
+     * <ul>
+     *   <li>组件库名称和组件数量</li>
+     *   <li>每个组件的名称和描述</li>
+     *   <li>组件库的分组和分类</li>
+     *   <li>格式化的信息展示</li>
+     * </ul>
+     *
+     * @param project 当前项目，用于获取组件信息
      */
     private void showAllComponents(Project project) {
         ComponentLibraryManager libraryManager = new ComponentLibraryManager();
@@ -134,7 +212,25 @@ public class CustomLibraryManagementAction extends AnAction {
     }
 
     /**
-     * 显示管理选项
+     * 显示管理选项菜单
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>提供组件库管理的主要操作选项</li>
+     *   <li>支持上传、导出、删除等操作</li>
+     *   <li>根据用户选择执行相应操作</li>
+     *   <li>提供友好的用户交互界面</li>
+     * </ul>
+     *
+     * <p>可用操作：</p>
+     * <ul>
+     *   <li>📦 上传新组件库</li>
+     *   <li>📤 导出组件库</li>
+     *   <li>🗑️ 删除自定义组件库</li>
+     *   <li>❌ 取消操作</li>
+     * </ul>
+     *
+     * @param project 当前项目，用于执行管理操作
      */
     private void showManagementOptions(Project project) {
         String[] options = {
@@ -171,6 +267,16 @@ public class CustomLibraryManagementAction extends AnAction {
 
     /**
      * 上传新组件库
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>打开组件库上传对话框</li>
+     *   <li>支持自定义组件库的导入</li>
+     *   <li>验证组件库格式和内容</li>
+     *   <li>集成到现有的组件库管理系统</li>
+     * </ul>
+     *
+     * @param project 当前项目，用于组件库上传
      */
     private void uploadNewLibrary(Project project) {
         ComponentLibraryManager libraryManager = new ComponentLibraryManager();
@@ -180,6 +286,25 @@ public class CustomLibraryManagementAction extends AnAction {
 
     /**
      * 导出组件库
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>获取所有可用的组件库</li>
+     *   <li>允许用户选择要导出的组件库</li>
+     *   <li>支持JSON格式的组件库导出</li>
+     *   <li>提供文件保存位置选择</li>
+     * </ul>
+     *
+     * <p>导出流程：</p>
+     * <ol>
+     *   <li>获取所有组件库信息</li>
+     *   <li>选择要导出的组件库</li>
+     *   <li>选择保存位置和文件名</li>
+     *   <li>生成JSON格式的导出文件</li>
+     *   <li>提供导出成功反馈</li>
+     * </ol>
+     *
+     * @param project 当前项目，用于获取组件库信息
      */
     private void exportLibrary(Project project) {
         // 获取所有组件库
@@ -264,6 +389,25 @@ public class CustomLibraryManagementAction extends AnAction {
 
     /**
      * 删除自定义组件库
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>获取所有自定义组件库列表</li>
+     *   <li>允许用户选择要删除的组件库</li>
+     *   <li>提供删除确认对话框</li>
+     *   <li>支持组件库的永久删除</li>
+     *   <li>通知相关组件重新加载数据</li>
+     * </ul>
+     *
+     * <p>安全特性：</p>
+     * <ul>
+     *   <li>只允许删除自定义组件库</li>
+     *   <li>内置组件库和远程组件库不可删除</li>
+     *   <li>删除前需要用户确认</li>
+     *   <li>删除后通知相关组件更新</li>
+     * </ul>
+     *
+     * @param project 当前项目，用于显示对话框和获取组件库信息
      */
     private void deleteCustomLibrary(Project project) {
         List<CustomComponentLibraryManager.CustomLibraryConfig> customLibraries =
@@ -325,9 +469,25 @@ public class CustomLibraryManagementAction extends AnAction {
         }
     }
 
-
     /**
      * 获取组件前缀
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>根据组件库名称确定组件前缀</li>
+     *   <li>支持常见组件库的前缀映射</li>
+     *   <li>为未知组件库提供默认前缀</li>
+     * </ul>
+     *
+     * <p>前缀映射规则：</p>
+     * <ul>
+     *   <li>Element Plus/Element UI: el-</li>
+     *   <li>Ant Design Vue: a-</li>
+     *   <li>其他组件库: my-</li>
+     * </ul>
+     *
+     * @param libraryName 组件库名称
+     * @return 对应的组件前缀
      */
     private String getComponentPrefix(String libraryName) {
         switch (libraryName.toLowerCase()) {
@@ -342,6 +502,18 @@ public class CustomLibraryManagementAction extends AnAction {
         }
     }
 
+    /**
+     * 更新动作状态
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>根据项目上下文动态启用/禁用动作</li>
+     *   <li>只有在有项目时才启用此动作</li>
+     *   <li>确保动作在正确的上下文中执行</li>
+     * </ul>
+     *
+     * @param e 动作事件，包含项目上下文信息
+     */
     @Override
     public void update(AnActionEvent e) {
         // 只有在有项目时才启用此动作

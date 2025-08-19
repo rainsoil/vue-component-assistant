@@ -37,23 +37,44 @@ import java.util.List;
 
 /**
  * 组件库配置对话框
- * <p>
- * 功能说明：
- * - 提供组件库启用/禁用开关
- * - 支持项目级配置管理
- * - 配置导入/导出功能
- * - 智能检测项目依赖的组件库
- * - 用户友好的配置界面
- * <p>
- * 特性：
- * - 直观的复选框界面
- * - 实时配置预览
- * - 一键导入/导出
- * - 智能默认值设置
- * - 配置验证和错误提示
+ *
+ * <p>功能说明：</p>
+ * <ul>
+ *   <li>提供组件库启用/禁用开关</li>
+ *   <li>支持项目级配置管理</li>
+ *   <li>配置导入/导出功能</li>
+ *   <li>智能检测项目依赖的组件库</li>
+ *   <li>用户友好的配置界面</li>
+ *   <li>调试模式配置选项</li>
+ *   <li>自动匹配项目依赖</li>
+ * </ul>
+ *
+ * <p>设计特点：</p>
+ * <ul>
+ *   <li>直观的复选框界面</li>
+ *   <li>实时配置预览</li>
+ *   <li>一键导入/导出</li>
+ *   <li>智能默认值设置</li>
+ *   <li>配置验证和错误提示</li>
+ *   <li>响应式布局设计</li>
+ *   <li>完整的日志记录</li>
+ * </ul>
+ *
+ * <p>使用场景：</p>
+ * <ul>
+ *   <li>项目初始化时的组件库配置</li>
+ *   <li>团队项目配置的统一管理</li>
+ *   <li>组件库功能的开关控制</li>
+ *   <li>配置的备份和恢复</li>
+ *   <li>开发环境的调试配置</li>
+ * </ul>
  *
  * @author VueKit Team
  * @version 2.0.0
+ * @since 1.0.0
+ * @see com.intellij.openapi.ui.DialogWrapper
+ * @see com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager
+ * @see com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector
  */
 public class ComponentLibraryConfigDialog extends DialogWrapper {
 

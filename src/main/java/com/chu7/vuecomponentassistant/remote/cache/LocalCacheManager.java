@@ -25,37 +25,131 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * 本地缓存管理器
  * 
- * 提供组件库和官方组件库的本地缓存功能，包括内存缓存和磁盘缓存。
- * 支持缓存过期清理、统计信息获取等高级功能。
+ * <p>功能说明：</p>
+ * <ul>
+ *   <li>提供组件库和官方组件库的本地缓存功能</li>
+ *   <li>支持内存缓存和磁盘缓存的双层存储</li>
+ *   <li>管理缓存的过期清理和统计信息</li>
+ *   <li>提供线程安全的缓存访问机制</li>
+ *   <li>支持JSON序列化和反序列化</li>
+ * </ul>
  * 
- * 特性：
- * - 内存缓存：使用ConcurrentHashMap提供线程安全的快速访问
- * - 磁盘缓存：持久化存储，支持应用重启后的数据恢复
- * - 过期清理：自动清理超过7天的过期缓存文件
- * - 统计信息：提供缓存使用情况的详细统计
+ * <p>设计特点：</p>
+ * <ul>
+ *   <li>双层缓存：内存缓存提供快速访问，磁盘缓存确保数据持久化</li>
+ *   <li>线程安全：使用ConcurrentHashMap确保多线程环境下的安全性</li>
+ *   <li>自动过期：支持配置缓存过期时间，自动清理过期数据</li>
+ *   <li>错误容错：完善的异常处理和错误恢复机制</li>
+ *   <li>性能优化：优先从内存缓存读取，减少磁盘I/O操作</li>
+ * </ul>
+ * 
+ * <p>缓存策略：</p>
+ * <ol>
+ *   <li>内存缓存：使用ConcurrentHashMap存储最近访问的组件库</li>
+ *   <li>磁盘缓存：持久化存储到用户主目录的.vuekit/cache目录</li>
+ *   <li>过期清理：自动清理超过7天的过期缓存文件</li>
+ *   <li>统计监控：提供详细的缓存使用情况统计</li>
+ * </ol>
+ * 
+ * <p>使用场景：</p>
+ * <ul>
+ *   <li>组件库的本地存储和快速访问</li>
+ *   <li>官方组件库列表的缓存管理</li>
+ *   <li>离线环境下的组件库访问</li>
+ *   <li>缓存性能监控和优化</li>
+ *   <li>磁盘空间管理和清理</li>
+ * </ul>
  * 
  * @author VueKit Team
  * @version 2.0.0
+ * @since 1.0.0
+ * @see com.chu7.vuecomponentassistant.remote.model.ComponentLibrary
+ * @see com.chu7.vuecomponentassistant.remote.model.OfficialLibrary
+ * @see com.chu7.vuecomponentassistant.exceptions.VueKitException
+ * @see java.util.concurrent.ConcurrentHashMap
  */
 public class LocalCacheManager {
+    
+    /**
+     * 日志记录器
+     * 用于记录缓存管理过程中的关键信息和错误
+     */
     private static final Logger LOG = Logger.getInstance(LocalCacheManager.class);
+    
+    /**
+     * 缓存目录名称
+     * 在用户主目录下创建的缓存文件夹名称
+     */
     private static final String CACHE_DIR = "vuekit_cache";
+    
+    /**
+     * 组件库列表文件名
+     * 存储所有组件库信息的JSON文件名
+     */
     private static final String LIBRARIES_FILE = "libraries.json";
+    
+    /**
+     * 官方组件库列表文件名
+     * 存储官方组件库信息的JSON文件名
+     */
     private static final String OFFICIAL_LIBRARIES_FILE = "official_libraries.json";
+    
+    /**
+     * 组件库文件前缀
+     * 单个组件库缓存文件的前缀标识
+     */
     private static final String COMPONENT_LIBRARY_PREFIX = "library_";
+    
+    /**
+     * 组件库文件后缀
+     * 单个组件库缓存文件的后缀标识
+     */
     private static final String COMPONENT_LIBRARY_SUFFIX = ".json";
     
-    // 缓存过期时间：7天
+    /**
+     * 缓存过期时间
+     * 缓存文件的有效期，默认为7天（毫秒）
+     */
     private static final long CACHE_EXPIRY_TIME = 7 * 24 * 60 * 60 * 1000L;
     
+    /**
+     * 缓存目录路径
+     * 指向用户主目录下的.vuekit/cache目录
+     */
     private final Path cacheDir;
+    
+    /**
+     * 组件库内存缓存
+     * 使用ConcurrentHashMap存储组件库ID到ComponentLibrary对象的映射
+     */
     private final Map<String, ComponentLibrary> memoryCache;
+    
+    /**
+     * 官方组件库内存缓存
+     * 使用ConcurrentHashMap存储官方组件库ID到OfficialLibrary对象的映射
+     */
     private final Map<String, OfficialLibrary> officialLibrariesCache;
     
     /**
      * 构造函数
      * 
-     * 初始化缓存管理器，创建必要的缓存目录和内存缓存容器
+     * <p>初始化本地缓存管理器，创建必要的缓存目录和内存缓存容器。</p>
+     * 
+     * <p>初始化流程：</p>
+     * <ol>
+     *   <li>获取缓存目录路径</li>
+     *   <li>创建内存缓存容器</li>
+     *   <li>确保缓存目录存在</li>
+     * </ol>
+     * 
+     * <p>缓存容器：</p>
+     * <ul>
+     *   <li>memoryCache：组件库的内存缓存</li>
+     *   <li>officialLibrariesCache：官方组件库的内存缓存</li>
+     * </ul>
+     * 
+     * @see #getCacheDirectory()
+     * @see #ensureCacheDirectoryExists()
      */
     public LocalCacheManager() {
         this.cacheDir = getCacheDirectory();
@@ -67,7 +161,18 @@ public class LocalCacheManager {
     /**
      * 获取缓存目录
      * 
+     * <p>该方法返回缓存目录的完整路径，默认位置在用户主目录下的.vuekit/cache目录。</p>
+     * 
+     * <p>目录结构：</p>
+     * <ul>
+     *   <li>Windows: C:\Users\{username}\.vuekit\vuekit_cache</li>
+     *   <li>macOS/Linux: /home/{username}/.vuekit/vuekit_cache</li>
+     * </ul>
+     * 
      * @return 缓存目录的Path对象
+     * 
+     * @see java.nio.file.Paths
+     * @see java.lang.System#getProperty(String)
      */
     private Path getCacheDirectory() {
         String userHome = System.getProperty("user.home");
@@ -77,7 +182,25 @@ public class LocalCacheManager {
     /**
      * 确保缓存目录存在
      * 
-     * 如果目录不存在，则创建完整的目录结构
+     * <p>该方法检查并创建缓存目录，如果目录不存在则创建完整的目录结构。
+     * 确保后续的缓存操作能够正常进行。</p>
+     * 
+     * <p>创建流程：</p>
+     * <ol>
+     *   <li>检查缓存目录是否存在</li>
+     *   <li>如果不存在，创建完整的目录结构</li>
+     *   <li>记录创建结果到日志</li>
+     * </ol>
+     * 
+     * <p>错误处理：</p>
+     * <ul>
+     *   <li>捕获IOException并记录错误日志</li>
+     *   <li>使用ErrorHandler统一处理异常</li>
+     *   <li>不影响管理器的正常初始化</li>
+     * </ul>
+     * 
+     * @see java.nio.file.Files#createDirectories(Path)
+     * @see com.chu7.vuecomponentassistant.utils.ErrorHandler#handleException(String, Exception, boolean)
      */
     private void ensureCacheDirectoryExists() {
         try {
@@ -95,11 +218,32 @@ public class LocalCacheManager {
     /**
      * 保存组件库到缓存
      * 
-     * 将组件库同时保存到内存缓存和磁盘缓存，确保数据持久化。
+     * <p>该方法将组件库同时保存到内存缓存和磁盘缓存，确保数据的持久化和快速访问。
+     * 支持完整的错误处理和参数验证。</p>
+     * 
+     * <p>保存流程：</p>
+     * <ol>
+     *   <li>验证组件库对象的有效性</li>
+     *   <li>生成缓存文件名</li>
+     *   <li>序列化为JSON并写入磁盘</li>
+     *   <li>更新内存缓存</li>
+     *   <li>记录操作日志</li>
+     * </ol>
+     * 
+     * <p>参数验证：</p>
+     * <ul>
+     *   <li>组件库对象不能为null</li>
+     *   <li>组件库ID不能为null</li>
+     *   <li>组件库名称不能为null</li>
+     * </ul>
      * 
      * @param library 要保存的组件库，不能为null
-     * @throws VueKitException 当保存操作失败时抛出
+     * @throws VueKitException 当保存操作失败时抛出，包含详细的错误信息
      * @throws IllegalArgumentException 当library为null时抛出
+     * 
+     * @see #convertLibraryToJson(ComponentLibrary)
+     * @see java.nio.file.Files#write(Path, byte[])
+     * @see java.util.Objects#requireNonNull(Object, String)
      */
     public void saveLibrary(ComponentLibrary library) throws VueKitException {
         Objects.requireNonNull(library, "组件库不能为null");
@@ -132,12 +276,32 @@ public class LocalCacheManager {
     /**
      * 从缓存加载组件库
      * 
-     * 优先从内存缓存加载，如果内存缓存中没有，则从磁盘缓存加载。
+     * <p>该方法优先从内存缓存加载组件库，如果内存缓存中没有，则从磁盘缓存加载。
+     * 实现了缓存的分层访问策略，提高访问性能。</p>
+     * 
+     * <p>加载策略：</p>
+     * <ol>
+     *   <li>首先检查内存缓存</li>
+     *   <li>如果内存缓存中没有，从磁盘加载</li>
+     *   <li>加载成功后更新内存缓存</li>
+     *   <li>返回加载的组件库对象</li>
+     * </ol>
+     * 
+     * <p>性能优化：</p>
+     * <ul>
+     *   <li>内存缓存优先，减少磁盘I/O</li>
+     *   <li>加载后自动更新内存缓存</li>
+     *   <li>支持并发访问，线程安全</li>
+     * </ul>
      * 
      * @param libraryId 组件库ID，不能为null或空字符串
-     * @return 加载的组件库，如果不存在则返回null
-     * @throws VueKitException 当加载操作失败时抛出
+     * @return 加载的组件库对象，如果不存在则返回null
+     * @throws VueKitException 当加载操作失败时抛出，包含详细的错误信息
      * @throws IllegalArgumentException 当libraryId为null或空字符串时抛出
+     * 
+     * @see #convertJsonToLibrary(String)
+     * @see java.nio.file.Files#readAllBytes(Path)
+     * @see java.lang.String#trim()
      */
     public ComponentLibrary loadLibrary(String libraryId) throws VueKitException {
         if (libraryId == null || libraryId.trim().isEmpty()) {
@@ -181,9 +345,30 @@ public class LocalCacheManager {
     /**
      * 获取所有缓存的组件库
      * 
-     * 扫描磁盘缓存目录，加载所有可用的组件库到内存缓存。
+     * <p>该方法扫描磁盘缓存目录，加载所有可用的组件库到内存缓存。
+     * 提供详细的日志记录，便于调试和监控。</p>
+     * 
+     * <p>扫描流程：</p>
+     * <ol>
+     *   <li>扫描缓存目录下的所有组件库文件</li>
+     *   <li>逐个读取和解析JSON文件</li>
+     *   <li>转换为ComponentLibrary对象</li>
+     *   <li>更新内存缓存</li>
+     *   <li>返回完整的组件库列表</li>
+     * </ol>
+     * 
+     * <p>错误处理：</p>
+     * <ul>
+     *   <li>单个文件失败不影响其他文件</li>
+     *   <li>损坏的文件会被跳过并记录警告</li>
+     *   <li>使用VueKitLogger记录详细信息</li>
+     * </ul>
      * 
      * @return 所有缓存的组件库列表，如果没有则返回空列表
+     * 
+     * @see #convertJsonToLibrary(String)
+     * @see com.chu7.vuecomponentassistant.utils.VueKitLogger#logAndIgnore(Logger, String, Exception)
+     * @see java.io.File#listFiles(FileFilter)
      */
     public List<ComponentLibrary> getAllLibraries() {
         LOG.info("=== LocalCacheManager.getAllLibraries() 开始 ===");

@@ -24,15 +24,45 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * 自定义组件库上传对话框 - 远程组件库版本
- * 
- * 功能说明：
- * - 支持本地JSON文件导入
- * - 支持远程JSON URL导入
- * - 预览组件库信息
- * - 验证组件库格式
- * 
+ *
+ * <p>功能说明：</p>
+ * <ul>
+ *   <li>支持本地JSON文件导入</li>
+ *   <li>支持远程JSON URL导入</li>
+ *   <li>预览组件库信息</li>
+ *   <li>验证组件库格式</li>
+ *   <li>智能冲突检测和处理</li>
+ *   <li>异步导入和验证</li>
+ *   <li>导入后自动启用选项</li>
+ * </ul>
+ *
+ * <p>设计特点：</p>
+ * <ul>
+ *   <li>卡片式布局：本地文件和远程URL两种输入方式</li>
+ *   <li>实时预览：导入前可预览组件库内容</li>
+ *   <li>智能验证：URL可访问性和JSON格式验证</li>
+ *   <li>异步处理：避免UI阻塞</li>
+ *   <li>冲突处理：同名组件库的智能替换</li>
+ *   <li>状态反馈：完整的操作状态显示</li>
+ * </ul>
+ *
+ * <p>使用场景：</p>
+ * <ul>
+ *   <li>开发者导入自定义组件库</li>
+ *   <li>团队共享组件库配置</li>
+ *   <li>从GitHub等平台导入组件库</li>
+ *   <li>本地开发的组件库测试</li>
+ *   <li>组件库的备份和恢复</li>
+ * </ul>
+ *
  * @author VueKit Team
  * @version 3.0.0
+ * @since 1.0.0
+ * @see com.intellij.openapi.ui.DialogWrapper
+ * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager
+ * @see com.chu7.vuecomponentassistant.remote.model.ComponentLibrary
+ * @see com.chu7.vuecomponentassistant.remote.model.ImportResult
+ * @see com.chu7.vuecomponentassistant.completion2.ComponentProviderManager
  */
 public class CustomLibraryUploadDialog extends DialogWrapper {
     
@@ -51,8 +81,43 @@ public class CustomLibraryUploadDialog extends DialogWrapper {
     private JPanel inputCardPanel;
     private CardLayout cardLayout;
     
+    /**
+     * 构造函数
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>初始化自定义组件库上传对话框</li>
+     *   <li>设置对话框基本属性和样式</li>
+     *   <li>初始化组件库管理器</li>
+     *   <li>配置对话框尺寸和可调整性</li>
+     * </ul>
+     *
+     * <p>初始化流程：</p>
+     * <ol>
+     *   <li>调用父类构造函数，传入项目实例</li>
+     *   <li>初始化项目实例和组件库管理器</li>
+     *   <li>设置对话框标题、尺寸和可调整性</li>
+     *   <li>调用init()方法完成初始化</li>
+     * </ol>
+     *
+     * @param project 当前项目实例，用于获取项目配置和组件库信息，不能为null
+     * @param libraryManager 组件库管理器实例，用于管理自定义组件库，不能为null
+     * @throws IllegalArgumentException 如果project或libraryManager参数为null
+     * @see #init()
+     * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager
+     */
     public CustomLibraryUploadDialog(Project project, ComponentLibraryManager libraryManager) {
+        // 调用父类构造函数，传入项目实例
         super(project);
+        
+        // 参数验证
+        if (project == null) {
+            throw new IllegalArgumentException("项目实例不能为null");
+        }
+        if (libraryManager == null) {
+            throw new IllegalArgumentException("组件库管理器不能为null");
+        }
+        
         this.project = project;
         this.libraryManager = libraryManager;
         setTitle("📁 导入自定义组件库");

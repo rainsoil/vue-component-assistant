@@ -22,22 +22,51 @@ import java.util.regex.Pattern;
 
 /**
  * Vue 组件智能补全提供者
- *
- * 功能说明：
- * 1. 组件补全：输入 < 时提供当前组件库的组件列表
- * 2. 属性补全：在组件标签内输入空格时提供该组件的属性列表
- * 3. 事件补全：输入 @ 时提供该组件的事件列表
- * 4. 插槽补全：输入 sl 或 slot 时提供该组件的插槽列表
- *
- * 智能特性：
- * - 根据前缀过滤，只显示匹配的选项
- * - 自动插入完整的标签结构
- * - 提供详细的中文描述和文档链接
- * - 支持作用域插槽的完整模板生成
- * - 动态检测项目使用的组件库（Element UI、Element Plus、Ant Design Vue）
- *
+ * 
+ * <p>该类是IntelliJ IDEA的代码补全扩展，为Vue组件开发提供智能的代码补全功能。
+ * 支持多种类型的补全，包括组件、属性、事件和插槽的智能提示。</p>
+ * 
+ * <p>功能说明：</p>
+ * <ol>
+ *   <li>组件补全：输入 &lt; 时提供当前组件库的组件列表</li>
+ *   <li>属性补全：在组件标签内输入空格时提供该组件的属性列表</li>
+ *   <li>事件补全：输入 @ 时提供该组件的事件列表</li>
+ *   <li>插槽补全：输入 sl 或 slot 时提供该组件的插槽列表</li>
+ * </ol>
+ * 
+ * <p>智能特性：</p>
+ * <ul>
+ *   <li>根据前缀过滤，只显示匹配的选项</li>
+ *   <li>自动插入完整的标签结构</li>
+ *   <li>提供详细的中文描述和文档链接</li>
+ *   <li>支持作用域插槽的完整模板生成</li>
+ *   <li>动态检测项目使用的组件库（Element UI、Element Plus、Ant Design Vue）</li>
+ *   <li>支持自定义组件库的补全</li>
+ * </ul>
+ * 
+ * <p>设计特点：</p>
+ * <ul>
+ *   <li>继承自IntelliJ IDEA的CompletionProvider</li>
+ *   <li>支持项目级和全局级的功能开关</li>
+ *   <li>智能上下文分析，准确识别补全类型</li>
+ *   <li>完整的错误处理和日志记录</li>
+ *   <li>性能优化，限制补全选项数量</li>
+ * </ul>
+ * 
+ * <p>使用场景：</p>
+ * <ul>
+ *   <li>Vue组件开发中的代码补全</li>
+ *   <li>提高开发效率和代码质量</li>
+ *   <li>减少拼写错误和语法错误</li>
+ *   <li>学习和了解组件API</li>
+ * </ul>
+ * 
  * @author VueKit Team
  * @version 2.0.0
+ * @since 1.0.0
+ * @see com.intellij.codeInsight.completion.CompletionProvider
+ * @see com.intellij.codeInsight.completion.CompletionParameters
+ * @see com.chu7.vuecomponentassistant.completion2.ComponentProvider
  */
 public class ElementPlusTestCompletionProvider extends CompletionProvider<CompletionParameters> {
 
@@ -48,7 +77,19 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
 
     /**
      * 构造函数
-     * 组件提供者将在 addCompletions 中根据项目动态创建
+     * 
+     * <p>创建补全提供者实例，组件提供者将在 addCompletions 方法中根据项目动态创建，
+     * 确保每个项目都有独立的组件数据管理。</p>
+     * 
+     * <p>设计考虑：</p>
+     * <ul>
+     *   <li>延迟初始化：避免在构造时创建不必要的对象</li>
+     *   <li>项目隔离：每个项目使用独立的ComponentProvider实例</li>
+     *   <li>内存优化：只在需要时创建组件提供者</li>
+     * </ul>
+     * 
+     * @see #addCompletions(CompletionParameters, ProcessingContext, CompletionResultSet)
+     * @see com.chu7.vuecomponentassistant.completion2.ComponentProvider
      */
     public ElementPlusTestCompletionProvider() {
         // 组件提供者将在 addCompletions 中根据项目动态创建
@@ -56,16 +97,41 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
 
     /**
      * 主要的补全方法，由 IntelliJ IDEA 调用
-     *
-     * 工作流程：
-     * 1. 获取当前光标位置的上下文信息
-     * 2. 分析用户输入的内容和位置
-     * 3. 根据上下文类型提供相应的补全选项
-     * 4. 将补全结果添加到结果集中
-     *
-     * @param parameters 补全参数，包含光标位置等信息
-     * @param context 处理上下文
-     * @param result 补全结果集，用于添加补全选项
+     * 
+     * <p>该方法是补全系统的核心入口，负责分析用户输入上下文并提供相应的补全选项。
+     * 支持组件、属性、事件和插槽四种类型的智能补全。</p>
+     * 
+     * <p>工作流程：</p>
+     * <ol>
+     *   <li>获取当前光标位置的上下文信息</li>
+     *   <li>检查补全功能的启用状态</li>
+     *   <li>动态创建组件提供者</li>
+     *   <li>分析用户输入的内容和位置</li>
+     *   <li>根据上下文类型提供相应的补全选项</li>
+     *   <li>将补全结果添加到结果集中</li>
+     * </ol>
+     * 
+     * <p>上下文分析：</p>
+     * <ul>
+     *   <li>自动识别补全类型（组件、属性、事件、插槽）</li>
+     *   <li>智能检测当前组件和前缀</li>
+     *   <li>支持多种触发方式</li>
+     * </ul>
+     * 
+     * <p>功能开关：</p>
+     * <ul>
+     *   <li>支持项目级和全局级的功能控制</li>
+     *   <li>项目级设置优先于全局设置</li>
+     *   <li>提供细粒度的功能控制</li>
+     * </ul>
+     * 
+     * @param parameters 补全参数，包含光标位置等信息，不能为null
+     * @param context 处理上下文，不能为null
+     * @param result 补全结果集，用于添加补全选项，不能为null
+     * 
+     * @see #analyzeContext(PsiFile, PsiElement)
+     * @see #isComponentCompletionEnabled(Project)
+     * @see com.intellij.codeInsight.completion.CompletionProvider#addCompletions(CompletionParameters, ProcessingContext, CompletionResultSet)
      */
     @Override
     protected void addCompletions(@NotNull CompletionParameters parameters,
@@ -139,15 +205,39 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
 
     /**
      * 添加组件补全选项
-     *
-     * 功能说明：
-     * - 当用户输入 < 时，提供当前组件库的组件列表
-     * - 支持前缀过滤，只显示匹配的组件
-     * - 自动插入完整的组件标签结构
-     * - 限制显示数量，避免选项过多影响用户体验
-     *
-     * @param result 补全结果集
-     * @param prefix 用户输入的前缀，用于过滤组件
+     * 
+     * <p>当用户输入 &lt; 时，提供当前组件库的组件列表，支持智能过滤和自动补全。</p>
+     * 
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>当用户输入 &lt; 时，提供当前组件库的组件列表</li>
+     *   <li>支持前缀过滤，只显示匹配的组件</li>
+     *   <li>自动插入完整的组件标签结构</li>
+     *   <li>限制显示数量，避免选项过多影响用户体验</li>
+     *   <li>显示组件库信息和版本号</li>
+     * </ul>
+     * 
+     * <p>补全内容：</p>
+     * <ul>
+     *   <li>组件名称和描述</li>
+     *   <li>所属组件库和版本信息</li>
+     *   <li>组件图标和类型标识</li>
+     *   <li>自动插入结束标签</li>
+     * </ul>
+     * 
+     * <p>性能优化：</p>
+     * <ul>
+     *   <li>限制最大显示数量为30个</li>
+     *   <li>支持前缀搜索提高响应速度</li>
+     *   <li>智能过滤减少无关选项</li>
+     * </ul>
+     * 
+     * @param result 补全结果集，用于添加补全选项，不能为null
+     * @param prefix 用户输入的前缀，用于过滤组件，可能为null或空字符串
+     * 
+     * @see #componentProvider
+     * @see com.chu7.vuecomponentassistant.completion2.ElementPlusComponent
+     * @see com.intellij.codeInsight.lookup.LookupElementBuilder
      */
     private void addComponentCompletions(CompletionResultSet result, String prefix) {
         List<ElementPlusComponent> components;
@@ -217,6 +307,40 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
 
     /**
      * 添加属性补全
+     * 
+     * <p>在组件标签内为用户提供属性补全选项，包括属性名称、描述和默认值。</p>
+     * 
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>显示组件的所有可用属性</li>
+     *   <li>支持前缀过滤，只显示匹配的属性</li>
+     *   <li>自动插入属性名和等号</li>
+     *   <li>根据属性类型智能添加引号</li>
+     *   <li>显示属性描述和类型信息</li>
+     * </ul>
+     * 
+     * <p>属性处理：</p>
+     * <ul>
+     *   <li>字符串类型：自动添加双引号</li>
+     *   <li>数字类型：不添加引号</li>
+     *   <li>布尔类型：不添加引号</li>
+     *   <li>其他类型：根据默认值决定</li>
+     * </ul>
+     * 
+     * <p>用户体验：</p>
+     * <ul>
+     *   <li>光标自动定位到引号内</li>
+     *   <li>显示属性图标和类型标识</li>
+     *   <li>提供详细的属性描述</li>
+     * </ul>
+     * 
+     * @param result 补全结果集，用于添加补全选项，不能为null
+     * @param componentName 当前组件名称，不能为null
+     * @param prefix 用户输入的前缀，用于过滤属性，可能为null或空字符串
+     * 
+     * @see #componentProvider
+     * @see com.chu7.vuecomponentassistant.completion2.ElementPlusProp
+     * @see com.chu7.vuecomponentassistant.utils.DefaultValueConverter
      */
     private void addAttributeCompletions(CompletionResultSet result, String componentName, String prefix) {
         if (componentName == null) {
@@ -279,6 +403,40 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
 
     /**
      * 添加事件补全
+     * 
+     * <p>为用户提供事件绑定补全选项，包括事件名称、描述和自动生成的事件处理函数名。</p>
+     * 
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>显示组件的所有可用事件</li>
+     *   <li>支持前缀过滤，只显示匹配的事件</li>
+     *   <li>自动插入事件名和等号</li>
+     *   <li>自动生成事件处理函数名</li>
+     *   <li>显示事件描述和类型信息</li>
+     * </ul>
+     * 
+     * <p>事件处理：</p>
+     * <ul>
+     *   <li>自动添加@符号前缀</li>
+     *   <li>生成标准的事件处理函数名</li>
+     *   <li>使用驼峰命名规则</li>
+     *   <li>光标定位到引号内</li>
+     * </ul>
+     * 
+     * <p>命名规则：</p>
+     * <ul>
+     *   <li>事件名：@click、@change、@input等</li>
+     *   <li>处理函数：handleClick、handleChange、handleInput等</li>
+     *   <li>支持连字符到驼峰的转换</li>
+     * </ul>
+     * 
+     * @param result 补全结果集，用于添加补全选项，不能为null
+     * @param componentName 当前组件名称，不能为null
+     * @param prefix 用户输入的前缀，用于过滤事件，可能为null或空字符串
+     * 
+     * @see #componentProvider
+     * @see com.chu7.vuecomponentassistant.completion2.ElementPlusEvent
+     * @see #capitalize(String)
      */
     private void addEventCompletions(CompletionResultSet result, String componentName, String prefix) {
         if (componentName == null) {
@@ -332,20 +490,41 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
 
     /**
      * 添加插槽补全选项
-     *
-     * 功能说明：
-     * - 当用户输入 sl 或 slot 时，提供当前组件的插槽列表
-     * - 只显示当前组件支持的插槽，避免混淆
-     * - 自动生成完整的插槽模板，包括作用域支持
-     * - 提供详细的中文描述和说明
-     *
-     * 插槽模板格式：
-     * - 有作用域：<template #slotName="scope"> <!-- 描述 --> </template>
-     * - 无作用域：<template #slotName> <!-- 描述 --> </template>
-     *
-     * @param result 补全结果集
-     * @param componentName 当前组件名称
-     * @param prefix 用户输入的前缀，用于过滤插槽
+     * 
+     * <p>当用户输入 sl 或 slot 时，提供当前组件的插槽列表，自动生成完整的插槽模板。</p>
+     * 
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>当用户输入 sl 或 slot 时，提供当前组件的插槽列表</li>
+     *   <li>只显示当前组件支持的插槽，避免混淆</li>
+     *   <li>自动生成完整的插槽模板，包括作用域支持</li>
+     *   <li>提供详细的中文描述和说明</li>
+     *   <li>支持作用域插槽的完整语法</li>
+     * </ul>
+     * 
+     * <p>插槽模板格式：</p>
+     * <ul>
+     *   <li>有作用域：&lt;template #slotName="scope"&gt; &lt;!-- 描述 --&gt; &lt;/template&gt;</li>
+     *   <li>无作用域：&lt;template #slotName&gt; &lt;!-- 描述 --&gt; &lt;/template&gt;</li>
+     *   <li>自动添加注释说明</li>
+     *   <li>支持多行格式化</li>
+     * </ul>
+     * 
+     * <p>用户体验：</p>
+     * <ul>
+     *   <li>显示插槽类型标识（卡槽）</li>
+     *   <li>显示作用域信息（如果有）</li>
+     *   <li>提供详细的插槽描述</li>
+     *   <li>自动生成完整的模板结构</li>
+     * </ul>
+     * 
+     * @param result 补全结果集，用于添加补全选项，不能为null
+     * @param componentName 当前组件名称，不能为null
+     * @param prefix 用户输入的前缀，用于过滤插槽，可能为null或空字符串
+     * 
+     * @see #componentProvider
+     * @see com.chu7.vuecomponentassistant.completion2.ElementPlusSlot
+     * @see com.intellij.codeInsight.lookup.LookupElementBuilder
      */
     private void addSlotCompletions(CompletionResultSet result, String componentName, String prefix) {
         // 安全检查：确保组件名称不为空
@@ -436,23 +615,43 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
 
     /**
      * 分析补全上下文，确定用户想要什么类型的补全
-     *
-     * 分析逻辑：
-     * 1. 检查当前文本是否以特殊字符开头（@、slot、sl）
-     * 2. 检查 beforeText 是否包含特殊符号
-     * 3. 检查是否在组件标签位置
-     * 4. 检查是否在属性位置
-     * 5. 检查是否在组件名称位置
-     *
-     * 返回的上下文类型：
-     * - COMPONENT: 组件补全（输入 < 时）
-     * - ATTRIBUTE: 属性补全（在组件标签内输入空格时）
-     * - EVENT: 事件补全（输入 @ 时）
-     * - SLOT: 插槽补全（输入 sl 或 slot 时）
-     *
-     * @param file 当前文件
-     * @param element 当前光标位置的 PSI 元素
+     * 
+     * <p>该方法通过分析用户输入和光标位置，智能识别补全类型，
+     * 为后续的补全选项提供准确的上下文信息。</p>
+     * 
+     * <p>分析逻辑：</p>
+     * <ol>
+     *   <li>检查当前文本是否以特殊字符开头（@、slot、sl）</li>
+     *   <li>检查 beforeText 是否包含特殊符号</li>
+     *   <li>检查是否在组件标签位置</li>
+     *   <li>检查是否在属性位置</li>
+     *   <li>检查是否在组件名称位置</li>
+     * </ol>
+     * 
+     * <p>返回的上下文类型：</p>
+     * <ul>
+     *   <li>COMPONENT: 组件补全（输入 &lt; 时）</li>
+     *   <li>ATTRIBUTE: 属性补全（在组件标签内输入空格时）</li>
+     *   <li>EVENT: 事件补全（输入 @ 时）</li>
+     *   <li>SLOT: 插槽补全（输入 sl 或 slot 时）</li>
+     * </ul>
+     * 
+     * <p>智能识别：</p>
+     * <ul>
+     *   <li>自动清理IntelliJ IDEA的后缀</li>
+     *   <li>支持多种触发方式</li>
+     *   <li>准确识别组件和前缀</li>
+     *   <li>处理边界情况</li>
+     * </ul>
+     * 
+     * @param file 当前文件，不能为null
+     * @param element 当前光标位置的 PSI 元素，不能为null
      * @return 补全上下文，包含类型、当前组件和前缀信息
+     * 
+     * @see CompletionContext
+     * @see CompletionType
+     * @see #getCurrentComponent(String)
+     * @see #isInComponentTag(String)
      */
     private CompletionContext analyzeContext(PsiFile file, PsiElement element) {
         String fileText = file.getText();
@@ -589,6 +788,38 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
 
     /**
      * 获取当前组件名称
+     * 
+     * <p>该方法通过分析光标位置前的文本内容，查找最近的组件标签，
+     * 并返回组件名称，用于确定当前编辑的组件上下文。</p>
+     * 
+     * <p>查找逻辑：</p>
+     * <ol>
+     *   <li>使用正则表达式匹配组件标签模式</li>
+     *   <li>向前查找最近的组件标签</li>
+     *   <li>提取组件名称（第一个空格前的内容）</li>
+     *   <li>返回最后一个匹配的组件名称</li>
+     * </ol>
+     * 
+     * <p>组件识别规则：</p>
+     * <ul>
+     *   <li>标签以字母开头，支持字母、数字、连字符</li>
+     *   <li>使用正则表达式：&lt;([a-zA-Z][a-zA-Z0-9-]*)\\b</li>
+     *   <li>支持自闭合标签和普通标签</li>
+     *   <li>不区分组件库来源</li>
+     * </ul>
+     * 
+     * <p>调试信息：</p>
+     * <ul>
+     *   <li>记录输入文本内容</li>
+     *   <li>记录找到的组件名称</li>
+     *   <li>记录返回结果</li>
+     * </ul>
+     * 
+     * @param beforeText 光标位置前的文本内容，不能为null
+     * @return 当前组件名称，如果未找到则返回null
+     * 
+     * @see #analyzeContext(PsiFile, PsiElement)
+     * @see #isInComponentTag(String)
      */
     private String getCurrentComponent(String beforeText) {
         System.out.println("getCurrentComponent - 输入 beforeText: '" + beforeText + "'");
@@ -896,12 +1127,28 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
 
     /**
      * 补全上下文类型枚举
-     *
-     * 定义了四种补全类型：
-     * - COMPONENT: 组件补全，用户输入 < 时触发
-     * - ATTRIBUTE: 属性补全，在组件标签内输入空格时触发
-     * - EVENT: 事件补全，用户输入 @ 时触发
-     * - SLOT: 插槽补全，用户输入 sl 或 slot 时触发
+     * 
+     * <p>定义了四种补全类型，用于区分用户的不同补全需求，
+     * 确保提供准确的补全选项。</p>
+     * 
+     * <p>补全类型说明：</p>
+     * <ul>
+     *   <li>COMPONENT: 组件补全，用户输入 &lt; 时触发</li>
+     *   <li>ATTRIBUTE: 属性补全，在组件标签内输入空格时触发</li>
+     *   <li>EVENT: 事件补全，用户输入 @ 时触发</li>
+     *   <li>SLOT: 插槽补全，用户输入 sl 或 slot 时触发</li>
+     * </ul>
+     * 
+     * <p>使用场景：</p>
+     * <ul>
+     *   <li>上下文分析中的类型识别</li>
+     *   <li>补全选项的准确提供</li>
+     *   <li>用户体验的优化</li>
+     *   <li>调试和日志记录</li>
+     * </ul>
+     * 
+     * @see CompletionContext
+     * @see #analyzeContext(PsiFile, PsiElement)
      */
     private enum CompletionType {
         COMPONENT, ATTRIBUTE, EVENT, SLOT
@@ -909,13 +1156,35 @@ public class ElementPlusTestCompletionProvider extends CompletionProvider<Comple
 
     /**
      * 补全上下文类
-     *
-     * 用于封装补全相关的上下文信息，包括：
-     * - 补全类型（组件、属性、事件、插槽）
-     * - 当前组件名称
-     * - 用户输入的前缀
-     *
-     * 这个类帮助补全系统理解用户的意图并提供相应的补全选项
+     * 
+     * <p>用于封装补全相关的上下文信息，帮助补全系统理解用户的意图
+     * 并提供相应的补全选项。</p>
+     * 
+     * <p>包含信息：</p>
+     * <ul>
+     *   <li>补全类型（组件、属性、事件、插槽）</li>
+     *   <li>当前组件名称</li>
+     *   <li>用户输入的前缀</li>
+     * </ul>
+     * 
+     * <p>设计特点：</p>
+     * <ul>
+     *   <li>不可变对象，确保线程安全</li>
+     *   <li>提供完整的getter方法</li>
+     *   <li>支持null值，处理边界情况</li>
+     *   <li>用于上下文传递和状态管理</li>
+     * </ul>
+     * 
+     * <p>使用场景：</p>
+     * <ul>
+     *   <li>上下文分析结果的封装</li>
+     *   <li>补全选项的准确提供</li>
+     *   <li>调试信息的记录</li>
+     *   <li>系统状态的管理</li>
+     * </ul>
+     * 
+     * @see CompletionType
+     * @see #analyzeContext(PsiFile, PsiElement)
      */
     private static class CompletionContext {
         /** 补全类型 */

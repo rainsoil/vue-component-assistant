@@ -16,20 +16,79 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * 组件库初始化器
- * 
- * 功能说明：
- * - 在项目启动时自动检查和下载必要的组件库
- * - 确保 Element Plus、Ant Design Vue 等官方组件库数据可用
- * - 提供组件库数据的自动更新机制
- * - 优化启动性能，避免阻塞UI线程
- * 
+ *
+ * <p>功能说明：</p>
+ * <ul>
+ *   <li>在项目启动时自动检查和下载必要的组件库</li>
+ *   <li>确保 Element Plus、Ant Design Vue 等官方组件库数据可用</li>
+ *   <li>提供组件库数据的自动更新机制</li>
+ *   <li>优化启动性能，避免阻塞UI线程</li>
+ *   <li>动态检测已安装的组件库</li>
+ *   <li>智能组件库管理和更新</li>
+ * </ul>
+ *
+ * <p>设计特点：</p>
+ * <ul>
+ *   <li>实现 IntelliJ IDEA 的 StartupActivity 接口</li>
+ *   <li>使用 CompletableFuture 异步执行，避免UI阻塞</li>
+ *   <li>动态检测组件库，不再硬编码特定组件库</li>
+ *   <li>完善的错误处理和日志记录</li>
+ *   <li>支持组件库的自动发现和管理</li>
+ *   <li>向后兼容已废弃的硬编码方法</li>
+ * </ul>
+ *
+ * <p>使用场景：</p>
+ * <ul>
+ *   <li>项目启动时的组件库自动初始化</li>
+ *   <li>新项目首次使用时的组件库准备</li>
+ *   <li>组件库数据的自动更新和维护</li>
+ *   <li>开发环境的组件库状态检查</li>
+ *   <li>团队项目的组件库统一管理</li>
+ * </ul>
+ *
  * @author VueKit Team
  * @version 1.0.0
+ * @since 1.0.0
+ * @see com.intellij.openapi.startup.StartupActivity
+ * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager
+ * @see com.chu7.vuecomponentassistant.remote.model.ComponentLibrary
+ * @see com.chu7.vuecomponentassistant.utils.VueKitLogger
  */
 public class ComponentLibraryInitializer implements StartupActivity {
 
     private static final Logger LOG = VueKitLogger.getLogger(ComponentLibraryInitializer.class);
 
+    /**
+     * 执行启动活动
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>在项目启动时自动执行组件库初始化</li>
+     *   <li>异步执行以避免阻塞UI线程</li>
+     *   <li>检查和初始化必要的组件库数据</li>
+     *   <li>记录完整的初始化过程</li>
+     * </ul>
+     *
+     * <p>执行流程：</p>
+     * <ol>
+     *   <li>使用 CompletableFuture.runAsync 异步执行</li>
+     *   <li>记录初始化开始日志</li>
+     *   <li>初始化组件库管理器</li>
+     *   <li>检查并初始化官方组件库</li>
+     *   <li>记录初始化完成日志</li>
+     * </ol>
+     *
+     * <p>性能优化：</p>
+     * <ul>
+     *   <li>异步执行避免阻塞UI线程</li>
+     *   <li>使用 CompletableFuture 进行非阻塞操作</li>
+     *   <li>启动失败不影响项目正常加载</li>
+     * </ul>
+     *
+     * @param project 当前项目实例，不能为null
+     * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager
+     * @see #initializeOfficialLibraries(ComponentLibraryManager)
+     */
     @Override
     public void runActivity(@NotNull Project project) {
         // 在后台线程中执行组件库初始化，避免阻塞UI

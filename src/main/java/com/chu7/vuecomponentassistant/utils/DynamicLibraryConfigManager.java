@@ -21,57 +21,211 @@ import com.chu7.vuecomponentassistant.remote.model.ComponentLibrary;
 
 /**
  * 动态组件库配置管理器
- * 替代硬编码的组件库配置，支持从配置文件动态加载
+ * 
+ * <p>功能说明：</p>
+ * <ul>
+ *   <li>替代硬编码的组件库配置，支持从配置文件动态加载</li>
+ *   <li>管理组件库的配置信息，包括包名、显示名称、组件前缀等</li>
+ *   <li>支持运行时配置更新和动态加载</li>
+ *   <li>提供包名到组件库ID的映射关系</li>
+ *   <li>智能推断组件前缀，避免硬编码</li>
+ * </ul>
+ * 
+ * <p>设计特点：</p>
+ * <ul>
+ *   <li>单例模式设计，确保全局唯一性</li>
+ *   <li>支持动态配置加载和更新</li>
+ *   <li>智能前缀推断，支持多种组件库</li>
+ *   <li>线程安全的初始化和管理</li>
+ *   <li>配置缓存机制，提高性能</li>
+ * </ul>
+ * 
+ * <p>配置策略：</p>
+ * <ol>
+ *   <li>优先从已安装的组件库中获取配置</li>
+ *   <li>智能推断组件前缀作为后备方案</li>
+ *   <li>支持运行时配置更新</li>
+ *   <li>提供默认配置作为最后保障</li>
+ * </ol>
+ * 
+ * <p>使用场景：</p>
+ * <ul>
+ *   <li>组件库类型识别和验证</li>
+ *   <li>组件前缀匹配和过滤</li>
+ *   <li>组件库配置管理</li>
+ *   <li>动态配置更新</li>
+ * </ul>
  * 
  * @author VueKit Team
  * @version 1.0.0
+ * @since 1.0.0
+ * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager
+ * @see com.chu7.vuecomponentassistant.remote.model.ComponentLibrary
  */
 public class DynamicLibraryConfigManager {
     
+    /**
+     * 日志记录器
+     * 用于记录配置管理过程中的关键信息和错误
+     */
     private static final Logger LOG = VueKitLogger.getLogger(DynamicLibraryConfigManager.class);
     
-    // 不再需要配置文件路径，所有信息从下载的组件库中获取
-    
-    /** 单例实例 */
+    /**
+     * 单例实例
+     * 使用volatile关键字确保多线程环境下的可见性
+     */
     private static volatile DynamicLibraryConfigManager instance;
     
-    /** 组件库配置缓存 */
+    /**
+     * 组件库配置缓存
+     * 存储组件库ID到配置对象的映射关系
+     */
     private Map<String, LibraryConfig> libraryConfigs;
     
-    /** 包名到组件库ID的映射 */
+    /**
+     * 包名到组件库ID的映射
+     * 用于快速查找包名对应的组件库
+     */
     private Map<String, String> packageToLibraryMap;
     
-    /** 是否已初始化 */
+    /**
+     * 是否已初始化
+     * 防止重复初始化，确保配置的一致性
+     */
     private boolean initialized = false;
     
     /**
      * 组件库配置信息
-     * 只包含静态配置，动态信息从下载的组件库中获取
+     * 
+     * <p>该类包含组件库的静态配置信息，动态信息从下载的组件库中获取。
+     * 提供完整的getter和setter方法，支持配置的读取和修改。</p>
+     * 
+     * <p>配置字段：</p>
+     * <ul>
+     *   <li>id：组件库的唯一标识符</li>
+     *   <li>packageName：组件库的包名</li>
+     *   <li>displayName：组件库的显示名称</li>
+     *   <li>componentPrefix：组件的命名前缀</li>
+     *   <li>description：组件库的描述信息</li>
+     * </ul>
+     * 
+     * @author VueKit Team
+     * @version 1.0.0
+     * @since 1.0.0
      */
     public static class LibraryConfig {
+        
+        /**
+         * 组件库的唯一标识符
+         */
         private String id;
+        
+        /**
+         * 组件库的包名
+         */
         private String packageName;
+        
+        /**
+         * 组件库的显示名称
+         */
         private String displayName;
+        
+        /**
+         * 组件的命名前缀
+         */
         private String componentPrefix;
+        
+        /**
+         * 组件库的描述信息
+         */
         private String description;
         
-        // Getters
+        // ==================== Getter 方法 ====================
+        
+        /**
+         * 获取组件库ID
+         * 
+         * @return 组件库的唯一标识符
+         */
         public String getId() { return id; }
+        
+        /**
+         * 获取包名
+         * 
+         * @return 组件库的包名
+         */
         public String getPackageName() { return packageName; }
+        
+        /**
+         * 获取显示名称
+         * 
+         * @return 组件库的显示名称
+         */
         public String getDisplayName() { return displayName; }
+        
+        /**
+         * 获取组件前缀
+         * 
+         * @return 组件的命名前缀
+         */
         public String getComponentPrefix() { return componentPrefix; }
+        
+        /**
+         * 获取描述信息
+         * 
+         * @return 组件库的描述信息
+         */
         public String getDescription() { return description; }
         
-        // Setters
+        // ==================== Setter 方法 ====================
+        
+        /**
+         * 设置组件库ID
+         * 
+         * @param id 组件库的唯一标识符
+         */
         public void setId(String id) { this.id = id; }
+        
+        /**
+         * 设置包名
+         * 
+         * @param packageName 组件库的包名
+         */
         public void setPackageName(String packageName) { this.packageName = packageName; }
+        
+        /**
+         * 设置显示名称
+         * 
+         * @param displayName 组件库的显示名称
+         */
         public void setDisplayName(String displayName) { this.displayName = displayName; }
+        
+        /**
+         * 设置组件前缀
+         * 
+         * @param componentPrefix 组件的命名前缀
+         */
         public void setComponentPrefix(String componentPrefix) { this.componentPrefix = componentPrefix; }
+        
+        /**
+         * 设置描述信息
+         * 
+         * @param description 组件库的描述信息
+         */
         public void setDescription(String description) { this.description = description; }
     }
     
     /**
      * 私有构造函数
+     * 
+     * <p>初始化配置管理器的内部状态，创建必要的集合和映射。</p>
+     * 
+     * <p>初始化内容：</p>
+     * <ul>
+     *   <li>创建组件库配置缓存映射</li>
+     *   <li>创建包名到组件库ID的映射</li>
+     *   <li>设置初始化状态为false</li>
+     * </ul>
      */
     private DynamicLibraryConfigManager() {
         this.libraryConfigs = new HashMap<>();
@@ -80,6 +234,18 @@ public class DynamicLibraryConfigManager {
     
     /**
      * 获取单例实例
+     * 
+     * <p>该方法使用双重检查锁定模式确保线程安全，
+     * 只有在实例为null时才进行同步操作。</p>
+     * 
+     * <p>线程安全保证：</p>
+     * <ul>
+     *   <li>使用volatile关键字确保可见性</li>
+     *   <li>双重检查锁定避免不必要的同步</li>
+     *   <li>synchronized块确保原子性</li>
+     * </ul>
+     * 
+     * @return 配置管理器的单例实例
      */
     public static DynamicLibraryConfigManager getInstance() {
         if (instance == null) {
@@ -94,6 +260,24 @@ public class DynamicLibraryConfigManager {
     
     /**
      * 初始化配置管理器
+     * 
+     * <p>该方法负责初始化配置管理器的所有必要组件，
+     * 包括加载配置、构建映射关系等。</p>
+     * 
+     * <p>初始化流程：</p>
+     * <ol>
+     *   <li>检查是否已初始化，避免重复初始化</li>
+     *   <li>加载默认配置或动态配置</li>
+     *   <li>构建包名到组件库ID的映射</li>
+     *   <li>设置初始化状态为true</li>
+     * </ol>
+     * 
+     * <p>错误处理：</p>
+     * <ul>
+     *   <li>捕获所有异常并记录错误日志</li>
+     *   <li>即使出错也设置初始化状态为true，避免死锁</li>
+     *   <li>提供降级处理机制</li>
+     * </ul>
      */
     public synchronized void initialize() {
         if (initialized) {
@@ -115,6 +299,12 @@ public class DynamicLibraryConfigManager {
     
     /**
      * 加载配置文件（已废弃，现在使用动态配置）
+     * 
+     * <p>该方法已废弃，不再从静态配置文件加载配置。
+     * 现在使用动态配置机制，从已安装的组件库中获取配置信息。</p>
+     * 
+     * @throws Exception 总是抛出异常，表示方法已废弃
+     * @deprecated 使用动态配置替代，此方法将在未来版本中移除
      */
     @Deprecated
     private void loadConfiguration() throws Exception {
@@ -125,6 +315,28 @@ public class DynamicLibraryConfigManager {
     
     /**
      * 加载默认配置（当配置文件加载失败时使用）
+     * 
+     * <p>该方法尝试从已下载的组件库中动态获取配置信息，
+     * 如果获取失败则使用智能推断作为后备方案。</p>
+     * 
+     * <p>加载策略：</p>
+     * <ol>
+     *   <li>获取已安装的组件库列表</li>
+     *   <li>为每个组件库创建配置对象</li>
+     *   <li>设置基本配置信息</li>
+     *   <li>智能推断组件前缀</li>
+     *   <li>添加到配置缓存中</li>
+     * </ol>
+     * 
+     * <p>错误处理：</p>
+     * <ul>
+     *   <li>捕获所有异常并记录错误日志</li>
+     *   <li>使用空配置作为后备方案</li>
+     *   <li>确保系统继续运行</li>
+     * </ul>
+     * 
+     * @see #inferComponentPrefix(String)
+     * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager#getAllLibraries()
      */
     private void loadDefaultConfiguration() {
         LOG.warn("使用默认组件库配置");
@@ -165,6 +377,31 @@ public class DynamicLibraryConfigManager {
     
     /**
      * 推断组件前缀
+     * 
+     * <p>该方法尝试从已安装的组件库中获取组件前缀，
+     * 如果获取失败则使用智能推断作为后备方案。</p>
+     * 
+     * <p>推断策略：</p>
+     * <ol>
+     *   <li>优先从已安装的组件库中获取前缀</li>
+     *   <li>使用智能推断作为后备方案</li>
+     *   <li>避免硬编码特定组件库</li>
+     * </ol>
+     * 
+     * <p>智能推断规则：</p>
+     * <ul>
+     *   <li>element相关：el-</li>
+     *   <li>ant design相关：a-</li>
+     *   <li>vuetify相关：v-</li>
+     *   <li>quasar相关：q-</li>
+     *   <li>naive相关：n-</li>
+     *   <li>prime相关：p-</li>
+     * </ul>
+     * 
+     * @param libraryName 组件库名称，不能为null
+     * @return 推断出的组件前缀，如果无法推断则返回空字符串
+     * 
+     * @see #inferPrefixFromLibraryName(String)
      */
     private String inferComponentPrefix(String libraryName) {
         if (libraryName == null) return "";

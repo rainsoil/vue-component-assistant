@@ -23,28 +23,115 @@ import java.util.HashSet;
 import com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager;
 
 /**
- * 通用组件数据提供者 - 简化版
+ * 通用组件数据提供者
  * 
- * 功能说明：
- * - 从远程组件库管理器加载组件数据
- * - 支持 Element UI、Element Plus、Ant Design Vue
- * - 提供组件查询功能
- * - 支持组件属性、事件、插槽等信息
+ * <p>功能说明：</p>
+ * <ul>
+ *   <li>从远程组件库管理器加载组件数据</li>
+ *   <li>支持 Element UI、Element Plus、Ant Design Vue</li>
+ *   <li>提供组件查询功能</li>
+ *   <li>支持组件属性、事件、插槽等信息</li>
+ *   <li>智能组件过滤和缓存管理</li>
+ *   <li>多数据源加载策略</li>
+ * </ul>
+ * 
+ * <p>设计特点：</p>
+ * <ul>
+ *   <li>多级数据加载：本地缓存 -> 远程管理器 -> 自定义库</li>
+ *   <li>智能过滤：根据项目上下文过滤相关组件</li>
+ *   <li>自动注册：初始化时自动注册到管理器</li>
+ *   <li>错误处理：完善的异常处理和日志记录</li>
+ *   <li>性能优化：支持缓存和增量更新</li>
+ * </ul>
+ * 
+ * <p>数据加载策略：</p>
+ * <ol>
+ *   <li>优先从本地缓存加载（最快）</li>
+ *   <li>从远程组件库管理器加载（中等速度）</li>
+ *   <li>从自定义组件库加载（后备方案）</li>
+ * </ol>
+ * 
+ * <p>使用场景：</p>
+ * <ul>
+ *   <li>代码补全功能的数据源</li>
+ *   <li>组件文档显示</li>
+ *   <li>组件信息查询</li>
+ *   <li>智能组件推荐</li>
+ * </ul>
  *
  * @author VueKit Team
  * @version 3.0.0
+ * @since 1.0.0
+ * @see com.chu7.vuecomponentassistant.completion2.ElementPlusComponent
+ * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager
+ * @see com.chu7.vuecomponentassistant.utils.SmartComponentFilter
  */
 public class ComponentProvider {
 
+    /**
+     * 日志记录器
+     * 用于记录组件数据加载和管理过程中的关键信息
+     */
     private static final Logger LOG = VueKitLogger.getLogger(ComponentProvider.class);
 
+    /**
+     * 组件名称到组件对象的映射表
+     * 用于快速查找和访问组件信息
+     */
     private final Map<String, ElementPlusComponent> componentsMap;
+
+    /**
+     * 组件对象列表
+     * 保持组件的原始顺序，用于遍历和过滤
+     */
     private final List<ElementPlusComponent> componentsList;
+
+    /**
+     * 组件库类型
+     * 通过项目依赖检测获得，如 "element-plus"、"ant-design-vue" 等
+     */
     private final String libraryType;
+
+    /**
+     * 关联的项目对象
+     * 用于项目级别的配置和过滤
+     */
     private final Project project;
 
     /**
      * 构造函数
+     * 
+     * <p>初始化组件提供者，执行以下操作：</p>
+     * <ol>
+     *   <li>验证项目对象的有效性</li>
+     *   <li>初始化内部数据结构</li>
+     *   <li>检测项目使用的组件库类型</li>
+     *   <li>加载组件数据</li>
+     *   <li>注册到ComponentProviderManager</li>
+     * </ol>
+     * 
+     * <p>初始化流程：</p>
+     * <ul>
+     *   <li>创建组件映射表和列表</li>
+     *   <li>调用ComponentLibraryDetector检测组件库</li>
+     *   <li>调用loadComponents()加载数据</li>
+     *   <li>自动注册到管理器</li>
+     * </ul>
+     * 
+     * <p>注意事项：</p>
+     * <ul>
+     *   <li>项目对象不能为null</li>
+     *   <li>初始化失败会抛出RuntimeException</li>
+     *   <li>自动注册避免重复创建</li>
+     * </ul>
+     * 
+     * @param project 项目对象，不能为null
+     * @throws IllegalArgumentException 如果project为null
+     * @throws RuntimeException 如果初始化失败
+     * 
+     * @see com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector#detectComponentLibrary(Project)
+     * @see #loadComponents()
+     * @see com.chu7.vuecomponentassistant.completion2.ComponentProviderManager#registerProvider(Project, ComponentProvider)
      */
     public ComponentProvider(Project project) {
         Objects.requireNonNull(project, "Project对象不能为null");
@@ -77,6 +164,33 @@ public class ComponentProvider {
 
     /**
      * 加载组件数据
+     * 
+     * <p>该方法会按照优先级顺序尝试从不同数据源加载组件数据：</p>
+     * <ol>
+     *   <li>本地缓存（最高优先级，最快速度）</li>
+     *   <li>远程组件库管理器（中等优先级，中等速度）</li>
+     *   <li>自定义组件库（最低优先级，后备方案）</li>
+     * </ol>
+     * 
+     * <p>加载策略：</p>
+     * <ul>
+     *   <li>优先使用缓存数据，提高性能</li>
+     *   <li>远程数据作为主要数据源</li>
+     *   <li>自定义库支持扩展功能</li>
+     *   <li>加载成功后应用智能过滤</li>
+     * </ul>
+     * 
+     * <p>错误处理：</p>
+     * <ul>
+     *   <li>捕获所有异常并记录日志</li>
+     *   <li>使用ErrorHandler统一处理错误</li>
+     *   <li>不会中断初始化流程</li>
+     * </ul>
+     * 
+     * @see #loadFromLocalCache()
+     * @see #loadFromRemoteManager()
+     * @see #applySmartFiltering()
+     * @see com.chu7.vuecomponentassistant.utils.ErrorHandler#handleException(String, Exception, boolean)
      */
     private void loadComponents() {
         try {
@@ -108,6 +222,28 @@ public class ComponentProvider {
 
     /**
      * 应用智能过滤
+     * 
+     * <p>该方法使用SmartComponentFilter对加载的组件进行智能过滤，
+     * 根据项目上下文和用户偏好过滤出最相关的组件。</p>
+     * 
+     * <p>过滤流程：</p>
+     * <ol>
+     *   <li>记录过滤前的组件数量</li>
+     *   <li>创建智能过滤器实例</li>
+     *   <li>应用项目相关的过滤规则</li>
+     *   <li>更新组件列表和映射表</li>
+     *   <li>记录过滤结果统计</li>
+     * </ol>
+     * 
+     * <p>过滤效果：</p>
+     * <ul>
+     *   <li>减少无关组件的干扰</li>
+     *   <li>提高补全建议的准确性</li>
+     *   <li>优化内存使用</li>
+     *   <li>提升用户体验</li>
+     * </ul>
+     * 
+     * @see com.chu7.vuecomponentassistant.utils.SmartComponentFilter#filterComponentsByProject(List, Project)
      */
     private void applySmartFiltering() {
         try {
@@ -146,6 +282,28 @@ public class ComponentProvider {
 
     /**
      * 根据组件库类型获取对应的组件库ID
+     * 
+     * <p>该方法会尝试多种方式获取组件库ID：</p>
+     * <ol>
+     *   <li>直接匹配已安装的组件库</li>
+     *   <li>使用动态配置管理器查找</li>
+     *   <li>返回找到的组件库ID或null</li>
+     * </ol>
+     * 
+     * <p>匹配策略：</p>
+     * <ul>
+     *   <li>优先检查已安装的组件库</li>
+     *   <li>支持名称和ID的精确匹配</li>
+     *   <li>使用配置管理器作为后备方案</li>
+     *   <li>记录匹配过程的日志信息</li>
+     * </ul>
+     * 
+     * @param libraryType 组件库类型，不能为null
+     * @return 对应的组件库ID，如果未找到则返回null
+     * @throws IllegalArgumentException 如果libraryType为null
+     * 
+     * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager#getAllLibraries()
+     * @see com.chu7.vuecomponentassistant.utils.DynamicLibraryConfigManager#getLibraryIdByPackageName(String)
      */
     private String getLibraryIdByType(String libraryType) {
         Objects.requireNonNull(libraryType, "组件库类型不能为null");
@@ -174,6 +332,29 @@ public class ComponentProvider {
 
     /**
      * 从本地缓存加载组件库
+     * 
+     * <p>该方法尝试从本地缓存的组件库中加载组件数据，
+     * 这是最快的数据加载方式。</p>
+     * 
+     * <p>加载流程：</p>
+     * <ol>
+     *   <li>获取组件库类型对应的ID</li>
+     *   <li>查找本地缓存的组件库</li>
+     *   <li>转换组件信息为ElementPlusComponent</li>
+     *   <li>更新内部数据结构</li>
+     * </ol>
+     * 
+     * <p>成功条件：</p>
+     * <ul>
+     *   <li>找到对应的本地组件库</li>
+     *   <li>组件库包含有效的组件数据</li>
+     *   <li>数据转换成功</li>
+     * </ul>
+     * 
+     * @return 如果成功加载则返回true，否则返回false
+     * 
+     * @see #getLibraryIdByType(String)
+     * @see #convertToElementPlusComponent(ComponentInfo)
      */
     private boolean loadFromLocalCache() {
         try {
@@ -225,6 +406,29 @@ public class ComponentProvider {
 
     /**
      * 从远程组件库管理器加载组件库
+     * 
+     * <p>该方法尝试从远程组件库管理器中加载组件数据，
+     * 作为本地缓存的后备数据源。</p>
+     * 
+     * <p>加载流程：</p>
+     * <ol>
+     *   <li>获取组件库类型对应的ID</li>
+     *   <li>从远程管理器查找匹配的组件库</li>
+     *   <li>转换组件信息为ElementPlusComponent</li>
+     *   <li>更新内部数据结构</li>
+     * </ol>
+     * 
+     * <p>成功条件：</p>
+     * <ul>
+     *   <li>远程管理器包含对应的组件库</li>
+     *   <li>组件库包含有效的组件数据</li>
+     *   <li>数据转换成功</li>
+     * </ul>
+     * 
+     * @return 如果成功加载则返回true，否则返回false
+     * 
+     * @see #getLibraryIdByType(String)
+     * @see #convertToElementPlusComponent(ComponentInfo)
      */
     private boolean loadFromRemoteManager() {
         try {
@@ -276,6 +480,32 @@ public class ComponentProvider {
 
     /**
      * 将 ComponentInfo 转换为 ElementPlusComponent
+     * 
+     * <p>该方法负责将远程组件库的 ComponentInfo 对象转换为
+     * 本地使用的 ElementPlusComponent 对象。</p>
+     * 
+     * <p>转换内容：</p>
+     * <ul>
+     *   <li>基本组件信息（名称、描述、版本、文档URL）</li>
+     *   <li>组件属性列表（props）</li>
+     *   <li>组件事件列表（events）</li>
+     *   <li>组件插槽列表（slots）</li>
+     * </ul>
+     * 
+     * <p>转换策略：</p>
+     * <ul>
+     *   <li>逐个转换每个属性、事件和插槽</li>
+     *   <li>处理可能的兼容性问题（如NoSuchMethodError）</li>
+     *   <li>保持数据结构的完整性</li>
+     * </ul>
+     * 
+     * @param componentInfo 要转换的ComponentInfo对象，不能为null
+     * @return 转换后的ElementPlusComponent对象
+     * @throws IllegalArgumentException 如果componentInfo为null
+     * @throws RuntimeException 如果转换过程中发生错误
+     * 
+     * @see com.chu7.vuecomponentassistant.remote.model.ComponentInfo
+     * @see com.chu7.vuecomponentassistant.completion2.ElementPlusComponent
      */
     private ElementPlusComponent convertToElementPlusComponent(ComponentInfo componentInfo) {
         Objects.requireNonNull(componentInfo, "ComponentInfo不能为null");
@@ -356,6 +586,21 @@ public class ComponentProvider {
 
     /**
      * 获取组件版本信息
+     * 
+     * <p>该方法尝试获取组件的实际版本信息，优先从项目的 package.json 中读取，
+     * 如果无法获取则返回通用版本信息。</p>
+     * 
+     * <p>版本获取策略：</p>
+     * <ol>
+     *   <li>尝试从项目的 package.json 中读取实际版本</li>
+     *   <li>如果无法获取实际版本，返回通用版本信息</li>
+     *   <li>包含组件库的显示名称</li>
+     * </ol>
+     * 
+     * @return 组件的版本信息字符串，格式为"组件库名称 版本号"
+     * 
+     * @see #getActualLibraryVersion()
+     * @see com.chu7.vuecomponentassistant.utils.LibraryTypeHelper#getDisplayName(String)
      */
     private String getComponentVersionInfo() {
         // 尝试从项目的 package.json 中读取实际版本
@@ -370,6 +615,28 @@ public class ComponentProvider {
 
     /**
      * 从项目的 package.json 中获取实际的组件库版本
+     * 
+     * <p>该方法尝试从项目的 package.json 文件中读取指定组件库的实际版本号，
+     * 提供比静态配置更准确的版本信息。</p>
+     * 
+     * <p>获取流程：</p>
+     * <ol>
+     *   <li>获取组件库对应的包名</li>
+     *   <li>在 package.json 中查找该包的版本信息</li>
+     *   <li>返回格式化的版本字符串</li>
+     * </ol>
+     * 
+     * <p>版本格式：</p>
+     * <ul>
+     *   <li>成功：返回"组件库名称 版本号"格式</li>
+     *   <li>失败：返回null</li>
+     * </ul>
+     * 
+     * @return 格式化的版本信息字符串，如果无法获取则返回null
+     * 
+     * @see #getPackageNameByLibraryType()
+     * @see #findPackageVersion(String)
+     * @see com.chu7.vuecomponentassistant.utils.LibraryTypeHelper#getDisplayName(String)
      */
     private String getActualLibraryVersion() {
         try {
@@ -394,6 +661,21 @@ public class ComponentProvider {
 
     /**
      * 根据组件库类型获取对应的包名
+     * 
+     * <p>该方法通过动态配置管理器获取组件库类型对应的 npm 包名，
+     * 用于在 package.json 中查找版本信息。</p>
+     * 
+     * <p>获取策略：</p>
+     * <ol>
+     *   <li>使用动态配置管理器查找配置信息</li>
+     *   <li>如果找到配置，返回配置中的包名</li>
+     *   <li>如果找不到配置，直接返回 libraryType（可能是包名）</li>
+     * </ol>
+     * 
+     * @return 对应的 npm 包名，如果无法确定则返回 libraryType
+     * 
+     * @see com.chu7.vuecomponentassistant.utils.DynamicLibraryConfigManager#getInstance()
+     * @see com.chu7.vuecomponentassistant.utils.DynamicLibraryConfigManager.LibraryConfig#getPackageName()
      */
     private String getPackageNameByLibraryType() {
         // 使用动态配置管理器获取包名
@@ -410,6 +692,29 @@ public class ComponentProvider {
 
     /**
      * 从项目的 package.json 中查找指定包的版本
+     * 
+     * <p>该方法在项目的 package.json 文件中查找指定 npm 包的版本信息，
+     * 支持 dependencies 和 devDependencies 中的版本查找。</p>
+     * 
+     * <p>查找流程：</p>
+     * <ol>
+     *   <li>获取项目根目录</li>
+     *   <li>查找 package.json 文件</li>
+     *   <li>读取文件内容</li>
+     *   <li>使用正则表达式提取版本信息</li>
+     * </ol>
+     * 
+     * <p>支持格式：</p>
+     * <ul>
+     *   <li>双引号格式："package-name": "version"</li>
+     *   <li>单引号格式：'package-name': 'version'</li>
+     * </ul>
+     * 
+     * @param packageName 要查找的 npm 包名
+     * @return 包的版本号，如果找不到则返回null
+     * 
+     * @see com.chu7.vuecomponentassistant.utils.ProjectPathHelper#getProjectRoot(Project)
+     * @see #extractVersionFromJson(String, String)
      */
     private String findPackageVersion(String packageName) {
         try {
@@ -440,6 +745,26 @@ public class ComponentProvider {
 
     /**
      * 从 JSON 字符串中提取指定包的版本
+     * 
+     * <p>该方法使用正则表达式从 package.json 的 JSON 内容中提取指定包的版本信息，
+     * 支持多种 JSON 格式的版本提取。</p>
+     * 
+     * <p>提取策略：</p>
+     * <ol>
+     *   <li>定义多种 JSON 格式的正则表达式</li>
+     *   <li>逐个尝试匹配每种格式</li>
+     *   <li>返回第一个成功匹配的版本号</li>
+     * </ol>
+     * 
+     * <p>支持的正则表达式：</p>
+     * <ul>
+     *   <li>双引号格式：`"package-name"\s*:\s*"([^"]+)"`</li>
+     *   <li>单引号格式：`'package-name'\s*:\s*'([^']+)'`</li>
+     * </ul>
+     * 
+     * @param jsonContent package.json 的 JSON 内容字符串
+     * @param packageName 要提取版本的包名
+     * @return 包的版本号，如果找不到则返回null
      */
     private String extractVersionFromJson(String jsonContent, String packageName) {
         try {
@@ -467,6 +792,29 @@ public class ComponentProvider {
 
     /**
      * 获取所有可用的组件列表
+     * 
+     * <p>该方法返回项目中所有可用的组件，包括内置组件库、自定义组件库和官方组件库，
+     * 根据项目的组件库启用配置进行过滤。</p>
+     * 
+     * <p>组件来源：</p>
+     * <ol>
+     *   <li>内置组件库组件（根据配置过滤）</li>
+     *   <li>自定义组件库组件（根据配置过滤）</li>
+     *   <li>官方组件库组件（根据配置过滤）</li>
+     * </ol>
+     * 
+     * <p>过滤逻辑：</p>
+     * <ul>
+     *   <li>只返回启用的组件库中的组件</li>
+     *   <li>跳过未启用的组件库</li>
+     *   <li>记录加载过程的详细信息</li>
+     * </ul>
+     * 
+     * @return 所有可用组件的列表，如果没有启用任何组件库则返回空列表
+     * 
+     * @see #getEnabledLibrariesForProject()
+     * @see #addCustomComponents(List, Set)
+     * @see #addDownloadedOfficialComponents(List, Set)
      */
     public List<ElementPlusComponent> getAllComponents() {
         VueKitLogger.debug(LOG, "开始获取所有可用组件...");
@@ -500,6 +848,29 @@ public class ComponentProvider {
 
     /**
      * 获取项目启用的组件库配置
+     * 
+     * <p>该方法从项目的组件库配置管理器中获取当前启用的组件库列表，
+     * 用于过滤和加载相应的组件数据。</p>
+     * 
+     * <p>获取流程：</p>
+     * <ol>
+     *   <li>获取项目级别的组件库配置管理器</li>
+     *   <li>查询启用的组件库名称列表</li>
+     *   <li>记录启用的组件库信息</li>
+     *   <li>返回启用列表</li>
+     * </ol>
+     * 
+     * <p>错误处理：</p>
+     * <ul>
+     *   <li>捕获所有异常并记录错误日志</li>
+     *   <li>返回空集合而不是抛出异常</li>
+     *   <li>确保方法调用的稳定性</li>
+     * </ul>
+     * 
+     * @return 启用的组件库名称集合，如果获取失败则返回空集合
+     * 
+     * @see com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager#getInstance(Project)
+     * @see com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager#getEnabledLibraryNames(Project)
      */
     private Set<String> getEnabledLibrariesForProject() {
         try {
@@ -520,6 +891,30 @@ public class ComponentProvider {
 
     /**
      * 根据前缀获取匹配的组件列表
+     * 
+     * <p>该方法根据指定的前缀字符串，从所有启用的组件库中查找匹配的组件，
+     * 使用精确的前缀匹配（startsWith）策略。</p>
+     * 
+     * <p>搜索范围：</p>
+     * <ol>
+     *   <li>内置组件库（根据配置过滤）</li>
+     *   <li>自定义组件库（根据配置过滤）</li>
+     *   <li>官方组件库（根据配置过滤）</li>
+     * </ol>
+     * 
+     * <p>匹配策略：</p>
+     * <ul>
+     *   <li>使用 toLowerCase() 进行不区分大小写的匹配</li>
+     *   <li>使用 startsWith() 进行精确前缀匹配</li>
+     *   <li>只返回启用的组件库中的组件</li>
+     * </ul>
+     * 
+     * @param prefix 要搜索的前缀字符串，如果为null或空字符串则返回所有组件
+     * @return 匹配前缀的组件列表
+     * 
+     * @see #getAllComponents()
+     * @see #addCustomComponents(List, Set)
+     * @see #addDownloadedOfficialComponents(List, Set)
      */
     public List<ElementPlusComponent> getComponentsByPrefix(String prefix) {
         if (prefix == null || prefix.isEmpty()) {
@@ -570,18 +965,37 @@ public class ComponentProvider {
     /**
      * 根据前缀搜索组件（模糊匹配）
      * 
-     * 搜索逻辑：
-     * 1. 收集所有可用的组件（内置、自定义、官方）
-     * 2. 如果前缀为空，返回所有组件
-     * 3. 使用模糊匹配（包含关系）而不是精确前缀匹配
-     * 4. 不区分大小写
+     * <p>该方法使用模糊匹配策略搜索组件，与 getComponentsByPrefix 的精确前缀匹配不同，
+     * 该方法使用 contains 关系进行搜索，提供更灵活的组件查找功能。</p>
      * 
-     * 与 getComponentsByPrefix 的区别：
-     * - getComponentsByPrefix: 精确前缀匹配（startsWith）
-     * - searchComponents: 模糊匹配（contains）
-     *
+     * <p>搜索逻辑：</p>
+     * <ol>
+     *   <li>收集所有可用的组件（内置、自定义、官方）</li>
+     *   <li>如果前缀为空，返回所有组件</li>
+     *   <li>使用模糊匹配（包含关系）而不是精确前缀匹配</li>
+     *   <li>不区分大小写</li>
+     * </ol>
+     * 
+     * <p>与 getComponentsByPrefix 的区别：</p>
+     * <ul>
+     *   <li>getComponentsByPrefix: 精确前缀匹配（startsWith）</li>
+     *   <li>searchComponents: 模糊匹配（contains）</li>
+     * </ul>
+     * 
+     * <p>搜索范围：</p>
+     * <ul>
+     *   <li>内置组件库（根据配置过滤）</li>
+     *   <li>自定义组件库（根据配置过滤）</li>
+     *   <li>官方组件库（根据配置过滤）</li>
+     * </ul>
+     * 
      * @param prefix 要搜索的前缀，如果为 null 或空字符串则返回所有组件
      * @return 匹配的组件列表，如果没有匹配的组件则返回空列表
+     * 
+     * @see #getComponentsByPrefix(String)
+     * @see #getAllComponents()
+     * @see #addCustomComponents(List, Set)
+     * @see #addDownloadedOfficialComponents(List, Set)
      */
     public List<ElementPlusComponent> searchComponents(String prefix) {
         VueKitLogger.debug(LOG, "开始模糊搜索组件，前缀: '" + prefix + "'");
@@ -637,6 +1051,31 @@ public class ComponentProvider {
 
     /**
      * 根据组件名获取指定的组件
+     * 
+     * <p>该方法根据组件名称从所有启用的组件库中查找指定的组件，
+     * 支持内置组件库、自定义组件库和官方组件库的查找。</p>
+     * 
+     * <p>查找策略：</p>
+     * <ol>
+     *   <li>先从内置组件库查找（最快）</li>
+     *   <li>从自定义组件库查找</li>
+     *   <li>从官方组件库查找（包括下载的组件库）</li>
+     * </ol>
+     * 
+     * <p>查找范围：</p>
+     * <ul>
+     *   <li>只查找启用的组件库中的组件</li>
+     *   <li>跳过未启用的组件库</li>
+     *   <li>记录查找过程的详细信息</li>
+     * </ul>
+     * 
+     * @param componentName 要查找的组件名称，不能为null或空字符串
+     * @return 找到的组件对象，如果未找到则返回null
+     * @throws IllegalArgumentException 如果componentName为null或空字符串
+     * 
+     * @see #getEnabledLibrariesForProject()
+     * @see com.chu7.vuecomponentassistant.utils.CustomComponentLibraryManager#getCustomComponent(String)
+     * @see #convertToElementPlusComponent(ComponentInfo)
      */
     public ElementPlusComponent getComponent(String componentName) {
         if (componentName == null || componentName.trim().isEmpty()) {
@@ -698,6 +1137,31 @@ public class ComponentProvider {
 
     /**
      * 添加自定义组件到组件列表中
+     * 
+     * <p>该方法将自定义组件库中的组件添加到指定的组件列表中，
+     * 只有在启用了相应组件库时才会添加。</p>
+     * 
+     * <p>添加流程：</p>
+     * <ol>
+     *   <li>验证目标组件列表的有效性</li>
+     *   <li>检查是否有启用的组件库</li>
+     *   <li>获取所有自定义组件库配置</li>
+     *   <li>转换并添加组件到目标列表</li>
+     * </ol>
+     * 
+     * <p>过滤逻辑：</p>
+     * <ul>
+     *   <li>如果没有启用任何组件库，跳过添加</li>
+     *   <li>只添加启用的自定义组件库中的组件</li>
+     *   <li>处理组件转换过程中的异常</li>
+     * </ul>
+     * 
+     * @param allComponents 目标组件列表，不能为null
+     * @param enabledLibraries 启用的组件库名称集合
+     * @throws IllegalArgumentException 如果allComponents为null
+     * 
+     * @see com.chu7.vuecomponentassistant.utils.CustomComponentLibraryManager#getAllCustomLibraries()
+     * @see #convertToElementPlusComponent(ComponentInfo)
      */
     private void addCustomComponents(List<ElementPlusComponent> allComponents, Set<String> enabledLibraries) {
         if (allComponents == null) {
@@ -733,6 +1197,34 @@ public class ComponentProvider {
 
     /**
      * 添加从官方组件库市场下载的组件库
+     * 
+     * <p>该方法将官方组件库市场下载的组件库中的组件添加到指定的组件列表中，
+     * 只有在启用了相应组件库时才会添加。</p>
+     * 
+     * <p>添加流程：</p>
+     * <ol>
+     *   <li>验证目标组件列表的有效性</li>
+     *   <li>检查是否有启用的组件库</li>
+     *   <li>获取所有组件库（包括官方和自定义）</li>
+     *   <li>过滤启用的组件库</li>
+     *   <li>转换并添加组件到目标列表</li>
+     * </ol>
+     * 
+     * <p>过滤逻辑：</p>
+     * <ul>
+     *   <li>如果没有启用任何组件库，跳过添加</li>
+     *   <li>只添加启用的组件库中的组件</li>
+     *   <li>记录添加过程的详细信息</li>
+     *   <li>处理组件转换过程中的异常</li>
+     * </ul>
+     * 
+     * @param allComponents 目标组件列表，不能为null
+     * @param enabledLibraries 启用的组件库名称集合
+     * @throws IllegalArgumentException 如果allComponents为null
+     * 
+     * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager#getAllLibraries()
+     * @see #getLibraryTypeByName(String)
+     * @see #convertToElementPlusComponent(ComponentInfo)
      */
     private void addDownloadedOfficialComponents(List<ElementPlusComponent> allComponents, Set<String> enabledLibraries) {
         if (allComponents == null) {
@@ -778,6 +1270,28 @@ public class ComponentProvider {
 
     /**
      * 重新加载组件数据
+     * 
+     * <p>该方法清空现有的组件数据并重新从所有数据源加载组件，
+     * 用于刷新组件数据或解决数据不一致问题。</p>
+     * 
+     * <p>重新加载流程：</p>
+     * <ol>
+     *   <li>记录重新加载前的组件数量</li>
+     *   <li>清空现有的组件映射表和列表</li>
+     *   <li>调用 loadComponents() 重新加载数据</li>
+     *   <li>记录重新加载后的组件数量</li>
+     *   <li>输出重新加载统计信息</li>
+     * </ol>
+     * 
+     * <p>使用场景：</p>
+     * <ul>
+     *   <li>组件库配置变更后刷新数据</li>
+     *   <li>解决数据不一致问题</li>
+     *   <li>手动刷新组件数据</li>
+     *   <li>调试和测试目的</li>
+     * </ul>
+     * 
+     * @see #loadComponents()
      */
     public void reloadComponents() {
         VueKitLogger.info(LOG, "=== 开始重新加载组件数据 ===");
@@ -800,6 +1314,31 @@ public class ComponentProvider {
 
     /**
      * 获取组件的所有属性
+     * 
+     * <p>该方法根据组件名称获取指定组件的所有属性信息，
+     * 包括属性名称、类型、描述、默认值、是否必需等。</p>
+     * 
+     * <p>获取流程：</p>
+     * <ol>
+     *   <li>验证组件名称参数的有效性</li>
+     *   <li>调用 getComponent() 获取组件对象</li>
+     *   <li>提取组件的属性列表</li>
+     *   <li>返回属性列表或空列表</li>
+     * </ol>
+     * 
+     * <p>返回结果：</p>
+     * <ul>
+     *   <li>如果找到组件且有属性，返回属性列表</li>
+     *   <li>如果找不到组件或没有属性，返回空列表</li>
+     *   <li>不会返回null，确保调用方的安全性</li>
+     * </ul>
+     * 
+     * @param componentName 组件名称，不能为null或空字符串
+     * @return 组件的属性列表，如果没有属性则返回空列表
+     * @throws IllegalArgumentException 如果componentName为null或空字符串
+     * 
+     * @see #getComponent(String)
+     * @see com.chu7.vuecomponentassistant.completion2.ElementPlusComponent#getProps()
      */
     public List<ElementPlusProp> getComponentProps(String componentName) {
         if (componentName == null || componentName.trim().isEmpty()) {
@@ -816,6 +1355,31 @@ public class ComponentProvider {
 
     /**
      * 获取组件的所有事件
+     * 
+     * <p>该方法根据组件名称获取指定组件的所有事件信息，
+     * 包括事件名称、描述、参数等。</p>
+     * 
+     * <p>获取流程：</p>
+     * <ol>
+     *   <li>验证组件名称参数的有效性</li>
+     *   <li>调用 getComponent() 获取组件对象</li>
+     *   <li>提取组件的事件列表</li>
+     *   <li>返回事件列表或空列表</li>
+     * </ol>
+     * 
+     * <p>返回结果：</p>
+     * <ul>
+     *   <li>如果找到组件且有事件，返回事件列表</li>
+     *   <li>如果找不到组件或没有事件，返回空列表</li>
+     *   <li>不会返回null，确保调用方的安全性</li>
+     * </ul>
+     * 
+     * @param componentName 组件名称，不能为null或空字符串
+     * @return 组件的事件列表，如果没有事件则返回空列表
+     * @throws IllegalArgumentException 如果componentName为null或空字符串
+     * 
+     * @see #getComponent(String)
+     * @see com.chu7.vuecomponentassistant.completion2.ElementPlusComponent#getEvents()
      */
     public List<ElementPlusEvent> getComponentEvents(String componentName) {
         if (componentName == null || componentName.trim().isEmpty()) {
@@ -832,6 +1396,31 @@ public class ComponentProvider {
 
     /**
      * 获取组件的所有插槽
+     * 
+     * <p>该方法根据组件名称获取指定组件的所有插槽信息，
+     * 包括插槽名称、描述、作用域等。</p>
+     * 
+     * <p>获取流程：</p>
+     * <ol>
+     *   <li>验证组件名称参数的有效性</li>
+     *   <li>调用 getComponent() 获取组件对象</li>
+     *   <li>提取组件的插槽列表</li>
+     *   <li>返回插槽列表或空列表</li>
+     * </ol>
+     * 
+     * <p>返回结果：</p>
+     * <ul>
+     *   <li>如果找到组件且有插槽，返回插槽列表</li>
+     *   <li>如果找不到组件或没有插槽，返回空列表</li>
+     *   <li>不会返回null，确保调用方的安全性</li>
+     * </ul>
+     * 
+     * @param componentName 组件名称，不能为null或空字符串
+     * @return 组件的插槽列表，如果没有插槽则返回空列表
+     * @throws IllegalArgumentException 如果componentName为null或空字符串
+     * 
+     * @see #getComponent(String)
+     * @see com.chu7.vuecomponentassistant.completion2.ElementPlusComponent#getSlots()
      */
     public List<ElementPlusSlot> getComponentSlots(String componentName) {
         if (componentName == null || componentName.trim().isEmpty()) {
@@ -848,6 +1437,27 @@ public class ComponentProvider {
 
     /**
      * 检查组件是否存在于内置组件库中
+     * 
+     * <p>该方法检查指定的组件是否存在于当前内置组件库中，
+     * 使用组件映射表进行快速查找。</p>
+     * 
+     * <p>检查逻辑：</p>
+     * <ul>
+     *   <li>验证组件名称参数的有效性</li>
+     *   <li>在 componentsMap 中查找组件名称</li>
+     *   <li>返回是否存在的结果</li>
+     * </ul>
+     * 
+     * <p>注意事项：</p>
+     * <ul>
+     *   <li>只检查内置组件库，不包括自定义和官方组件库</li>
+     *   <li>使用 HashMap 进行 O(1) 时间复杂度的查找</li>
+     *   <li>不区分大小写（取决于映射表的键值）</li>
+     * </ul>
+     * 
+     * @param componentName 要检查的组件名称，不能为null或空字符串
+     * @return 如果组件存在于内置组件库中则返回true，否则返回false
+     * @throws IllegalArgumentException 如果componentName为null或空字符串
      */
     public boolean hasComponent(String componentName) {
         if (componentName == null || componentName.trim().isEmpty()) {
@@ -859,6 +1469,26 @@ public class ComponentProvider {
 
     /**
      * 获取内置组件库的组件总数
+     * 
+     * <p>该方法返回当前内置组件库中已加载的组件总数，
+     * 用于统计和监控组件库的使用情况。</p>
+     * 
+     * <p>返回值说明：</p>
+     * <ul>
+     *   <li>返回 componentsList 的当前大小</li>
+     *   <li>如果组件库为空，返回 0</li>
+     *   <li>不包括自定义和官方组件库的组件</li>
+     * </ul>
+     * 
+     * <p>使用场景：</p>
+     * <ul>
+     *   <li>显示组件库统计信息</li>
+     *   <li>监控组件加载状态</li>
+     *   <li>调试和测试目的</li>
+     *   <li>性能分析</li>
+     * </ul>
+     * 
+     * @return 内置组件库的组件总数
      */
     public int getComponentCount() {
         return componentsList.size();
@@ -866,6 +1496,28 @@ public class ComponentProvider {
 
     /**
      * 获取当前检测到的组件库类型
+     * 
+     * <p>该方法返回在初始化时检测到的组件库类型，
+     * 通常是通过分析项目的 package.json 依赖获得的。</p>
+     * 
+     * <p>返回值说明：</p>
+     * <ul>
+     *   <li>返回检测到的组件库类型字符串</li>
+     *   <li>例如："element-plus"、"ant-design-vue"、"element-ui"</li>
+     *   <li>如果检测失败，可能返回默认值或"unknown"</li>
+     * </ul>
+     * 
+     * <p>使用场景：</p>
+     * <ul>
+     *   <li>确定当前项目使用的组件库</li>
+     *   <li>配置组件库相关的功能</li>
+     *   <li>生成正确的文档链接</li>
+     *   <li>调试和配置目的</li>
+     * </ul>
+     * 
+     * @return 当前检测到的组件库类型字符串
+     * 
+     * @see com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector#detectComponentLibrary(Project)
      */
     public String getLibraryType() {
         return libraryType;
@@ -873,6 +1525,29 @@ public class ComponentProvider {
 
     /**
      * 获取当前组件库的显示名称
+     * 
+     * <p>该方法返回当前组件库的用户友好的显示名称，
+     * 通过 LibraryTypeHelper 将内部类型转换为可读的名称。</p>
+     * 
+     * <p>转换示例：</p>
+     * <ul>
+     *   <li>"element-plus" → "Element Plus"</li>
+     *   <li>"ant-design-vue" → "Ant Design Vue"</li>
+     *   <li>"element-ui" → "Element UI"</li>
+     *   <li>"unknown" → "未知组件库"</li>
+     * </ul>
+     * 
+     * <p>使用场景：</p>
+     * <ul>
+     *   <li>在用户界面中显示组件库名称</li>
+     *   <li>生成用户友好的错误消息</li>
+     *   <li>日志记录和调试信息</li>
+     *   <li>配置界面的显示</li>
+     * </ul>
+     * 
+     * @return 组件库的用户友好显示名称
+     * 
+     * @see com.chu7.vuecomponentassistant.utils.LibraryTypeHelper#getDisplayName(String)
      */
     public String getLibraryDisplayName() {
         return LibraryTypeHelper.getDisplayName(libraryType);
@@ -880,6 +1555,28 @@ public class ComponentProvider {
 
     /**
      * 获取组件前缀
+     * 
+     * <p>该方法返回当前组件库的组件前缀，用于识别和过滤组件名称。
+     * 通过 LibraryTypeHelper 获取组件库的标准前缀。</p>
+     * 
+     * <p>前缀示例：</p>
+     * <ul>
+     *   <li>Element Plus: "el-"</li>
+     *   <li>Ant Design Vue: "a-"</li>
+     *   <li>Element UI: "el-"</li>
+     * </ul>
+     * 
+     * <p>使用场景：</p>
+     * <ul>
+     *   <li>识别组件是否属于特定组件库</li>
+     *   <li>生成正确的组件名称</li>
+     *   <li>过滤和分类组件</li>
+     *   <li>文档链接生成</li>
+     * </ul>
+     * 
+     * @return 组件库的组件前缀字符串
+     * 
+     * @see com.chu7.vuecomponentassistant.utils.LibraryTypeHelper#getComponentPrefix(String)
      */
     public String getComponentPrefix() {
         return LibraryTypeHelper.getComponentPrefix(libraryType);
@@ -887,6 +1584,28 @@ public class ComponentProvider {
 
     /**
      * 获取文档 URL 模板
+     * 
+     * <p>该方法返回当前组件库的文档 URL 模板，用于生成组件的官方文档链接。
+     * 通过 LibraryTypeHelper 获取组件库的标准文档模板。</p>
+     * 
+     * <p>URL 模板示例：</p>
+     * <ul>
+     *   <li>Element Plus: "https://element-plus.org/en-US/component/{0}.html"</li>
+     *   <li>Ant Design Vue: "https://antdv.com/components/{0}"</li>
+     *   <li>Element UI: "https://element.eleme.io/#/en-US/component/{0}"</li>
+     * </ul>
+     * 
+     * <p>使用场景：</p>
+     * <ul>
+     *   <li>生成组件的官方文档链接</li>
+     *   <li>在 IDE 中提供文档跳转功能</li>
+     *   <li>帮助用户了解组件的使用方法</li>
+     *   <li>集成到帮助系统中</li>
+     * </ul>
+     * 
+     * @return 组件库的文档 URL 模板字符串
+     * 
+     * @see com.chu7.vuecomponentassistant.utils.LibraryTypeHelper#getDocumentationUrlTemplate(String)
      */
     public String getDocumentationUrlTemplate() {
         return LibraryTypeHelper.getDocumentationUrlTemplate(libraryType);
@@ -894,6 +1613,30 @@ public class ComponentProvider {
 
     /**
      * 检查组件是否属于当前组件库
+     * 
+     * <p>该方法检查指定的组件是否属于当前检测到的组件库，
+     * 通过组件名称前缀和自定义组件库检查来判断。</p>
+     * 
+     * <p>检查逻辑：</p>
+     * <ol>
+     *   <li>检查是否是内置组件库的组件（通过前缀匹配）</li>
+     *   <li>检查是否是自定义组件库的组件</li>
+     *   <li>返回检查结果</li>
+     * </ol>
+     * 
+     * <p>使用场景：</p>
+     * <ul>
+     *   <li>确定组件的来源</li>
+     *   <li>过滤和分类组件</li>
+     *   <li>生成正确的文档链接</li>
+     *   <li>组件库管理功能</li>
+     * </ul>
+     * 
+     * @param componentName 要检查的组件名称
+     * @return 如果组件属于当前组件库则返回true，否则返回false
+     * 
+     * @see com.chu7.vuecomponentassistant.utils.LibraryTypeHelper#isComponentFromLibrary(String, String)
+     * @see com.chu7.vuecomponentassistant.utils.CustomComponentLibraryManager#isCustomComponent(String)
      */
     public boolean isComponentFromCurrentLibrary(String componentName) {
         // 检查是否是内置组件库的组件
@@ -907,6 +1650,38 @@ public class ComponentProvider {
 
     /**
      * 生成组件的文档 URL
+     * 
+     * <p>该方法根据组件名称生成对应的官方文档链接，
+     * 支持内置组件库和自定义组件库的文档生成。</p>
+     * 
+     * <p>生成策略：</p>
+     * <ol>
+     *   <li>检查是否是自定义组件库的组件</li>
+     *   <li>如果是自定义组件，使用自定义文档生成逻辑</li>
+     *   <li>如果是内置组件，使用标准模板生成</li>
+     * </ol>
+     * 
+     * <p>URL 生成流程：</p>
+     * <ul>
+     *   <li>获取文档 URL 模板</li>
+     *   <li>移除组件前缀（如果存在）</li>
+     *   <li>使用 String.format 格式化 URL</li>
+     * </ul>
+     * 
+     * <p>使用场景：</p>
+     * <ul>
+     *   <li>在 IDE 中提供文档跳转功能</li>
+     *   <li>生成组件的帮助链接</li>
+     *   <li>集成到帮助系统中</li>
+     *   <li>用户学习和参考</li>
+     * </ul>
+     * 
+     * @param componentName 要生成文档链接的组件名称
+     * @return 组件的官方文档 URL，如果无法生成则返回空字符串
+     * 
+     * @see #getDocumentationUrlTemplate()
+     * @see #getComponentPrefix()
+     * @see com.chu7.vuecomponentassistant.utils.CustomComponentLibraryManager#generateCustomDocumentationUrl(String)
      */
     public String generateDocumentationUrl(String componentName) {
         // 检查是否是自定义组件库的组件
@@ -932,9 +1707,33 @@ public class ComponentProvider {
 
     /**
      * 获取组件所属的组件库显示名称
-     *
-     * @param componentName 组件名称
-     * @return 组件库的显示名称
+     * 
+     * <p>该方法根据组件名称确定组件所属的组件库，并返回该组件库的用户友好显示名称。
+     * 支持内置组件库、自定义组件库和官方组件库的识别。</p>
+     * 
+     * <p>识别策略：</p>
+     * <ol>
+     *   <li>检查是否是自定义组件库的组件</li>
+     *   <li>检查是否是内置组件库的组件</li>
+     *   <li>检查是否来自其他官方组件库</li>
+     *   <li>返回对应的组件库显示名称</li>
+     * </ol>
+     * 
+     * <p>返回值说明：</p>
+     * <ul>
+     *   <li>自定义组件：返回自定义组件库的显示名称</li>
+     *   <li>内置组件：返回当前组件库的显示名称</li>
+     *   <li>官方组件：返回官方组件库的名称</li>
+     *   <li>未知组件：返回"未知组件库"</li>
+     * </ul>
+     * 
+     * @param componentName 组件名称，不能为null或空字符串
+     * @return 组件所属组件库的显示名称，如果无法确定则返回"未知组件库"
+     * 
+     * @see com.chu7.vuecomponentassistant.utils.CustomComponentLibraryManager#isCustomComponent(String)
+     * @see com.chu7.vuecomponentassistant.utils.CustomComponentLibraryManager#getCustomLibraryDisplayName(String)
+     * @see com.chu7.vuecomponentassistant.utils.LibraryTypeHelper#isComponentFromLibrary(String, String)
+     * @see #getLibraryDisplayName()
      */
     public String getComponentLibraryDisplayName(String componentName) {
         if (componentName == null || componentName.trim().isEmpty()) {
@@ -980,9 +1779,33 @@ public class ComponentProvider {
 
     /**
      * 获取组件所属的组件库版本
-     *
-     * @param componentName 组件名称
-     * @return 组件库的版本号
+     * 
+     * <p>该方法根据组件名称确定组件所属的组件库，并返回该组件库的版本号。
+     * 支持内置组件库、自定义组件库和官方组件库的版本获取。</p>
+     * 
+     * <p>版本获取策略：</p>
+     * <ol>
+     *   <li>检查是否是自定义组件库的组件</li>
+     *   <li>检查是否是内置组件库的组件</li>
+     *   <li>检查是否来自其他官方组件库</li>
+     *   <li>返回对应的组件库版本</li>
+     * </ol>
+     * 
+     * <p>返回值说明：</p>
+     * <ul>
+     *   <li>自定义组件：返回自定义组件库的版本</li>
+     *   <li>内置组件：返回当前组件库的版本信息</li>
+     *   <li>官方组件：返回官方组件库的版本</li>
+     *   <li>未知组件：返回"未知版本"</li>
+     * </ul>
+     * 
+     * @param componentName 组件名称，不能为null或空字符串
+     * @return 组件所属组件库的版本号，如果无法确定则返回"未知版本"
+     * 
+     * @see com.chu7.vuecomponentassistant.utils.CustomComponentLibraryManager#isCustomComponent(String)
+     * @see com.chu7.vuecomponentassistant.utils.CustomComponentLibraryManager#getCustomLibraryVersion(String)
+     * @see com.chu7.vuecomponentassistant.utils.LibraryTypeHelper#isComponentFromLibrary(String, String)
+     * @see #getComponentVersionInfo()
      */
     public String getComponentLibraryVersion(String componentName) {
         if (componentName == null || componentName.trim().isEmpty()) {
@@ -1028,10 +1851,36 @@ public class ComponentProvider {
 
     /**
      * 根据组件库名称获取对应的组件库类型
-     * 现在直接返回字符串包名
      * 
-     * @param libraryName 组件库名称
+     * <p>该方法根据组件库名称获取对应的组件库类型字符串，
+     * 用于在组件库管理中进行类型识别和匹配。</p>
+     * 
+     * <p>处理流程：</p>
+     * <ol>
+     *   <li>验证组件库名称参数的有效性</li>
+     *   <li>移除版本号部分，只保留组件库名称</li>
+     *   <li>尝试使用 LibraryTypeHelper 获取包名</li>
+     *   <li>如果无法识别，直接返回组件库名称</li>
+     * </ol>
+     * 
+     * <p>版本号处理：</p>
+     * <ul>
+     *   <li>使用正则表达式移除版本号部分</li>
+     *   <li>例如："element-plus (2.3.0)" → "element-plus"</li>
+     *   <li>支持括号和空格格式的版本号</li>
+     * </ul>
+     * 
+     * <p>返回值说明：</p>
+     * <ul>
+     *   <li>如果 LibraryTypeHelper 能识别：返回对应的包名</li>
+     *   <li>如果无法识别：返回清理后的组件库名称</li>
+     *   <li>如果参数无效：返回 null</li>
+     * </ul>
+     * 
+     * @param libraryName 组件库名称，可能包含版本号
      * @return 对应的组件库类型字符串，如果找不到则返回 null
+     * 
+     * @see com.chu7.vuecomponentassistant.utils.LibraryTypeHelper#getPackageName(String)
      */
     private String getLibraryTypeByName(String libraryName) {
         if (libraryName == null || libraryName.trim().isEmpty()) {

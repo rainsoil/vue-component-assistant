@@ -15,14 +15,43 @@ import java.util.List;
 
 /**
  * 官方组件库市场对话框 - 简化版
- * 
- * 功能说明：
- * - 显示官方组件库列表
- * - 支持搜索和筛选
- * - 下载官方组件库
- * 
+ *
+ * <p>功能说明：</p>
+ * <ul>
+ *   <li>显示官方组件库列表</li>
+ *   <li>支持搜索和筛选功能</li>
+ *   <li>下载官方组件库到本地</li>
+ *   <li>实时刷新官方组件库数据</li>
+ *   <li>显示组件库详细信息和评分</li>
+ *   <li>异步下载和导入组件库</li>
+ * </ul>
+ *
+ * <p>设计特点：</p>
+ * <ul>
+ *   <li>左右分栏布局：左侧列表，右侧详情</li>
+ *   <li>顶部搜索栏：支持关键词搜索</li>
+ *   <li>实时数据获取：不使用缓存，确保数据最新</li>
+ *   <li>异步下载：避免UI阻塞</li>
+ *   <li>智能状态管理：下载中状态显示</li>
+ *   <li>完整的错误处理和用户反馈</li>
+ * </ul>
+ *
+ * <p>使用场景：</p>
+ * <ul>
+ *   <li>开发者浏览官方组件库</li>
+ *   <li>搜索特定功能的组件库</li>
+ *   <li>下载新的官方组件库</li>
+ *   <li>查看组件库评分和下载统计</li>
+ *   <li>团队项目组件库扩展</li>
+ * </ul>
+ *
  * @author VueKit Team
  * @version 3.0.0
+ * @since 1.0.0
+ * @see com.intellij.openapi.ui.DialogWrapper
+ * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager
+ * @see com.chu7.vuecomponentassistant.remote.model.OfficialLibrary
+ * @see com.chu7.vuecomponentassistant.remote.model.ImportResult
  */
 public class OfficialLibraryMarketDialog extends DialogWrapper {
     
@@ -37,8 +66,43 @@ public class OfficialLibraryMarketDialog extends DialogWrapper {
     private JButton downloadButton;
     private JTextArea detailArea;
     
+    /**
+     * 构造函数
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>初始化官方组件库市场对话框</li>
+     *   <li>设置对话框基本属性和样式</li>
+     *   <li>初始化组件库管理器</li>
+     *   <li>配置对话框尺寸和可调整性</li>
+     * </ul>
+     *
+     * <p>初始化流程：</p>
+     * <ol>
+     *   <li>调用父类构造函数，传入项目实例</li>
+     *   <li>初始化项目实例和组件库管理器</li>
+     *   <li>设置对话框标题、尺寸和可调整性</li>
+     *   <li>调用init()方法完成初始化</li>
+     * </ol>
+     *
+     * @param project 当前项目实例，用于获取项目配置和组件库信息，不能为null
+     * @param libraryManager 组件库管理器实例，用于管理官方组件库，不能为null
+     * @throws IllegalArgumentException 如果project或libraryManager参数为null
+     * @see #init()
+     * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager
+     */
     public OfficialLibraryMarketDialog(Project project, ComponentLibraryManager libraryManager) {
+        // 调用父类构造函数，传入项目实例
         super(project);
+        
+        // 参数验证
+        if (project == null) {
+            throw new IllegalArgumentException("项目实例不能为null");
+        }
+        if (libraryManager == null) {
+            throw new IllegalArgumentException("组件库管理器不能为null");
+        }
+        
         this.project = project;
         this.libraryManager = libraryManager;
         setTitle("🌐 官方组件库市场 - VueKit");
@@ -266,6 +330,34 @@ public class OfficialLibraryMarketDialog extends DialogWrapper {
     
     /**
      * 下载选中的组件库
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>异步下载选中的官方组件库</li>
+     *   <li>自动导入到组件库管理器</li>
+     *   <li>提供下载状态反馈</li>
+     *   <li>处理下载成功和失败情况</li>
+     * </ul>
+     *
+     * <p>执行流程：</p>
+     * <ol>
+     *   <li>显示下载确认对话框</li>
+     *   <li>更新UI状态为下载中</li>
+     *   <li>异步执行下载操作</li>
+     *   <li>下载完成后自动导入</li>
+     *   <li>根据结果更新UI和显示消息</li>
+     * </ol>
+     *
+     * <p>状态管理：</p>
+     * <ul>
+     *   <li>下载中：按钮显示"⏳ 下载中..."，禁用状态</li>
+     *   <li>下载完成：自动关闭对话框，显示成功消息</li>
+     *   <li>下载失败：恢复按钮状态，显示错误信息</li>
+     *   <li>导入失败：显示导入错误，允许重试</li>
+     * </ul>
+     *
+     * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager#importLibrary(Object, String)
+     * @see com.chu7.vuecomponentassistant.remote.model.ImportResult
      */
     private void downloadSelectedLibrary() {
         OfficialLibrary library = libraryList.getSelectedValue();

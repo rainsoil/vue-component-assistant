@@ -22,22 +22,42 @@ import java.net.URI;
 
 /**
  * 组件文档对话框
- * 
- * 功能说明：
- * - 显示组件的详细文档信息（属性、事件、插槽等）
- * - 支持滚动查看长文档内容
- * - 提供打开官方文档的按钮
- * - 使用 Element Plus 风格的界面设计
- * - 支持IDEA主题背景色适配
- * 
- * 设计特点：
- * - 与鼠标悬浮文档样式保持一致
- * - 使用IDEA原生背景色，支持主题切换
- * - 响应式布局，支持窗口大小调整
- * - 现代化的UI设计风格
- * 
+ *
+ * <p>功能说明：</p>
+ * <ul>
+ *   <li>显示组件的详细文档信息（属性、事件、插槽等）</li>
+ *   <li>支持滚动查看长文档内容</li>
+ *   <li>提供打开官方文档的按钮</li>
+ *   <li>使用 Element Plus 风格的界面设计</li>
+ *   <li>支持IDEA主题背景色适配</li>
+ *   <li>支持文档内容复制到剪贴板</li>
+ *   <li>智能识别组件库类型并生成文档链接</li>
+ * </ul>
+ *
+ * <p>设计特点：</p>
+ * <ul>
+ *   <li>与鼠标悬浮文档样式保持一致</li>
+ *   <li>使用IDEA原生背景色，支持主题切换</li>
+ *   <li>响应式布局，支持窗口大小调整</li>
+ *   <li>现代化的UI设计风格</li>
+ *   <li>完整的CSS样式系统，支持动画效果</li>
+ *   <li>智能的组件库识别和URL生成</li>
+ * </ul>
+ *
+ * <p>使用场景：</p>
+ * <ul>
+ *   <li>用户需要查看组件的完整文档信息</li>
+ *   <li>开发者在编写代码时需要参考组件API</li>
+ *   <li>团队协作中的组件使用说明</li>
+ *   <li>组件库学习和教学场景</li>
+ * </ul>
+ *
  * @author VueKit Team
  * @version 1.0.0
+ * @since 1.0.0
+ * @see com.intellij.openapi.ui.DialogWrapper
+ * @see com.chu7.vuecomponentassistant.documentation.DocumentationStyleGenerator
+ * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager
  */
 public class ComponentDocumentationDialog extends DialogWrapper {
 
@@ -57,16 +77,43 @@ public class ComponentDocumentationDialog extends DialogWrapper {
 
     /**
      * 构造函数
-     * 
-     * 初始化组件文档对话框，设置基本属性和样式
-     * 
-     * @param project 当前项目实例，用于获取项目配置和主题信息
-     * @param componentName 组件名称，如 "el-table"、"el-button" 等
-     * @param documentation HTML格式的文档内容，包含组件的详细说明
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>初始化组件文档对话框</li>
+     *   <li>设置对话框基本属性和样式</li>
+     *   <li>配置对话框尺寸和可调整性</li>
+     *   <li>初始化UI组件和布局</li>
+     *   <li>执行编码测试验证</li>
+     * </ul>
+     *
+     * <p>初始化流程：</p>
+     * <ol>
+     *   <li>调用父类构造函数，传入项目实例</li>
+     *   <li>初始化成员变量（项目、组件名称、文档内容）</li>
+     *   <li>设置对话框标题、尺寸和可调整性</li>
+     *   <li>调用init()方法初始化UI组件</li>
+     *   <li>执行编码测试验证文档显示</li>
+     * </ol>
+     *
+     * @param project 当前项目实例，用于获取项目配置和主题信息，不能为null
+     * @param componentName 组件名称，如 "el-table"、"el-button" 等，不能为null
+     * @param documentation HTML格式的文档内容，包含组件的详细说明，可能为null
+     * @throws IllegalArgumentException 如果project或componentName参数为null
+     * @see #init()
+     * @see #testEncoding()
      */
     public ComponentDocumentationDialog(Project project, String componentName, String documentation) {
         // 调用父类构造函数，传入项目实例
         super(project);
+        
+        // 参数验证
+        if (project == null) {
+            throw new IllegalArgumentException("项目实例不能为null");
+        }
+        if (componentName == null) {
+            throw new IllegalArgumentException("组件名称不能为null");
+        }
         
         // 初始化成员变量
         this.project = project;
@@ -87,13 +134,35 @@ public class ComponentDocumentationDialog extends DialogWrapper {
 
     /**
      * 创建对话框的中心面板
-     * 
-     * 使用BorderLayout布局管理器，将对话框分为三个区域：
-     * - 顶部：标题面板
-     * - 中间：文档内容面板（可滚动）
-     * - 底部：按钮面板
-     * 
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>创建对话框的主要布局结构</li>
+     *   <li>使用BorderLayout布局管理器组织UI组件</li>
+     *   <li>设置面板尺寸和边框样式</li>
+     *   <li>集成IDEA主题背景色</li>
+     * </ul>
+     *
+     * <p>布局结构：</p>
+     * <ul>
+     *   <li>顶部（NORTH）：标题面板，显示组件名称</li>
+     *   <li>中间（CENTER）：文档内容面板，支持滚动查看</li>
+     *   <li>底部（SOUTH）：按钮面板，提供功能操作</li>
+     * </ul>
+     *
+     * <p>设计特点：</p>
+     * <ul>
+     *   <li>使用BorderLayout确保组件合理分布</li>
+     *   <li>设置合适的面板尺寸和边框</li>
+     *   <li>集成IDEA主题系统，支持背景色适配</li>
+     *   <li>响应式布局，支持窗口大小调整</li>
+     * </ul>
+     *
      * @return 配置好的主面板组件
+     * @see #createTitlePanel()
+     * @see #createContentPanel()
+     * @see #createButtonPanel()
+     * @see java.awt.BorderLayout
      */
     @Nullable
     @Override
@@ -123,11 +192,33 @@ public class ComponentDocumentationDialog extends DialogWrapper {
 
     /**
      * 创建标题面板
-     * 
-     * 创建一个带有Element Plus主题色的标题栏，显示组件名称
-     * 使用蓝色背景和白色文字，提供良好的视觉层次
-     * 
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>创建带有Element Plus主题色的标题栏</li>
+     *   <li>显示组件名称和图标</li>
+     *   <li>提供良好的视觉层次和品牌识别</li>
+     * </ul>
+     *
+     * <p>视觉设计：</p>
+     * <ul>
+     *   <li>使用Element Plus主色调（蓝色背景）</li>
+     *   <li>白色文字确保良好的对比度</li>
+     *   <li>包含组件图标（📦）增强视觉效果</li>
+     *   <li>合适的内边距和字体设置</li>
+     * </ul>
+     *
+     * <p>样式配置：</p>
+     * <ul>
+     *   <li>背景色：#409EFF（Element Plus蓝色）</li>
+     *   <li>文字颜色：白色</li>
+     *   <li>字体：Microsoft YaHei，粗体，20px</li>
+     *   <li>内边距：20px上下，25px左右</li>
+     * </ul>
+     *
      * @return 配置好的标题面板
+     * @see java.awt.BorderLayout
+     * @see javax.swing.JLabel
      */
     private JPanel createTitlePanel() {
         // 创建标题面板，使用BorderLayout布局
@@ -381,9 +472,34 @@ public class ComponentDocumentationDialog extends DialogWrapper {
 
     /**
      * 打开官方文档
-     * 
-     * 根据组件名称生成对应的官方文档URL，并在默认浏览器中打开
-     * 支持Element Plus和Ant Design Vue等主流组件库
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>根据组件名称生成对应的官方文档URL</li>
+     *   <li>在系统默认浏览器中打开文档链接</li>
+     *   <li>支持多种主流组件库的文档访问</li>
+     *   <li>提供错误处理和用户反馈</li>
+     * </ul>
+     *
+     * <p>执行流程：</p>
+     * <ol>
+     *   <li>调用generateDocumentationUrl()生成文档URL</li>
+     *   <li>验证URL是否生成成功</li>
+     *   <li>使用Desktop.browse()在浏览器中打开</li>
+     *   <li>处理可能的异常情况</li>
+     * </ol>
+     *
+     * <p>错误处理：</p>
+     * <ul>
+     *   <li>URL生成失败时显示错误对话框</li>
+     *   <li>浏览器打开失败时显示详细错误信息</li>
+     *   <li>使用IntelliJ IDEA的Messages类显示错误</li>
+     * </ul>
+     *
+     * @throws IOException 如果无法打开浏览器或访问URL
+     * @see #generateDocumentationUrl()
+     * @see java.awt.Desktop#browse(URI)
+     * @see com.intellij.openapi.ui.Messages#showErrorDialog(String, String)
      */
     private void openOfficialDocumentation() {
         try {
@@ -494,9 +610,35 @@ public class ComponentDocumentationDialog extends DialogWrapper {
 
     /**
      * 复制文档内容
-     * 
-     * 将当前显示的文档内容复制到系统剪贴板
-     * 包括选择全部内容、复制到剪贴板、重置光标位置和显示成功提示
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>将当前显示的文档内容复制到系统剪贴板</li>
+     *   <li>支持完整的文档内容复制</li>
+     *   <li>提供用户操作反馈</li>
+     *   <li>自动重置光标位置</li>
+     * </ul>
+     *
+     * <p>复制流程：</p>
+     * <ol>
+     *   <li>选择编辑器中的所有内容</li>
+     *   <li>将选中内容复制到系统剪贴板</li>
+     *   <li>重置光标位置到文档开头</li>
+     *   <li>显示复制成功的提示信息</li>
+     * </ol>
+     *
+     * <p>用户体验：</p>
+     * <ul>
+     *   <li>自动选择全部内容，无需手动选择</li>
+     *   <li>复制后自动重置光标位置</li>
+     *   <li>显示友好的成功提示信息</li>
+     *   <li>支持后续的粘贴操作</li>
+     * </ul>
+     *
+     * @see javax.swing.JEditorPane#selectAll()
+     * @see javax.swing.JEditorPane#copy()
+     * @see javax.swing.JEditorPane#setCaretPosition(int)
+     * @see com.intellij.openapi.ui.Messages#showInfoMessage(String, String)
      */
     private void copyDocumentation() {
         // 选择编辑器中的所有内容

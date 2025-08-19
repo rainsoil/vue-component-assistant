@@ -15,19 +15,115 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * 远程组件库管理器
+ * 
+ * <p>功能说明：</p>
+ * <ul>
+ *   <li>管理远程组件库的下载、更新和验证</li>
+ *   <li>提供异步下载核心组件库的功能</li>
+ *   <li>支持从指定URL下载自定义组件库</li>
+ *   <li>管理远程组件库的重新加载和预览</li>
+ *   <li>与本地缓存管理器协同工作</li>
+ * </ul>
+ * 
+ * <p>设计特点：</p>
+ * <ul>
+ *   <li>异步操作：使用CompletableFuture支持非阻塞操作</li>
+ *   <li>错误处理：完善的异常处理和错误信息提供</li>
+ *   <li>缓存集成：自动保存下载的组件库到本地缓存</li>
+ *   <li>重试机制：支持网络请求的重试和容错</li>
+ *   <li>JSON解析：智能的JSON解析和错误诊断</li>
+ * </ul>
+ * 
+ * <p>核心功能：</p>
+ * <ol>
+ *   <li>核心组件库下载：从官方源下载标准组件库</li>
+ *   <li>自定义组件库下载：支持用户指定的远程URL</li>
+ *   <li>组件库更新：重新下载远程组件库的最新版本</li>
+ *   <li>URL验证：验证远程URL的可访问性</li>
+ *   <li>预览功能：预览远程组件库而不保存</li>
+ * </ol>
+ * 
+ * <p>使用场景：</p>
+ * <ul>
+ *   <li>系统初始化时下载核心组件库</li>
+ *   <li>用户导入自定义远程组件库</li>
+ *   <li>定期更新远程组件库</li>
+ *   <li>组件库市场功能</li>
+ *   <li>网络组件库管理</li>
+ * </ul>
+ * 
+ * @author VueKit Team
+ * @version 2.0.0
+ * @since 1.0.0
+ * @see com.chu7.vuecomponentassistant.remote.cache.LocalCacheManager
+ * @see com.chu7.vuecomponentassistant.remote.model.ComponentLibrary
+ * @see com.chu7.vuecomponentassistant.remote.utils.HttpClient
+ * @see java.util.concurrent.CompletableFuture
  */
 public class RemoteLibraryManager {
+    
+    /**
+     * 日志记录器
+     * 用于记录远程组件库管理过程中的关键信息和错误
+     */
     private static final Logger LOG = Logger.getInstance(RemoteLibraryManager.class);
+    
+    /**
+     * 核心组件库下载URL
+     * 指向VueKit官方维护的核心组件库列表
+     */
     private static final String CORE_LIBRARIES_URL = "https://registry.vuekit.dev/core-libraries.json";
 
+    /**
+     * 本地缓存管理器
+     * 负责将下载的组件库保存到本地存储
+     */
     private final LocalCacheManager cacheManager;
 
+    /**
+     * 构造函数
+     * 
+     * <p>初始化远程组件库管理器，创建本地缓存管理器实例。</p>
+     * 
+     * <p>初始化内容：</p>
+     * <ul>
+     *   <li>创建LocalCacheManager实例</li>
+     *   <li>准备缓存管理功能</li>
+     * </ul>
+     * 
+     * @see com.chu7.vuecomponentassistant.remote.cache.LocalCacheManager
+     */
     public RemoteLibraryManager() {
         this.cacheManager = new LocalCacheManager();
     }
 
     /**
      * 异步下载核心组件库
+     * 
+     * <p>该方法从官方源异步下载核心组件库列表，包括Element Plus、Ant Design Vue等
+     * 标准组件库。下载完成后自动保存到本地缓存。</p>
+     * 
+     * <p>下载流程：</p>
+     * <ol>
+     *   <li>从官方URL下载核心组件库JSON</li>
+     *   <li>解析JSON内容为ComponentLibrary对象列表</li>
+     *   <li>逐个保存到本地缓存</li>
+     *   <li>返回下载的组件库列表</li>
+     * </ol>
+     * 
+     * <p>错误处理：</p>
+     * <ul>
+     *   <li>网络错误：抛出RuntimeException</li>
+     *   <li>JSON解析错误：使用默认组件库列表</li>
+     *   <li>缓存保存错误：记录日志但不中断流程</li>
+     * </ul>
+     * 
+     * @return 包含下载结果的CompletableFuture，成功时返回组件库列表
+     * @throws RuntimeException 如果下载或解析失败
+     * 
+     * @see #parseCoreLibrariesJson(String)
+     * @see #createDefaultCoreLibraries()
+     * @see com.chu7.vuecomponentassistant.remote.utils.HttpClient#downloadJson(String)
      */
     public CompletableFuture<List<ComponentLibrary>> downloadCoreLibraries() {
         return CompletableFuture.supplyAsync(() -> {
@@ -55,6 +151,32 @@ public class RemoteLibraryManager {
 
     /**
      * 异步下载指定组件库
+     * 
+     * <p>该方法从指定的URL异步下载自定义组件库，支持重试机制和详细的错误诊断。
+     * 下载完成后自动保存到本地缓存。</p>
+     * 
+     * <p>下载流程：</p>
+     * <ol>
+     *   <li>使用重试机制下载组件库JSON</li>
+     *   <li>记录下载内容用于调试</li>
+     *   <li>解析JSON为ComponentLibrary对象</li>
+     *   <li>保存到本地缓存</li>
+     *   <li>返回下载的组件库</li>
+     * </ol>
+     * 
+     * <p>重试机制：</p>
+     * <ul>
+     *   <li>最多重试3次</li>
+     *   <li>支持网络波动和临时错误</li>
+     *   <li>提供详细的错误信息</li>
+     * </ul>
+     * 
+     * @param url 组件库的下载URL，不能为null或空字符串
+     * @return 包含下载结果的CompletableFuture，成功时返回ComponentLibrary对象
+     * @throws RuntimeException 如果下载或解析失败
+     * 
+     * @see #parseComponentLibraryJson(String)
+     * @see com.chu7.vuecomponentassistant.remote.utils.HttpClient#downloadJsonWithRetry(String, int)
      */
     public CompletableFuture<ComponentLibrary> downloadLibrary(String url) {
         return CompletableFuture.supplyAsync(() -> {
@@ -93,6 +215,33 @@ public class RemoteLibraryManager {
 
     /**
      * 重新加载远程组件库
+     * 
+     * <p>该方法重新下载指定的远程组件库，用于更新组件库到最新版本。
+     * 只支持来源类型为"CUSTOM_REMOTE"的组件库。</p>
+     * 
+     * <p>重新加载流程：</p>
+     * <ol>
+     *   <li>验证组件库的来源类型</li>
+     *   <li>检查源URL的有效性</li>
+     *   <li>重新下载组件库JSON</li>
+     *   <li>保持原有的ID和来源信息</li>
+     *   <li>更新本地缓存</li>
+     * </ol>
+     * 
+     * <p>验证规则：</p>
+     * <ul>
+     *   <li>只能重新加载远程自定义组件库</li>
+     *   <li>源URL必须有效且不为空</li>
+     *   <li>保持原有的组件库标识信息</li>
+     * </ul>
+     * 
+     * @param library 要重新加载的组件库，不能为null
+     * @return 包含重新加载结果的CompletableFuture，成功时返回更新后的ComponentLibrary对象
+     * @throws RuntimeException 如果重新加载失败
+     * @throws VueKitException 如果组件库类型不支持或源URL无效
+     * 
+     * @see #parseComponentLibraryJson(String)
+     * @see com.chu7.vuecomponentassistant.remote.utils.HttpClient#downloadJsonWithRetry(String, int)
      */
     public CompletableFuture<ComponentLibrary> reloadRemoteLibrary(ComponentLibrary library) {
         return CompletableFuture.supplyAsync(() -> {
@@ -132,6 +281,13 @@ public class RemoteLibraryManager {
 
     /**
      * 验证远程URL
+     * 
+     * <p>该方法异步检查指定的URL是否可访问，用于验证远程组件库的有效性。</p>
+     * 
+     * @param url 要验证的URL，不能为null或空字符串
+     * @return 包含验证结果的CompletableFuture，true表示URL可访问，false表示不可访问
+     * 
+     * @see com.chu7.vuecomponentassistant.remote.utils.HttpClient#checkUrlAccessibleAsync(String)
      */
     public CompletableFuture<Boolean> validateRemoteUrl(String url) {
         return HttpClient.checkUrlAccessibleAsync(url);
@@ -139,6 +295,24 @@ public class RemoteLibraryManager {
 
     /**
      * 预览远程组件库
+     * 
+     * <p>该方法从指定URL下载并解析组件库，但不保存到本地缓存。
+     * 用于在用户确认导入前预览组件库的内容。</p>
+     * 
+     * <p>预览流程：</p>
+     * <ol>
+     *   <li>下载组件库JSON内容</li>
+     *   <li>记录内容用于调试</li>
+     *   <li>解析为ComponentLibrary对象</li>
+     *   <li>返回预览结果（不保存）</li>
+     * </ol>
+     * 
+     * @param url 组件库的预览URL，不能为null或空字符串
+     * @return 包含预览结果的CompletableFuture，成功时返回ComponentLibrary对象
+     * @throws RuntimeException 如果预览失败
+     * 
+     * @see #parseComponentLibraryJson(String)
+     * @see com.chu7.vuecomponentassistant.remote.utils.HttpClient#downloadJson(String)
      */
     public CompletableFuture<ComponentLibrary> previewRemoteLibrary(String url) {
         return CompletableFuture.supplyAsync(() -> {
@@ -173,6 +347,12 @@ public class RemoteLibraryManager {
 
     /**
      * 获取本地缓存的所有组件库
+     * 
+     * <p>该方法返回本地缓存中存储的所有组件库列表，包括已下载的远程组件库。</p>
+     * 
+     * @return 本地缓存中的所有组件库列表，如果没有则返回空列表
+     * 
+     * @see com.chu7.vuecomponentassistant.remote.cache.LocalCacheManager#getAllLibraries()
      */
     public List<ComponentLibrary> getLocalLibraries() {
         return cacheManager.getAllLibraries();
@@ -180,6 +360,13 @@ public class RemoteLibraryManager {
 
     /**
      * 从本地缓存获取组件库
+     * 
+     * <p>该方法根据组件库ID从本地缓存中加载指定的组件库。</p>
+     * 
+     * @param libraryId 组件库的唯一ID，不能为null
+     * @return 找到的组件库对象，如果未找到或加载失败则返回null
+     * 
+     * @see com.chu7.vuecomponentassistant.remote.cache.LocalCacheManager#loadLibrary(String)
      */
     public ComponentLibrary getLocalLibrary(String libraryId) {
         try {
@@ -192,6 +379,13 @@ public class RemoteLibraryManager {
 
     /**
      * 删除本地组件库
+     * 
+     * <p>该方法根据组件库ID从本地缓存中删除指定的组件库。</p>
+     * 
+     * @param libraryId 要删除的组件库ID，不能为null
+     * @return 如果删除成功则返回true，否则返回false
+     * 
+     * @see com.chu7.vuecomponentassistant.remote.cache.LocalCacheManager#removeLibrary(String)
      */
     public boolean removeLocalLibrary(String libraryId) {
         return cacheManager.removeLibrary(libraryId);
@@ -199,6 +393,10 @@ public class RemoteLibraryManager {
 
     /**
      * 清理过期缓存
+     * 
+     * <p>该方法清理本地缓存中的过期数据，释放存储空间。</p>
+     * 
+     * @see com.chu7.vuecomponentassistant.remote.cache.LocalCacheManager#cleanExpiredCache()
      */
     public void cleanExpiredCache() {
         cacheManager.cleanExpiredCache();
@@ -206,6 +404,12 @@ public class RemoteLibraryManager {
 
     /**
      * 获取缓存统计信息
+     * 
+     * <p>该方法返回本地缓存的统计信息，包括缓存大小、命中率等。</p>
+     * 
+     * @return 包含缓存统计信息的Map对象
+     * 
+     * @see com.chu7.vuecomponentassistant.remote.cache.LocalCacheManager#getCacheStats()
      */
     public java.util.Map<String, Object> getCacheStats() {
         return cacheManager.getCacheStats();

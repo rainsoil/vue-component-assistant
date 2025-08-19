@@ -30,15 +30,44 @@ import java.util.HashMap;
 
 /**
  * 组件库管理对话框 - 远程组件库版本（简化版）
- * 
- * 功能说明：
- * - 查看已安装的组件库（官方 + 自定义本地 + 自定义远程）
- * - 对组件库进行删除、查看、导出等操作
- * - 导入自定义组件库（本地JSON文件和远程URL）
- * - 重新加载远程组件库
- * 
+ *
+ * <p>功能说明：</p>
+ * <ul>
+ *   <li>查看已安装的组件库（官方 + 自定义本地 + 自定义远程）</li>
+ *   <li>对组件库进行删除、查看、导出等操作</li>
+ *   <li>导入自定义组件库（本地JSON文件和远程URL）</li>
+ *   <li>重新加载远程组件库</li>
+ *   <li>导出组件库JSON模板</li>
+ *   <li>访问官方组件库市场</li>
+ *   <li>实时统计组件库和组件数量</li>
+ * </ul>
+ *
+ * <p>设计特点：</p>
+ * <ul>
+ *   <li>左右分栏布局：左侧列表，右侧详情</li>
+ *   <li>顶部工具栏：快速操作按钮</li>
+ *   <li>底部操作区：选中组件库的操作按钮</li>
+ *   <li>智能按钮状态管理</li>
+ *   <li>自定义列表单元格渲染器</li>
+ *   <li>完整的错误处理和用户反馈</li>
+ * </ul>
+ *
+ * <p>使用场景：</p>
+ * <ul>
+ *   <li>开发者的组件库管理需求</li>
+ *   <li>团队项目组件库的统一管理</li>
+ *   <li>自定义组件库的导入和配置</li>
+ *   <li>组件库的备份和迁移</li>
+ *   <li>组件库性能监控和统计</li>
+ * </ul>
+ *
  * @author VueKit Team
  * @version 3.0.0
+ * @since 1.0.0
+ * @see com.intellij.openapi.ui.DialogWrapper
+ * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager
+ * @see com.chu7.vuecomponentassistant.remote.model.ComponentLibrary
+ * @see com.chu7.vuecomponentassistant.completion2.ComponentProviderManager
  */
 public class ComponentLibraryManagementDialog extends DialogWrapper {
     
@@ -57,8 +86,39 @@ public class ComponentLibraryManagementDialog extends DialogWrapper {
     private JButton refreshButton;
     private JLabel statsLabel;
     
+    /**
+     * 构造函数
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>初始化组件库管理对话框</li>
+     *   <li>设置对话框基本属性和样式</li>
+     *   <li>初始化组件库管理器</li>
+     *   <li>配置对话框尺寸和可调整性</li>
+     * </ul>
+     *
+     * <p>初始化流程：</p>
+     * <ol>
+     *   <li>调用父类构造函数，传入项目实例</li>
+     *   <li>初始化项目实例和组件库管理器</li>
+     *   <li>设置对话框标题、尺寸和可调整性</li>
+     *   <li>调用init()方法完成初始化</li>
+     * </ol>
+     *
+     * @param project 当前项目实例，用于获取项目配置和组件库信息，不能为null
+     * @throws IllegalArgumentException 如果project参数为null
+     * @see #init()
+     * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager
+     */
     public ComponentLibraryManagementDialog(Project project) {
+        // 调用父类构造函数，传入项目实例
         super(project);
+        
+        // 参数验证
+        if (project == null) {
+            throw new IllegalArgumentException("项目实例不能为null");
+        }
+        
         this.project = project;
         this.libraryManager = new ComponentLibraryManager();
         setTitle("📚 组件库管理 - VueKit");
@@ -466,6 +526,34 @@ public class ComponentLibraryManagementDialog extends DialogWrapper {
     
     /**
      * 删除组件库
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>删除选中的组件库</li>
+     *   <li>提供用户确认对话框</li>
+     *   <li>刷新组件库列表</li>
+     *   <li>通知组件提供者重新加载数据</li>
+     * </ul>
+     *
+     * <p>执行流程：</p>
+     * <ol>
+     *   <li>获取当前选中的组件库</li>
+     *   <li>显示确认删除对话框</li>
+     *   <li>调用组件库管理器删除组件库</li>
+     *   <li>刷新列表并重置选择状态</li>
+     *   <li>通知所有组件提供者重新加载</li>
+     * </ol>
+     *
+     * <p>安全措施：</p>
+     * <ul>
+     *   <li>删除前显示确认对话框</li>
+     *   <li>使用警告图标提醒操作不可撤销</li>
+     *   <li>删除后立即刷新界面状态</li>
+     *   <li>完整的错误处理和用户反馈</li>
+     * </ul>
+     *
+     * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager#removeLibraryById(String)
+     * @see com.chu7.vuecomponentassistant.completion2.ComponentProviderManager#notifyAllProvidersReload()
      */
     private void deleteLibrary() {
         ComponentLibrary library = libraryList.getSelectedValue();

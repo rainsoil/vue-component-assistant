@@ -21,28 +21,66 @@ import java.util.stream.Collectors;
 /**
  * 智能组件库过滤器
  * 
- * 功能说明：
- * - 根据项目配置动态过滤组件库
- * - 智能排序：当前项目使用的组件库优先
- * - 自动检测项目依赖的组件库
- * - 支持用户配置的组件库启用/禁用
+ * <p>功能说明：</p>
+ * <ul>
+ *   <li>根据项目配置动态过滤组件库</li>
+ *   <li>智能排序：当前项目使用的组件库优先</li>
+ *   <li>自动检测项目依赖的组件库</li>
+ *   <li>支持用户配置的组件库启用/禁用</li>
+ *   <li>性能优化：避免加载不必要的组件库</li>
+ * </ul>
  * 
- * 特性：
- * - 自动化程度高：大部分情况下无需用户干预
- * - 用户可控：支持手动配置组件库启用状态
- * - 性能优化：避免加载不必要的组件库
- * - 智能匹配：根据 package.json 自动识别项目组件库
+ * <p>特性：</p>
+ * <ul>
+ *   <li>自动化程度高：大部分情况下无需用户干预</li>
+ *   <li>用户可控：支持手动配置组件库启用状态</li>
+ *   <li>性能优化：避免加载不必要的组件库</li>
+ *   <li>智能匹配：根据 package.json 自动识别项目组件库</li>
+ *   <li>动态配置：支持运行时组件库配置更新</li>
+ * </ul>
+ * 
+ * <p>过滤策略：</p>
+ * <ol>
+ *   <li>检测项目使用的组件库</li>
+ *   <li>获取用户配置的启用组件库</li>
+ *   <li>合并项目检测和用户配置</li>
+ *   <li>过滤不属于启用库的组件</li>
+ *   <li>智能排序：项目组件库优先</li>
+ * </ol>
+ * 
+ * <p>使用场景：</p>
+ * <ul>
+ *   <li>代码补全中的组件过滤</li>
+ *   <li>组件库管理界面</li>
+ *   <li>性能优化和资源管理</li>
+ *   <li>用户体验提升</li>
+ * </ul>
  * 
  * @author VueKit Team
  * @version 2.0.0
+ * @since 1.0.0
+ * @see com.chu7.vuecomponentassistant.completion2.ElementPlusComponent
+ * @see com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager
+ * @see com.chu7.vuecomponentassistant.utils.ComponentLibraryDetector
  */
 public class SmartComponentFilter {
     
+    /**
+     * 日志记录器
+     * 用于记录组件过滤过程中的关键信息和错误
+     */
     private static final Logger LOG = VueKitLogger.getLogger(SmartComponentFilter.class);
     
-    // 组件库名称集合 - 现在动态从远程组件库管理器获取
+    /**
+     * 组件库名称集合
+     * 动态从远程组件库管理器获取，避免硬编码
+     */
     private static final Set<String> AVAILABLE_LIBRARIES = new HashSet<>();
     
+    /**
+     * 静态初始化块
+     * 在类加载时初始化组件库映射
+     */
     static {
         // 初始化时动态加载组件库
         initializeLibraryMapping();
@@ -50,6 +88,27 @@ public class SmartComponentFilter {
     
     /**
      * 初始化组件库映射
+     * 
+     * <p>该方法在类加载时执行，动态获取已安装的组件库信息，
+     * 并建立包名到组件库的映射关系。</p>
+     * 
+     * <p>初始化流程：</p>
+     * <ol>
+     *   <li>获取已安装的组件库列表</li>
+     *   <li>提取组件库的包名</li>
+     *   <li>添加到可用组件库集合</li>
+     *   <li>生成相关包名映射</li>
+     * </ol>
+     * 
+     * <p>错误处理：</p>
+     * <ul>
+     *   <li>捕获所有异常并记录调试日志</li>
+     *   <li>不影响类的正常初始化</li>
+     *   <li>支持后续的动态更新</li>
+     * </ul>
+     * 
+     * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager#getAllLibraries()
+     * @see #addRelatedPackages(String)
      */
     private static void initializeLibraryMapping() {
         try {
@@ -75,7 +134,19 @@ public class SmartComponentFilter {
     /**
      * 动态添加相关包名
      * 
-     * @param packageName 主包名
+     * <p>该方法根据主包名动态生成相关的包名，用于扩展组件库的识别范围。
+     * 目前为未来扩展预留接口。</p>
+     * 
+     * <p>设计考虑：</p>
+     * <ul>
+     *   <li>避免硬编码相关包名</li>
+     *   <li>支持动态包名生成</li>
+     *   <li>为未来扩展预留接口</li>
+     * </ul>
+     * 
+     * @param packageName 主包名，不能为null
+     * 
+     * @see com.chu7.vuecomponentassistant.utils.StringNormalizer#normalize(String)
      */
     private static void addRelatedPackages(String packageName) {
         // 根据包名动态生成相关包名
@@ -89,13 +160,43 @@ public class SmartComponentFilter {
     /**
      * 根据项目配置智能过滤组件
      * 
-     * @param allComponents 所有可用组件
-     * @param project 项目对象
+     * <p>该方法提供完整的组件过滤流程，包括检测、配置、过滤和排序。</p>
+     * 
+     * <p>过滤流程：</p>
+     * <ol>
+     *   <li>检测项目使用的组件库</li>
+     *   <li>获取用户配置的启用组件库</li>
+     *   <li>合并项目检测和用户配置</li>
+     *   <li>过滤不属于启用库的组件</li>
+     *   <li>智能排序：项目组件库优先</li>
+     * </ol>
+     * 
+     * <p>错误处理：</p>
+     * <ul>
+     *   <li>捕获所有异常并记录错误日志</li>
+     *   <li>出错时返回原始组件列表，确保功能可用</li>
+     *   <li>不影响用户的正常使用</li>
+     * </ul>
+     * 
+     * @param allComponents 所有可用组件列表，不能为null
+     * @param project 项目对象，不能为null
      * @return 过滤后的组件列表，按优先级排序
+     * @throws IllegalArgumentException 如果allComponents或project为null
+     * 
+     * @see #detectProjectLibraries(Project)
+     * @see #getUserEnabledLibraries(Project)
+     * @see #sortComponentsByPriority(List, Set)
      */
     public List<ElementPlusComponent> filterComponentsByProject(
             List<ElementPlusComponent> allComponents, 
             Project project) {
+        
+        if (allComponents == null) {
+            throw new IllegalArgumentException("组件列表不能为null");
+        }
+        if (project == null) {
+            throw new IllegalArgumentException("项目对象不能为null");
+        }
         
         try {
             VueKitLogger.debug(LOG, "开始智能过滤组件，项目: " + project.getName());
@@ -143,10 +244,30 @@ public class SmartComponentFilter {
     /**
      * 检测项目使用的组件库
      * 
-     * @param project 项目对象
+     * <p>该方法通过分析项目的 package.json 文件，自动检测项目使用的组件库。
+     * 支持 dependencies 和 devDependencies 字段的检查。</p>
+     * 
+     * <p>检测流程：</p>
+     * <ol>
+     *   <li>查找项目的 package.json 文件</li>
+     *   <li>解析 package.json 内容</li>
+     *   <li>检查 dependencies 和 devDependencies</li>
+     *   <li>返回检测到的组件库集合</li>
+     * </ol>
+     * 
+     * @param project 项目对象，不能为null
      * @return 项目使用的组件库类型集合
+     * @throws IllegalArgumentException 如果project为null
+     * 
+     * @see #findPackageJson(Project)
+     * @see #parsePackageJson(String)
+     * @see #checkDependencies(Map, String, Set)
      */
     public Set<String> detectProjectLibraries(Project project) {
+        if (project == null) {
+            throw new IllegalArgumentException("项目对象不能为null");
+        }
+        
         Set<String> libraries = new HashSet<>();
         
         try {
@@ -182,10 +303,27 @@ public class SmartComponentFilter {
     /**
      * 查找项目的 package.json 文件
      * 
-     * @param project 项目对象
+     * <p>该方法在项目根目录及其子目录中查找 package.json 文件。
+     * 支持常见的项目结构。</p>
+     * 
+     * <p>查找策略：</p>
+     * <ol>
+     *   <li>首先在项目根目录查找</li>
+     *   <li>如果未找到，在子目录中查找</li>
+     *   <li>返回找到的 package.json 文件</li>
+     * </ol>
+     * 
+     * @param project 项目对象，不能为null
      * @return package.json 文件，如果未找到则返回 null
+     * @throws IllegalArgumentException 如果project为null
+     * 
+     * @see com.chu7.vuecomponentassistant.utils.ProjectPathHelper#getProjectRoot(Project)
      */
     private VirtualFile findPackageJson(Project project) {
+        if (project == null) {
+            throw new IllegalArgumentException("项目对象不能为null");
+        }
+        
         try {
             VirtualFile projectDir = com.chu7.vuecomponentassistant.utils.ProjectPathHelper.getProjectRoot(project);
             VirtualFile packageJson = projectDir.findChild("package.json");

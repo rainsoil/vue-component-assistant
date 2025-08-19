@@ -14,32 +14,71 @@ import java.nio.charset.StandardCharsets;
 /**
  * 组件库检测器
  * 
- * 功能说明：
- * - 读取项目根目录下的 package.json 文件
- * - 检测项目使用的组件库类型
- * - 完全动态化，不依赖硬编码的组件库信息
+ * <p>功能说明：</p>
+ * <ul>
+ *   <li>读取项目根目录下的 package.json 文件</li>
+ *   <li>检测项目使用的组件库类型</li>
+ *   <li>完全动态化，不依赖硬编码的组件库信息</li>
+ *   <li>支持多种检测策略：已下载库优先、动态配置、静态检查</li>
+ *   <li>提供组件前缀获取功能</li>
+ * </ul>
+ * 
+ * <p>检测策略：</p>
+ * <ol>
+ *   <li>优先检查已下载的组件库（最高优先级）</li>
+ *   <li>使用动态配置管理器检查已知组件库</li>
+ *   <li>后备方案：静态检查（已废弃，保留兼容性）</li>
+ * </ol>
+ * 
+ * <p>设计原则：</p>
+ * <ul>
+ *   <li>完全动态化，支持运行时配置更新</li>
+ *   <li>多级检测策略，确保检测准确性</li>
+ *   <li>完善的异常处理和日志记录</li>
+ *   <li>支持多种依赖类型（dependencies、devDependencies）</li>
+ * </ul>
  * 
  * @author VueKit Team
  * @version 2.0.0
+ * @since 1.0.0
+ * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager
+ * @see com.chu7.vuecomponentassistant.utils.DynamicLibraryConfigManager
+ * @see com.chu7.vuecomponentassistant.utils.VueKitLogger
  */
 public class ComponentLibraryDetector {
     
-    /** 日志记录器 */
+    /**
+     * 日志记录器
+     * 用于记录组件库检测过程中的关键信息和错误
+     */
     private static final Logger LOG = VueKitLogger.getLogger(ComponentLibraryDetector.class);
 
     /**
      * 检测项目使用的组件库类型
      * 
-     * 检测逻辑：
-     * 1. 读取项目根目录下的 package.json 文件
-     * 2. 解析 dependencies 和 devDependencies 字段
-     * 3. 使用动态配置管理器检查是否匹配已知组件库
-     * 4. 如果找到匹配，返回对应的包名
-     * 5. 如果未找到，返回 "unknown"
+     * <p>检测逻辑：</p>
+     * <ol>
+     *   <li>读取项目根目录下的 package.json 文件</li>
+     *   <li>解析 dependencies 和 devDependencies 字段</li>
+     *   <li>使用动态配置管理器检查是否匹配已知组件库</li>
+     *   <li>如果找到匹配，返回对应的包名</li>
+     *   <li>如果未找到，返回 "unknown"</li>
+     * </ol>
+     * 
+     * <p>检测优先级：</p>
+     * <ol>
+     *   <li>首先检查 dependencies 字段</li>
+     *   <li>如果未找到，再检查 devDependencies 字段</li>
+     *   <li>优先使用已下载的组件库信息</li>
+     * </ol>
      * 
      * @param project 当前项目，不能为 null
      * @return 检测到的组件库包名，如果未检测到则返回 "unknown"
      * @throws IllegalArgumentException 如果项目对象为 null
+     * 
+     * @see #checkDependencies(Project, String)
+     * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager
+     * @see com.chu7.vuecomponentassistant.utils.DynamicLibraryConfigManager
      */
     public static String detectComponentLibrary(Project project) {
         if (project == null) {
@@ -77,9 +116,29 @@ public class ComponentLibraryDetector {
     /**
      * 检查指定类型的依赖中是否包含支持的组件库
      * 
-     * @param project 当前项目
+     * <p>该方法会执行以下操作：</p>
+     * <ol>
+     *   <li>获取项目根目录</li>
+     *   <li>查找 package.json 文件</li>
+     *   <li>读取并解析文件内容</li>
+     *   <li>优先检查已下载的组件库</li>
+     *   <li>使用动态配置管理器进行后备检查</li>
+     * </ol>
+     * 
+     * <p>检查策略：</p>
+     * <ul>
+     *   <li>优先检查已下载的组件库（最高优先级）</li>
+     *   <li>使用动态配置管理器检查已知组件库</li>
+     *   <li>如果都未找到，返回 "unknown"</li>
+     * </ul>
+     * 
+     * @param project 当前项目，不能为 null
      * @param dependencyType 依赖类型（"dependencies" 或 "devDependencies"）
      * @return 检测到的组件库包名，如果未检测到则返回 "unknown"
+     * 
+     * @see #readFileContent(VirtualFile)
+     * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager
+     * @see com.chu7.vuecomponentassistant.utils.DynamicLibraryConfigManager
      */
     private static String checkDependencies(Project project, String dependencyType) {
         VueKitLogger.debug(LOG, "  检查 " + dependencyType + "...");
@@ -160,9 +219,28 @@ public class ComponentLibraryDetector {
     /**
      * 读取文件内容
      * 
+     * <p>该方法会执行以下操作：</p>
+     * <ol>
+     *   <li>打开文件输入流</li>
+     *   <li>读取所有字节内容</li>
+     *   <li>将字节转换为UTF-8字符串</li>
+     *   <li>记录读取操作的日志信息</li>
+     * </ol>
+     * 
+     * <p>注意事项：</p>
+     * <ul>
+     *   <li>使用 try-with-resources 确保资源自动关闭</li>
+     *   <li>支持大文件读取（使用 readAllBytes 方法）</li>
+     *   <li>统一使用UTF-8编码</li>
+     *   <li>完善的异常处理和日志记录</li>
+     * </ul>
+     * 
      * @param file 要读取的虚拟文件，不能为 null
      * @return 文件内容字符串，如果读取失败则返回 null
      * @throws IllegalArgumentException 如果文件对象为 null
+     * 
+     * @see java.nio.charset.StandardCharsets#UTF_8
+     * @see java.io.InputStream#readAllBytes()
      */
     private static String readFileContent(VirtualFile file) {
         if (file == null) {
@@ -183,11 +261,22 @@ public class ComponentLibraryDetector {
     /**
      * 获取组件库的组件前缀
      * 
-     * 使用动态配置管理器获取组件前缀，完全移除硬编码
+     * <p>使用动态配置管理器获取组件前缀，完全移除硬编码。
+     * 该方法支持运行时配置更新，无需重启插件。</p>
+     * 
+     * <p>组件前缀说明：</p>
+     * <ul>
+     *   <li>Element Plus: "el-"</li>
+     *   <li>Element UI: "el-"</li>
+     *   <li>Ant Design Vue: "a-"</li>
+     *   <li>其他组件库: 根据配置动态获取</li>
+     * </ul>
      * 
      * @param libraryType 组件库类型，不能为 null
      * @return 对应的组件前缀字符串
      * @throws IllegalArgumentException 如果组件库类型为 null
+     * 
+     * @see com.chu7.vuecomponentassistant.utils.DynamicLibraryConfigManager#getComponentPrefix(String)
      */
     public static String getComponentPrefix(String libraryType) {
         if (libraryType == null) {
@@ -199,8 +288,8 @@ public class ComponentLibraryDetector {
             DynamicLibraryConfigManager configManager = DynamicLibraryConfigManager.getInstance();
             return configManager.getComponentPrefix(libraryType);
         } catch (Exception e) {
-            VueKitLogger.debug(LOG, "无法获取组件库前缀: " + libraryType + ", 返回空前缀", e);
-            return "";
+            VueKitLogger.warn(LOG, "获取组件前缀失败: " + libraryType + ", 使用默认前缀", e);
+            return "el-"; // 默认前缀
         }
     }
 

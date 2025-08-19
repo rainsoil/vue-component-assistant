@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.chu7.vuekit</id>
     <name>VueKit</name>
-    <version>1.0.8</version>
+    <version>1.0.1</version>
     <vendor email="luyanan0718@163.com" url="https://github.com/rainsoil/vuekit">luyanan</vendor>
 
     <description><![CDATA[

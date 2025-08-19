@@ -13,23 +13,78 @@ import java.util.List;
 /**
  * Element Plus 文档样式生成器
  *
- * 功能说明：
- * - 统一生成 Element Plus 风格的文档样式
- * - 支持 HTML 格式（用于悬浮提示）和纯文本格式（用于右键菜单）
- * - 参照 Element Plus 官网的设计风格
+ * <p>功能说明：</p>
+ * <ul>
+ *   <li>统一生成 Element Plus 风格的文档样式</li>
+ *   <li>支持 HTML 格式（用于悬浮提示）和纯文本格式（用于右键菜单）</li>
+ *   <li>参照 Element Plus 官网的设计风格和配色方案</li>
+ *   <li>提供完整的组件属性、事件、插槽信息展示</li>
+ *   <li>支持智能的文档URL生成和组件库识别</li>
+ *   <li>集成现代化的CSS动画和交互效果</li>
+ * </ul>
+ *
+ * <p>设计特点：</p>
+ * <ul>
+ *   <li>响应式设计：适配不同屏幕尺寸和显示环境</li>
+ *   <li>现代化UI：使用Element Plus官方配色和字体</li>
+ *   <li>智能布局：自动调整表格列宽和内容换行</li>
+ *   <li>交互体验：支持悬停效果和动画过渡</li>
+ *   <li>多格式支持：HTML和纯文本两种输出格式</li>
+ *   <li>组件库适配：支持多种组件库的文档生成</li>
+ * </ul>
+ *
+ * <p>使用场景：</p>
+ * <ul>
+ *   <li>IntelliJ IDEA中的组件悬浮提示文档</li>
+ *   <li>右键菜单中的组件信息展示</li>
+ *   <li>组件库文档的在线预览</li>
+ *   <li>开发调试时的组件信息查阅</li>
+ *   <li>团队协作中的组件文档共享</li>
+ * </ul>
  *
  * @author VueKit Team
  * @version 1.0.0
+ * @since 1.0.0
+ * @see com.chu7.vuecomponentassistant.remote.model.ComponentInfo
+ * @see com.chu7.vuecomponentassistant.completion2.ElementPlusComponent
+ * @see com.chu7.vuecomponentassistant.utils.DefaultValueConverter
+ * @see com.chu7.vuecomponentassistant.utils.DynamicLibraryInfoProvider
  */
 public class DocumentationStyleGenerator {
 
     /**
      * 生成 HTML 格式的组件文档（用于悬浮提示）
      *
-     * @param component 组件信息
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>生成完整的HTML格式组件文档</li>
+     *   <li>包含现代化的CSS样式和动画效果</li>
+     *   <li>支持组件属性、事件、插槽的表格展示</li>
+     *   <li>提供使用示例和文档链接</li>
+     *   <li>集成Element Plus官方设计风格</li>
+     * </ul>
+     *
+     * <p>文档结构：</p>
+     * <ul>
+     *   <li>组件标题和描述</li>
+     *   <li>属性表格（参数、说明、类型、可选值、默认值）</li>
+     *   <li>事件表格（事件名称、说明、回调参数）</li>
+     *   <li>插槽表格（插槽名、说明、作用域）</li>
+     *   <li>使用示例代码</li>
+     *   <li>相关文档链接</li>
+     * </ul>
+     *
+     * @param component 组件信息对象，不能为null
      * @return HTML 格式的文档内容
+     * @throws IllegalArgumentException 如果component参数为null
+     * @see #generateDocumentationUrl(String)
+     * @see com.chu7.vuecomponentassistant.utils.DefaultValueConverter#formatForDisplay(Object)
      */
     public static String generateHtmlDocumentation(ComponentInfo component) {
+        if (component == null) {
+            throw new IllegalArgumentException("组件信息对象不能为null");
+        }
+        
         StringBuilder html = new StringBuilder();
 
         // 添加现代化的 Element Plus 风格 CSS 样式，使用 IDEA 背景色
@@ -202,10 +257,36 @@ public class DocumentationStyleGenerator {
     /**
      * 生成表格格式的组件文档（用于右键菜单）
      *
-     * @param component 组件信息
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>生成纯文本格式的组件文档</li>
+     *   <li>适用于不支持HTML的环境</li>
+     *   <li>提供表格化的信息展示</li>
+     *   <li>支持长文本的智能截断</li>
+     *   <li>包含编码测试和调试信息</li>
+     * </ul>
+     *
+     * <p>文档结构：</p>
+     * <ul>
+     *   <li>组件标题和分隔线</li>
+     *   <li>属性表格（固定列宽格式）</li>
+     *   <li>事件表格（事件信息展示）</li>
+     *   <li>插槽表格（插槽信息展示）</li>
+     *   <li>使用示例代码</li>
+     *   <li>相关文档链接</li>
+     * </ul>
+     *
+     * @param component 组件信息对象，不能为null
      * @return 表格格式的文档内容
+     * @throws IllegalArgumentException 如果component参数为null
+     * @see #generateDocumentationUrl(String)
+     * @see com.chu7.vuecomponentassistant.utils.DefaultValueConverter#formatForDisplay(Object)
      */
     public static String generateTextDocumentation(ComponentInfo component) {
+        if (component == null) {
+            throw new IllegalArgumentException("组件信息对象不能为null");
+        }
+        
         StringBuilder text = new StringBuilder();
 
         // 添加编码测试信息
@@ -340,10 +421,33 @@ public class DocumentationStyleGenerator {
     
     /**
      * 生成组件文档URL
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>智能识别组件所属的组件库</li>
+     *   <li>生成对应的官方文档链接</li>
+     *   <li>支持多种组件库的URL模板</li>
+     *   <li>提供智能推断作为后备方案</li>
+     * </ul>
+     *
+     * <p>生成策略：</p>
+     * <ol>
+     *   <li>优先从已安装的组件库中获取文档URL模板</li>
+     *   <li>检查组件是否属于指定的组件库</li>
+     *   <li>使用智能推断生成通用文档URL</li>
+     *   <li>返回可用的文档链接或空字符串</li>
+     * </ol>
+     *
+     * @param componentName 组件名称，不能为null或空字符串
+     * @return 组件的官方文档URL，如果无法生成则返回空字符串
+     * @throws IllegalArgumentException 如果componentName参数为null或空字符串
+     * @see #isComponentFromLibrary(String, ComponentLibrary)
+     * @see #inferDocumentationUrl(String, String)
+     * @see com.chu7.vuecomponentassistant.remote.ComponentLibraryManager#getAllLibraries()
      */
     private static String generateDocumentationUrl(String componentName) {
         if (componentName == null || componentName.trim().isEmpty()) {
-            return "";
+            throw new IllegalArgumentException("组件名称不能为null或空字符串");
         }
         
         // 优先从已安装的组件库中获取文档URL模板
@@ -372,10 +476,34 @@ public class DocumentationStyleGenerator {
     
     /**
      * 检查组件是否属于指定的组件库
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>根据组件库提供的前缀进行匹配</li>
+     *   <li>支持智能推断组件库前缀</li>
+     *   <li>避免硬编码的组件库识别逻辑</li>
+     * </ul>
+     *
+     * <p>匹配规则：</p>
+     * <ul>
+     *   <li>优先使用组件库的componentPrefix属性</li>
+     *   <li>如果前缀为空，则智能推断库名第一段的前两位 + "-"</li>
+     *   <li>检查组件名称是否以推断的前缀开头</li>
+     * </ul>
+     *
+     * @param componentName 组件名称，不能为null
+     * @param library 组件库对象，不能为null
+     * @return 如果组件属于指定组件库则返回true，否则返回false
+     * @throws IllegalArgumentException 如果componentName或library参数为null
+     * @see com.chu7.vuecomponentassistant.remote.model.ComponentLibrary#getComponentPrefix()
+     * @see com.chu7.vuecomponentassistant.remote.model.ComponentLibrary#getName()
      */
     private static boolean isComponentFromLibrary(String componentName, com.chu7.vuecomponentassistant.remote.model.ComponentLibrary library) {
-        if (componentName == null || library == null) {
-            return false;
+        if (componentName == null) {
+            throw new IllegalArgumentException("组件名称不能为null");
+        }
+        if (library == null) {
+            throw new IllegalArgumentException("组件库对象不能为null");
         }
         
         // 根据组件库提供的前缀或从名称智能推断，避免硬编码
@@ -395,10 +523,31 @@ public class DocumentationStyleGenerator {
     
     /**
      * 推断文档URL
+     *
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>智能移除组件名称中的常见前缀</li>
+     *   <li>根据组件库名称推断文档基础URL</li>
+     *   <li>构建完整的组件文档链接</li>
+     * </ul>
+     *
+     * <p>推断逻辑：</p>
+     * <ol>
+     *   <li>移除常见的组件前缀（el-、a-、v-、q-、n-、p-）</li>
+     *   <li>获取组件库的文档基础URL</li>
+     *   <li>拼接组件键名和基础URL</li>
+     *   <li>返回完整的文档链接</li>
+     * </ol>
+     *
+     * @param componentName 组件名称，不能为null或空字符串
+     * @param libraryName 组件库名称，可能为null
+     * @return 推断的文档URL，如果无法推断则返回空字符串
+     * @throws IllegalArgumentException 如果componentName参数为null或空字符串
+     * @see com.chu7.vuecomponentassistant.utils.DynamicLibraryInfoProvider#getDocumentationBaseUrlFromName(String)
      */
     private static String inferDocumentationUrl(String componentName, String libraryName) {
         if (componentName == null || componentName.trim().isEmpty()) {
-            return "";
+            throw new IllegalArgumentException("组件名称不能为null或空字符串");
         }
         
         // 移除组件前缀
@@ -427,10 +576,37 @@ public class DocumentationStyleGenerator {
     /**
      * 生成 HTML 格式的组件文档（用于悬浮提示）- ElementPlusComponent 重载
      *
-     * @param component ElementPlusComponent 组件信息
+     * <p>功能说明：</p>
+     * <ul>
+     *   <li>将 ElementPlusComponent 转换为 ComponentInfo 格式</li>
+     *   <li>支持 ElementPlus 组件的文档生成</li>
+     *   <li>保持与 ComponentInfo 版本的一致性</li>
+     * </ul>
+     *
+     * <p>转换过程：</p>
+     * <ol>
+     *   <li>创建新的 ComponentInfo 对象</li>
+     *   <li>转换组件基本属性（名称、描述）</li>
+     *   <li>转换属性列表（ElementPlusProp → ComponentProp）</li>
+     *   <li>转换事件列表（ElementPlusEvent → ComponentEvent）</li>
+     *   <li>转换插槽列表（ElementPlusSlot → ComponentSlot）</li>
+     *   <li>调用原有的 generateHtmlDocumentation 方法</li>
+     * </ol>
+     *
+     * @param component ElementPlusComponent 组件信息，不能为null
      * @return HTML 格式的文档内容
+     * @throws IllegalArgumentException 如果component参数为null
+     * @see #generateHtmlDocumentation(ComponentInfo)
+     * @see com.chu7.vuecomponentassistant.completion2.ElementPlusComponent
+     * @see com.chu7.vuecomponentassistant.completion2.ElementPlusProp
+     * @see com.chu7.vuecomponentassistant.completion2.ElementPlusEvent
+     * @see com.chu7.vuecomponentassistant.completion2.ElementPlusSlot
      */
     public static String generateHtmlDocumentation(ElementPlusComponent component) {
+        if (component == null) {
+            throw new IllegalArgumentException("ElementPlusComponent对象不能为null");
+        }
+        
         // 将 ElementPlusComponent 转换为 ComponentInfo 格式
         ComponentInfo componentInfo = new ComponentInfo();
         componentInfo.setName(component.getName());
