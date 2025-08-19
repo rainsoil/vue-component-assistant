@@ -1,6 +1,8 @@
 <template>
     <div>
 
+        <el-collapse-item></el-collapse-item>
+        <el-input></el-input>
         <el-input placeholder="">
             <template #append>
                 <!-- 输入框后置内容 -->

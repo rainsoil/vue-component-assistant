@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'com.chu7'
-version '1.0.1'
+version '1.0.2'
 
 repositories {
     mavenCentral()
@@ -30,7 +30,7 @@ tasks.withType(JavaExec) {
 tasks {
     patchPluginXml {
         sinceBuild.set("231")
-        untilBuild.set("241.*")
+        untilBuild.set("252.*")
 
     }
 
