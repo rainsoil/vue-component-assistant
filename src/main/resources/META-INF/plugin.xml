@@ -53,6 +53,9 @@
         <!-- XML文档提供者 -->
         <lang.documentationProvider language="XML"
                                     implementationClass="com.chu7.vuecomponentassistant.documentation.ComponentDocumentationProvider"/>
+        <!-- VueKit XML 标签名称提供者 - 高优先级组件补全 -->
+        <xml.tagNameProvider implementation="com.chu7.vuecomponentassistant.xml.VueKitTagNameProvider"/>
+        <xml.elementDescriptorProvider implementation="com.chu7.vuecomponentassistant.xml.VueKitTagNameProvider" order="first"/>
         <!-- Vue Kit设置组 -->
         <applicationConfigurable
                 parentId="tools"

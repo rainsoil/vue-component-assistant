@@ -1,6 +1,12 @@
 <template>
     <div>
 
+        <el-input disabled="false" placeholder=无>
+        </el-input>
+
+        <el-input disabled="false" placeholder=无>
+
+        </el-input>
         <el-collapse-item></el-collapse-item>
         <el-input></el-input>
         <el-input placeholder="">
