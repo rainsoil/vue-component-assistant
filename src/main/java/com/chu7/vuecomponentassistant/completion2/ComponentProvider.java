@@ -883,6 +883,10 @@ public class ComponentProvider {
                     .collect(java.util.stream.Collectors.joining(", "))));
             
             return enabledLibraries;
+        } catch (com.intellij.openapi.progress.ProcessCanceledException e) {
+            // ProcessCanceledException 是正常的控制流异常，不应该记录为错误
+            VueKitLogger.debug(LOG, "获取项目启用的组件库配置被取消");
+            return new HashSet<>();
         } catch (Exception e) {
             VueKitLogger.error(LOG, "获取项目启用的组件库配置失败", e);
             return new HashSet<>();

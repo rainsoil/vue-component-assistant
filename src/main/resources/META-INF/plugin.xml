@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <idea-plugin>
     <id>com.chu7.vuekit</id>
     <name>VueKit</name>
@@ -40,49 +41,65 @@
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.xml</depends>
     <depends>com.intellij.modules.vcs</depends>
+    <depends>JavaScript</depends>
+    <depends>org.jetbrains.plugins.vue</depends>
+    <!-- <depends>com.intellij.modules.ultimate</depends> -->
 
     <extensions defaultExtensionNs="com.intellij">
-        <!-- Vue代码补全贡献者 -->
-        <completion.contributor
-                language="Vue"
-                implementationClass="com.chu7.vuecomponentassistant.completion2.ElementPlusCompletionContributor"/>
-        <!-- HTML代码补全贡献者 -->
-        <completion.contributor
-                language="HTML"
-                implementationClass="com.chu7.vuecomponentassistant.completion2.ElementPlusCompletionContributor"/>
-        <!-- XML文档提供者 -->
+        <!-- 暂时注释掉所有扩展点，只保留最基本的 -->
+        
+        <!-- 测试文档提供者 - 简单测试 -->
+        <lang.documentationProvider language="HTML"
+                                    implementationClass="com.chu7.vuecomponentassistant.documentation.ElementUIDocumentProvider"
+                                    order="first"/>
+        <lang.documentationProvider language="Vue"
+                                    implementationClass="com.chu7.vuecomponentassistant.documentation.ElementUIDocumentProvider"
+                                    order="first"/>
         <lang.documentationProvider language="XML"
-                                    implementationClass="com.chu7.vuecomponentassistant.documentation.ComponentDocumentationProvider"/>
-        <!-- VueKit XML 标签名称提供者 - 高优先级组件补全 -->
-        <xml.tagNameProvider implementation="com.chu7.vuecomponentassistant.xml.VueKitTagNameProvider"/>
+                                    implementationClass="com.chu7.vuecomponentassistant.documentation.ElementUIDocumentProvider"
+                                    order="first"/>
+        
+        <!-- 核心服务 - 启用这些服务让插件正常工作 -->
+        <applicationService serviceImplementation="com.chu7.vuecomponentassistant.settings.PluginSettings"/>
+        <applicationService serviceImplementation="com.chu7.vuecomponentassistant.remote.ComponentLibraryManager"/>
+        <applicationService serviceImplementation="com.chu7.vuecomponentassistant.remote.OfficialLibraryManager"/>
+        <applicationService serviceImplementation="com.chu7.vuecomponentassistant.remote.cache.LocalCacheManager"/>
+        <projectService serviceImplementation="com.chu7.vuecomponentassistant.settings.ProjectSettingsManager"/>
+        <projectService serviceImplementation="com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager"/>
+        
+        <!-- 启动活动 -->
+        <postStartupActivity implementation="com.chu7.vuecomponentassistant.startup.PluginStartupActivity"/>
+        <postStartupActivity implementation="com.chu7.vuecomponentassistant.startup.ComponentLibraryStartupActivity"/>
+        
+        <!-- 启用组件补全功能 - 参考 elementPlugin 实现 -->
+        <xml.tagNameProvider implementation="com.chu7.vuecomponentassistant.xml.VueKitTagNameProvider" order="first"/>
         <xml.elementDescriptorProvider implementation="com.chu7.vuecomponentassistant.xml.VueKitTagNameProvider" order="first"/>
-        <!-- Vue Kit设置组 -->
+        <xml.attributeDescriptorsProvider implementation="com.chu7.vuecomponentassistant.xml.VueKitXmlAttributeDescriptorsProvider" order="first"/>
+        
+        <!-- 暂时注释掉UI配置 -->
+        <!--
         <applicationConfigurable
                 parentId="tools"
                 instance="com.chu7.vuecomponentassistant.settings.VueKitSettingsGroupConfigurable"
                 id="com.chu7.vuecomponentassistant.settings.VueKitSettingsGroupConfigurable"
                 displayName="Vue Kit"/>
-        <!-- Vue Kit工具菜单组 -->
+        
         <group id="VueKit.Tools" text="Vue Kit" description="VueKit开发工具">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </group>
-        <!-- 设置服务 -->
-        <applicationService serviceImplementation="com.chu7.vuecomponentassistant.settings.PluginSettings"/>
-        <!-- 远程组件库管理器服务 -->
-        <applicationService serviceImplementation="com.chu7.vuecomponentassistant.remote.ComponentLibraryManager"/>
-        <!-- 官方组件库管理器服务 -->
-        <applicationService serviceImplementation="com.chu7.vuecomponentassistant.remote.OfficialLibraryManager"/>
-        <!-- 本地缓存管理器服务 -->
-        <applicationService serviceImplementation="com.chu7.vuecomponentassistant.remote.cache.LocalCacheManager"/>
-        <!-- 项目设置管理器服务 -->
-        <projectService serviceImplementation="com.chu7.vuecomponentassistant.settings.ProjectSettingsManager"/>
-        <!-- 组件库配置管理器服务 -->
-        <projectService serviceImplementation="com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager"/>
-        <!-- 组件库配置启动活动 -->
-        <postStartupActivity implementation="com.chu7.vuecomponentassistant.startup.ComponentLibraryStartupActivity"/>
+        -->
     </extensions>
 
     <actions>
+        <!-- 测试文档动作 -->
+        <action id="Test.Documentation"
+                class="com.chu7.vuecomponentassistant.action.TestDocumentationAction"
+                text="测试文档提供者"
+                description="手动测试文档提供者是否工作"
+                icon="AllIcons.Actions.Preview">
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+        </action>
+
         <!-- Vue Component文档动作 -->
         <action id="Component.Documentation"
                 class="com.chu7.vuecomponentassistant.action.ComponentDocumentationAction"
@@ -130,8 +147,6 @@
                 icon="AllIcons.Nodes.Module">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
-
-
 
         <!-- VueKit 工具分隔符 -->
         <separator id="VueKit.Separator.After" add-to-group="ToolsMenu" anchor="last"/>

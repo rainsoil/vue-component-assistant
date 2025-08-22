@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>文档调试测试</title>
+</head>
+<body>
+    <h1>文档调试测试</h1>
+    
+    <!-- 基础HTML元素测试 -->
+    <div>
+        <p>鼠标悬停在任何标签上应该显示测试文档</p>
+        <span>测试元素</span>
+        <button>按钮</button>
+    </div>
+    
+    <!-- Vue组件测试 -->
+    <el-button type="primary">Element Plus 按钮</el-button>
+    <el-input placeholder="输入框"></el-input>
+    
+    <!-- 调试说明 -->
+    <div style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;">
+        <h3>调试步骤：</h3>
+        <ol>
+            <li>重新构建插件</li>
+            <li>重启IDEA</li>
+            <li>鼠标悬停在任何HTML标签上</li>
+            <li>查看Event Log是否有"TestDocumentationProvider"相关日志</li>
+            <li>如果有日志输出，说明文档提供者工作正常</li>
+            <li>如果没有日志，说明注册有问题</li>
+        </ol>
+        
+        <h4>预期日志：</h4>
+        <pre>
+=== TestDocumentationProvider 类被加载 ===
+=== TestDocumentationProvider 实例被创建 ===
+=== TestDocumentationProvider.generateDoc 被调用 ===
+        </pre>
+    </div>
+</body>
+</html>

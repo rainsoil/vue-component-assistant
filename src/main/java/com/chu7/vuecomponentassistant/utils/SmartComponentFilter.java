@@ -234,6 +234,11 @@ public class SmartComponentFilter {
             VueKitLogger.info(LOG, "智能过滤完成，返回 " + sortedComponents.size() + " 个组件");
             return sortedComponents;
             
+        } catch (com.intellij.openapi.progress.ProcessCanceledException e) {
+            // ProcessCanceledException 是正常的控制流异常，不应该记录为错误
+            VueKitLogger.debug(LOG, "智能过滤组件被取消");
+            // 被取消时返回原始组件列表，确保功能可用
+            return allComponents;
         } catch (Exception e) {
             VueKitLogger.error(LOG, "智能过滤组件失败", e);
             // 出错时返回原始组件列表，确保功能可用
@@ -293,6 +298,9 @@ public class SmartComponentFilter {
             
             VueKitLogger.info(LOG, "从 package.json 检测到组件库: " + String.join(", ", libraries));
             
+        } catch (com.intellij.openapi.progress.ProcessCanceledException e) {
+            // ProcessCanceledException 是正常的控制流异常，不应该记录为错误
+            VueKitLogger.debug(LOG, "检测项目组件库被取消");
         } catch (Exception e) {
             VueKitLogger.error(LOG, "检测项目组件库失败", e);
         }
@@ -344,6 +352,9 @@ public class SmartComponentFilter {
                 }
             }
             
+        } catch (com.intellij.openapi.progress.ProcessCanceledException e) {
+            // ProcessCanceledException 是正常的控制流异常，不应该记录为错误
+            VueKitLogger.debug(LOG, "查找 package.json 被取消");
         } catch (Exception e) {
             VueKitLogger.error(LOG, "查找 package.json 失败", e);
         }
@@ -362,6 +373,10 @@ public class SmartComponentFilter {
             // 使用简单的 JSON 解析，避免引入额外的依赖
             // 这里可以后续替换为 Gson 或其他 JSON 解析器
             return parseSimpleJson(content);
+        } catch (com.intellij.openapi.progress.ProcessCanceledException e) {
+            // ProcessCanceledException 是正常的控制流异常，不应该记录为错误
+            VueKitLogger.debug(LOG, "解析 package.json 被取消");
+            return null;
         } catch (Exception e) {
             VueKitLogger.error(LOG, "解析 package.json 失败", e);
             return null;
@@ -382,6 +397,9 @@ public class SmartComponentFilter {
             extractDependenciesSection(content, "dependencies", result);
             extractDependenciesSection(content, "devDependencies", result);
             
+        } catch (com.intellij.openapi.progress.ProcessCanceledException e) {
+            // ProcessCanceledException 是正常的控制流异常，不应该记录为错误
+            VueKitLogger.debug(LOG, "简单 JSON 解析被取消");
         } catch (Exception e) {
             VueKitLogger.warn(LOG, "简单 JSON 解析失败，使用备用方法", e);
         }
@@ -426,6 +444,9 @@ public class SmartComponentFilter {
                 result.put(sectionName, deps);
             }
             
+        } catch (com.intellij.openapi.progress.ProcessCanceledException e) {
+            // ProcessCanceledException 是正常的控制流异常，不应该记录为错误
+            VueKitLogger.debug(LOG, "提取 " + sectionName + " 部分被取消");
         } catch (Exception e) {
             VueKitLogger.debug(LOG, "提取 " + sectionName + " 部分失败", e);
         }
@@ -460,6 +481,9 @@ public class SmartComponentFilter {
                     }
                 }
             }
+        } catch (com.intellij.openapi.progress.ProcessCanceledException e) {
+            // ProcessCanceledException 是正常的控制流异常，不应该记录为错误
+            VueKitLogger.debug(LOG, "解析依赖映射被取消");
         } catch (Exception e) {
             VueKitLogger.debug(LOG, "解析依赖映射失败", e);
         }
@@ -512,6 +536,10 @@ public class SmartComponentFilter {
             
             return enabledLibraries;
             
+        } catch (com.intellij.openapi.progress.ProcessCanceledException e) {
+            // ProcessCanceledException 是正常的控制流异常，不应该记录为错误
+            VueKitLogger.debug(LOG, "获取用户启用的组件库被取消");
+            return new HashSet<>();
         } catch (Exception e) {
             VueKitLogger.error(LOG, "获取用户启用的组件库失败", e);
             return new HashSet<>();
@@ -584,6 +612,9 @@ public class SmartComponentFilter {
                     break;
                 }
             }
+        } catch (com.intellij.openapi.progress.ProcessCanceledException e) {
+            // ProcessCanceledException 是正常的控制流异常，不应该记录为错误
+            VueKitLogger.debug(LOG, "从已安装组件库检查组件归属被取消");
         } catch (Exception e) {
             VueKitLogger.debug(LOG, "从已安装组件库检查组件归属失败: " + e.getMessage());
         }
@@ -667,6 +698,9 @@ public class SmartComponentFilter {
             } else {
                 VueKitLogger.debug(LOG, "没有找到已安装的组件库，返回空映射");
             }
+        } catch (com.intellij.openapi.progress.ProcessCanceledException e) {
+            // ProcessCanceledException 是正常的控制流异常，不应该记录为错误
+            VueKitLogger.debug(LOG, "动态获取组件库映射被取消，返回空映射");
         } catch (Exception e) {
             VueKitLogger.warn(LOG, "动态获取组件库映射失败，返回空映射: " + e.getMessage());
         }
@@ -701,6 +735,9 @@ public class SmartComponentFilter {
                 VueKitLogger.debug(LOG, "✅ 项目配置文件已存在且有效");
             }
             
+        } catch (com.intellij.openapi.progress.ProcessCanceledException e) {
+            // ProcessCanceledException 是正常的控制流异常，不应该记录为错误
+            VueKitLogger.debug(LOG, "确保项目配置文件存在被取消");
         } catch (Exception e) {
             VueKitLogger.error(LOG, "确保项目配置文件存在时发生错误", e);
         }
@@ -718,6 +755,9 @@ public class SmartComponentFilter {
             Set<String> emptyConfig = new HashSet<>();
             configManager.setProjectEnabledLibraryNames(project, emptyConfig);
             VueKitLogger.info(LOG, "已创建空的项目配置文件");
+        } catch (com.intellij.openapi.progress.ProcessCanceledException e) {
+            // ProcessCanceledException 是正常的控制流异常，不应该记录为错误
+            VueKitLogger.debug(LOG, "创建空项目配置文件被取消");
         } catch (Exception e) {
             VueKitLogger.error(LOG, "创建空项目配置文件失败", e);
         }
