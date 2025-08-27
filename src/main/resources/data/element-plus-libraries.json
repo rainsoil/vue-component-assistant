@@ -1,0 +1,1576 @@
+{
+  "id": "element-plus",
+  "name": "element-plus",
+  "componentPrefix": "el-",
+  "displayName": "Element Plus",
+  "description": "Element Plus 组件库",
+  "version": "2.5.0",
+  "sourceUrl": "",
+  "lastUpdated": "2025-08-11T10:00:09.914799",
+  "components": [
+    {
+      "name": "el-button",
+      "description": "常用的按钮组件，支持多种样式和事件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-button type=\"primary\">主要按钮</el-button>",
+      "docUrl": "https://element-plus.org/zh-CN/component/button.html",
+      "props": [
+        {
+          "name": "type",
+          "type": "string",
+          "description": "按钮类型",
+          "defaultValue": "default",
+          "required": false,
+          "options": [
+            "primary",
+            "success",
+            "warning",
+            "danger",
+            "info",
+            "default"
+          ]
+        },
+        {
+          "name": "size",
+          "type": "string",
+          "description": "按钮尺寸",
+          "defaultValue": "default",
+          "required": false,
+          "options": [
+            "large",
+            "default",
+            "small"
+          ]
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "description": "是否禁用按钮",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "loading",
+          "type": "boolean",
+          "description": "是否显示加载状态",
+          "defaultValue": "false",
+          "required": false
+        }
+      ],
+      "events": [
+        {
+          "name": "click",
+          "description": "点击按钮时触发",
+          "parameters": "event"
+        }
+      ],
+      "slots": [
+        {
+          "name": "default",
+          "description": "按钮内容"
+        },
+        {
+          "name": "icon",
+          "description": "按钮图标"
+        }
+      ]
+    },
+    {
+      "name": "el-input",
+      "description": "输入框组件，支持多种类型和校验。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-input v-model=\"input\"></el-input>",
+      "docUrl": "https://element-plus.org/zh-CN/component/input.html",
+      "props": [
+        {
+          "name": "modelValue",
+          "type": "string",
+          "description": "绑定值",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "description": "输入框类型",
+          "defaultValue": "text",
+          "required": false,
+          "options": [
+            "text",
+            "textarea",
+            "password",
+            "number",
+            "email",
+            "url",
+            "tel"
+          ]
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "description": "占位符",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "description": "是否禁用",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "clearable",
+          "type": "boolean",
+          "description": "是否可清空",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "size",
+          "type": "string",
+          "description": "输入框尺寸",
+          "defaultValue": "default",
+          "required": false,
+          "options": [
+            "large",
+            "default",
+            "small"
+          ]
+        }
+      ],
+      "events": [
+        {
+          "name": "input",
+          "description": "输入事件",
+          "parameters": "value"
+        },
+        {
+          "name": "change",
+          "description": "值改变事件",
+          "parameters": "value"
+        },
+        {
+          "name": "clear",
+          "description": "清空事件",
+          "parameters": ""
+        },
+        {
+          "name": "focus",
+          "description": "获得焦点事件",
+          "parameters": "event"
+        },
+        {
+          "name": "blur",
+          "description": "失去焦点事件",
+          "parameters": "event"
+        }
+      ],
+      "slots": [
+        {
+          "name": "prefix",
+          "description": "输入框头部内容"
+        },
+        {
+          "name": "suffix",
+          "description": "输入框尾部内容"
+        },
+        {
+          "name": "prepend",
+          "description": "输入框前置内容"
+        },
+        {
+          "name": "append",
+          "description": "输入框后置内容"
+        }
+      ]
+    },
+    {
+      "name": "el-table",
+      "description": "表格组件，支持排序、筛选、分页等功能。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-table :data=\"tableData\"></el-table>",
+      "docUrl": "https://element-plus.org/zh-CN/component/table.html",
+      "props": [
+        {
+          "name": "data",
+          "type": "array",
+          "description": "显示的数据",
+          "defaultValue": "[]",
+          "required": true
+        },
+        {
+          "name": "height",
+          "type": "string",
+          "description": "表格高度",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "stripe",
+          "type": "boolean",
+          "description": "是否为斑马纹表格",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "border",
+          "type": "boolean",
+          "description": "是否带有纵向边框",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "size",
+          "type": "string",
+          "description": "表格尺寸",
+          "defaultValue": "default",
+          "required": false,
+          "options": [
+            "large",
+            "default",
+            "small"
+          ]
+        },
+        {
+          "name": "fit",
+          "type": "boolean",
+          "description": "列的宽度是否自撑开",
+          "defaultValue": "true",
+          "required": false
+        }
+      ],
+      "events": [
+        {
+          "name": "select",
+          "description": "当用户手动勾选数据行的 Checkbox 时触发的事件",
+          "parameters": "selection, row"
+        },
+        {
+          "name": "select-all",
+          "description": "当用户手动勾选全选 Checkbox 时触发的事件",
+          "parameters": "selection"
+        },
+        {
+          "name": "selection-change",
+          "description": "当选择项发生变化时会触发该事件",
+          "parameters": "selection"
+        },
+        {
+          "name": "cell-mouse-enter",
+          "description": "当单元格 hover 进入时会触发该事件",
+          "parameters": "row, column, cell, event"
+        },
+        {
+          "name": "cell-mouse-leave",
+          "description": "当单元格 hover 退出时会触发该事件",
+          "parameters": "row, column, cell, event"
+        },
+        {
+          "name": "cell-click",
+          "description": "当某个单元格被点击时会触发该事件",
+          "parameters": "row, column, cell, event"
+        },
+        {
+          "name": "cell-dblclick",
+          "description": "当某个单元格被双击击时会触发该事件",
+          "parameters": "row, column, cell, event"
+        },
+        {
+          "name": "row-click",
+          "description": "当某一行被点击时会触发该事件",
+          "parameters": "row, column, event"
+        },
+        {
+          "name": "row-contextmenu",
+          "description": "当某一行被鼠标右键点击时会触发该事件",
+          "parameters": "row, column, event"
+        },
+        {
+          "name": "row-dblclick",
+          "description": "当某一行被双击时会触发该事件",
+          "parameters": "row, column, event"
+        },
+        {
+          "name": "header-click",
+          "description": "当某一列的表头被点击时会触发该事件",
+          "parameters": "column, event"
+        },
+        {
+          "name": "header-contextmenu",
+          "description": "当某一列的表头被鼠标右键点击时触发该事件",
+          "parameters": "column, event"
+        },
+        {
+          "name": "sort-change",
+          "description": "当表格的排序条件发生变化的时候会触发该事件",
+          "parameters": "{ column, prop, order }"
+        },
+        {
+          "name": "filter-change",
+          "description": "当表格的筛选条件发生变化的时候会触发该事件",
+          "parameters": "filters"
+        },
+        {
+          "name": "header-dragend",
+          "description": "当拖动表头改变了列的宽度的时候会触发该事件",
+          "parameters": "newWidth, oldWidth, column, event"
+        },
+        {
+          "name": "expand-change",
+          "description": "当用户对某一行展开或者关闭的时候会触发该事件",
+          "parameters": "row, expandedRows"
+        }
+      ],
+      "slots": [
+        {
+          "name": "default",
+          "description": "表格内容"
+        },
+        {
+          "name": "append",
+          "description": "插入至表格最后一行之后的内容"
+        },
+        {
+          "name": "empty",
+          "description": "当数据为空时显示的内容"
+        },
+        {
+          "name": "reference",
+          "description": "触发元素",
+          "scope": "scope"
+        }
+      ]
+    },
+    {
+      "name": "el-form",
+      "description": "表单容器组件，配合 el-form-item 使用。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-form :model=\"form\"></el-form>",
+      "docUrl": "https://element-plus.org/zh-CN/component/form.html",
+      "props": [
+        {
+          "name": "model",
+          "type": "object",
+          "description": "表单数据对象",
+          "defaultValue": "{}",
+          "required": true
+        },
+        {
+          "name": "rules",
+          "type": "object",
+          "description": "表单验证规则",
+          "defaultValue": "{}",
+          "required": false
+        },
+        {
+          "name": "label-width",
+          "type": "string",
+          "description": "表单域标签的宽度",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "label-position",
+          "type": "string",
+          "description": "表单域标签的位置",
+          "defaultValue": "right",
+          "required": false,
+          "options": [
+            "left",
+            "right",
+            "top"
+          ]
+        },
+        {
+          "name": "size",
+          "type": "string",
+          "description": "表单内组件的尺寸",
+          "defaultValue": "default",
+          "required": false,
+          "options": [
+            "large",
+            "default",
+            "small"
+          ]
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "description": "是否禁用表单",
+          "defaultValue": "false",
+          "required": false
+        }
+      ],
+      "events": [
+        {
+          "name": "validate",
+          "description": "任一表单项被校验后触发",
+          "parameters": "prop, valid, message"
+        },
+        {
+          "name": "submit",
+          "description": "表单提交事件",
+          "parameters": ""
+        }
+      ],
+      "slots": [
+        {
+          "name": "default",
+          "description": "表单内容"
+        }
+      ]
+    },
+    {
+      "name": "el-select",
+      "description": "下拉选择器组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-select v-model=\"value\"></el-select>",
+      "docUrl": "https://element-plus.org/zh-CN/component/select.html",
+      "props": [
+        {
+          "name": "modelValue",
+          "type": "string",
+          "description": "绑定值",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "description": "占位符",
+          "defaultValue": "请选择",
+          "required": false
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "description": "是否禁用",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "clearable",
+          "type": "boolean",
+          "description": "是否可以清空选项",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "multiple",
+          "type": "boolean",
+          "description": "是否多选",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "size",
+          "type": "string",
+          "description": "输入框尺寸",
+          "defaultValue": "default",
+          "required": false,
+          "options": [
+            "large",
+            "default",
+            "small"
+          ]
+        }
+      ],
+      "events": [
+        {
+          "name": "change",
+          "description": "选中值发生变化时触发",
+          "parameters": "value"
+        },
+        {
+          "name": "visible-change",
+          "description": "下拉框出现/隐藏时触发",
+          "parameters": "visible"
+        },
+        {
+          "name": "remove-tag",
+          "description": "多选模式下移除tag时触发",
+          "parameters": "value"
+        },
+        {
+          "name": "clear",
+          "description": "可清空的单选模式下用户点击清空按钮时触发",
+          "parameters": ""
+        },
+        {
+          "name": "blur",
+          "description": "当 input 失去焦点时触发",
+          "parameters": "event"
+        },
+        {
+          "name": "focus",
+          "description": "当 input 获得焦点时触发",
+          "parameters": "event"
+        }
+      ],
+      "slots": [
+        {
+          "name": "default",
+          "description": "选择器的选项"
+        },
+        {
+          "name": "prefix",
+          "description": "选择器头部内容"
+        },
+        {
+          "name": "empty",
+          "description": "无选项时的列表"
+        }
+      ]
+    },
+    {
+      "name": "el-option",
+      "description": "下拉选择器的选项组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-option label=\"选项1\" value=\"1\"></el-option>",
+      "docUrl": "https://element-plus.org/zh-CN/component/select.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-date-picker",
+      "description": "日期选择器组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-date-picker v-model=\"date\"></el-date-picker>",
+      "docUrl": "https://element-plus.org/zh-CN/component/date-picker.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-dialog",
+      "description": "对话框组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-dialog title=\"标题\" v-model=\"visible\"></el-dialog>",
+      "docUrl": "https://element-plus.org/zh-CN/component/dialog.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-checkbox",
+      "description": "复选框组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-checkbox v-model=\"checked\">选项</el-checkbox>",
+      "docUrl": "https://element-plus.org/zh-CN/component/checkbox.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-radio",
+      "description": "单选框组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-radio v-model=\"radio\">选项</el-radio>",
+      "docUrl": "https://element-plus.org/zh-CN/component/radio.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-switch",
+      "description": "开关组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-switch v-model=\"switchValue\"></el-switch>",
+      "docUrl": "https://element-plus.org/zh-CN/component/switch.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-slider",
+      "description": "滑块组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-slider v-model=\"sliderValue\"></el-slider>",
+      "docUrl": "https://element-plus.org/zh-CN/component/slider.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-upload",
+      "description": "上传组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-upload action=\"#\"></el-upload>",
+      "docUrl": "https://element-plus.org/zh-CN/component/upload.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-rate",
+      "description": "评分组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-rate v-model=\"rateValue\"></el-rate>",
+      "docUrl": "https://element-plus.org/zh-CN/component/rate.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-tree",
+      "description": "树形控件组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-tree :data=\"treeData\"></el-tree>",
+      "docUrl": "https://element-plus.org/zh-CN/component/tree.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-pagination",
+      "description": "分页组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-pagination :total=\"100\"></el-pagination>",
+      "docUrl": "https://element-plus.org/zh-CN/component/pagination.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-badge",
+      "description": "徽章组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-badge value=\"5\"><el-button>消息</el-button></el-badge>",
+      "docUrl": "https://element-plus.org/zh-CN/component/badge.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-alert",
+      "description": "警告提示组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-alert title=\"成功\" type=\"success\"></el-alert>",
+      "docUrl": "https://element-plus.org/zh-CN/component/alert.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-breadcrumb",
+      "description": "面包屑导航组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-breadcrumb><el-breadcrumb-item>首页</el-breadcrumb-item></el-breadcrumb>",
+      "docUrl": "https://element-plus.org/zh-CN/component/breadcrumb.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-card",
+      "description": "卡片组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-card>卡片内容</el-card>",
+      "docUrl": "https://element-plus.org/zh-CN/component/card.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-carousel",
+      "description": "走马灯组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-carousel><el-carousel-item>内容1</el-carousel-item></el-carousel>",
+      "docUrl": "https://element-plus.org/zh-CN/component/carousel.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-collapse",
+      "description": "折叠面板组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-collapse><el-collapse-item title=\"标题\">内容</el-collapse-item></el-collapse>",
+      "docUrl": "https://element-plus.org/zh-CN/component/collapse.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-dropdown",
+      "description": "下拉菜单组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-dropdown><el-button>下拉菜单</el-button></el-dropdown>",
+      "docUrl": "https://element-plus.org/zh-CN/component/dropdown.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-menu",
+      "description": "导航菜单组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-menu><el-menu-item>菜单项</el-menu-item></el-menu>",
+      "docUrl": "https://element-plus.org/zh-CN/component/menu.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-progress",
+      "description": "进度条组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-progress :percentage=\"50\"></el-progress>",
+      "docUrl": "https://element-plus.org/zh-CN/component/progress.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-steps",
+      "description": "步骤条组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-steps><el-step title=\"步骤1\"></el-step></el-steps>",
+      "docUrl": "https://element-plus.org/zh-CN/component/steps.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-tabs",
+      "description": "标签页组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-tabs><el-tab-pane label=\"标签1\">内容</el-tab-pane></el-tabs>",
+      "docUrl": "https://element-plus.org/zh-CN/component/tabs.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-tag",
+      "description": "标签组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-tag>标签</el-tag>",
+      "docUrl": "https://element-plus.org/zh-CN/component/tag.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-table",
+      "description": "表格组件，用于展示结构化数据。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-table :data=\"tableData\"><el-table-column prop=\"name\" label=\"姓名\"></el-table-column></el-table>",
+      "docUrl": "https://element-plus.org/zh-CN/component/table.html",
+      "props": [
+        {
+          "name": "data",
+          "type": "array",
+          "description": "显示的数据",
+          "defaultValue": "[]",
+          "required": false
+        },
+        {
+          "name": "height",
+          "type": "string|number",
+          "description": "Table 的高度",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "max-height",
+          "type": "string|number",
+          "description": "Table 的最大高度",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "stripe",
+          "type": "boolean",
+          "description": "是否为斑马纹 table",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "border",
+          "type": "boolean",
+          "description": "是否带有纵向边框",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "size",
+          "type": "string",
+          "description": "Table 的尺寸",
+          "defaultValue": "default",
+          "required": false,
+          "options": [
+            "large",
+            "default",
+            "small"
+          ]
+        },
+        {
+          "name": "fit",
+          "type": "boolean",
+          "description": "列的宽度是否自撑开",
+          "defaultValue": "true",
+          "required": false
+        },
+        {
+          "name": "show-header",
+          "type": "boolean",
+          "description": "是否显示表头",
+          "defaultValue": "true",
+          "required": false
+        },
+        {
+          "name": "highlight-current-row",
+          "type": "boolean",
+          "description": "是否要高亮当前行",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "current-row-key",
+          "type": "string|number",
+          "description": "当前行的 key，只写属性，用于 Table 设置当前行",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "row-class-name",
+          "type": "string|function",
+          "description": "行的 className 的回调方法，也可以使用字符串为所有行设置一个固定的 className",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "row-style",
+          "type": "object|function",
+          "description": "行的 style 的回调方法，也可以使用一个固定的 Object 为所有行设置一样的 Style",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "cell-class-name",
+          "type": "string|function",
+          "description": "单元格的 className 的回调方法，也可以使用字符串为所有单元格设置一个固定的 className",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "cell-style",
+          "type": "object|function",
+          "description": "单元格的 style 的回调方法，也可以使用一个固定的 Object 为所有单元格设置一样的 Style",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "header-row-class-name",
+          "type": "string|function",
+          "description": "表头行的 className 的回调方法，也可以使用字符串为所有表头行设置一个固定的 className",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "header-row-style",
+          "type": "object|function",
+          "description": "表头行的 style 的回调方法，也可以使用一个固定的 Object 为所有表头行设置一样的 Style",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "header-cell-class-name",
+          "type": "string|function",
+          "description": "表头单元格的 className 的回调方法，也可以使用字符串为所有表头单元格设置一个固定的 className",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "header-cell-style",
+          "type": "object|function",
+          "description": "表头单元格的 style 的回调方法，也可以使用一个固定的 Object 为所有表头单元格设置一样的 Style",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "row-key",
+          "type": "string|function",
+          "description": "行数据的 Key，用来优化 Table 的渲染；在使用 reserve-selection 功能与显示树形数据时，该字段是必填的",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "empty-text",
+          "type": "string",
+          "description": "空数据时显示的文本内容",
+          "defaultValue": "暂无数据",
+          "required": false
+        },
+        {
+          "name": "default-expand-all",
+          "type": "boolean",
+          "description": "是否默认展开所有行，当 Table 包含展开行功能时有效",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "expand-row-keys",
+          "type": "array",
+          "description": "可以通过该属性设置展开行的展开行 keys，该属性为展开行的 keys 数组",
+          "defaultValue": "[]",
+          "required": false
+        },
+        {
+          "name": "default-sort",
+          "type": "object",
+          "description": "默认的排序列的 prop 和顺序。它的 prop 属性指定默认的排序的列，order 指定默认排序的顺序",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "tooltip-effect",
+          "type": "string",
+          "description": "tooltip effect 属性",
+          "defaultValue": "dark",
+          "required": false,
+          "options": [
+            "dark",
+            "light"
+          ]
+        },
+        {
+          "name": "show-summary",
+          "type": "boolean",
+          "description": "是否在表尾显示合计行",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "sum-text",
+          "type": "string",
+          "description": "合计行第一列的文本",
+          "defaultValue": "合计",
+          "required": false
+        },
+        {
+          "name": "summary-method",
+          "type": "function",
+          "description": "自定义的合计计算方法",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "span-method",
+          "type": "function",
+          "description": "合并行或列的计算方法",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "select-on-indeterminate",
+          "type": "boolean",
+          "description": "在多选表格中，当只有部分行被选中时，点击表头的 checkbox 时的行为",
+          "defaultValue": "true",
+          "required": false
+        },
+        {
+          "name": "indent",
+          "type": "number",
+          "description": "展示树形数据时，树节点的缩进",
+          "defaultValue": "16",
+          "required": false
+        },
+        {
+          "name": "lazy",
+          "type": "boolean",
+          "description": "是否懒加载子节点数据",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "load",
+          "type": "function",
+          "description": "加载子节点数据的方法，仅当 lazy 为 true 时生效",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "tree-props",
+          "type": "object",
+          "description": "渲染嵌套数据的配置选项",
+          "defaultValue": "{ hasChildren: \u0027hasChildren\u0027, children: \u0027children\u0027 }",
+          "required": false
+        },
+        {
+          "name": "table-layout",
+          "type": "string",
+          "description": "设置表格单元、行和列的布局方式",
+          "defaultValue": "fixed",
+          "required": false,
+          "options": [
+            "fixed",
+            "auto"
+          ]
+        },
+        {
+          "name": "scrollbar-always-on",
+          "type": "boolean",
+          "description": "是否总是显示滚动条",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "flexible",
+          "type": "boolean",
+          "description": "是否启用 flex 布局",
+          "defaultValue": "false",
+          "required": false
+        }
+      ],
+      "events": [
+        {
+          "name": "select",
+          "description": "当用户手动勾选数据行的 Checkbox 时触发的事件",
+          "parameters": "selection, row"
+        },
+        {
+          "name": "select-all",
+          "description": "当用户手动勾选全选 Checkbox 时触发的事件",
+          "parameters": "selection"
+        },
+        {
+          "name": "selection-change",
+          "description": "当选择项发生变化时会触发该事件",
+          "parameters": "selection"
+        },
+        {
+          "name": "cell-mouse-enter",
+          "description": "当单元格被鼠标进入时触发",
+          "parameters": "row, column, cell, event"
+        },
+        {
+          "name": "cell-mouse-leave",
+          "description": "当单元格被鼠标离开时触发",
+          "parameters": "row, column, cell, event"
+        },
+        {
+          "name": "cell-click",
+          "description": "当某个单元格被点击时会触发该事件",
+          "parameters": "row, column, cell, event"
+        },
+        {
+          "name": "cell-dblclick",
+          "description": "当某个单元格被双击击时会触发该事件",
+          "parameters": "row, column, cell, event"
+        },
+        {
+          "name": "row-click",
+          "description": "当某一行被点击时会触发该事件",
+          "parameters": "row, column, event"
+        },
+        {
+          "name": "row-contextmenu",
+          "description": "当某一行被鼠标右键点击时会触发该事件",
+          "parameters": "row, column, event"
+        },
+        {
+          "name": "row-dblclick",
+          "description": "当某一行被双击时会触发该事件",
+          "parameters": "row, column, event"
+        },
+        {
+          "name": "header-click",
+          "description": "当某一列的表头被点击时会触发该事件",
+          "parameters": "column, event"
+        },
+        {
+          "name": "header-contextmenu",
+          "description": "当某一列的表头被鼠标右键点击时触发该事件",
+          "parameters": "column, event"
+        },
+        {
+          "name": "sort-change",
+          "description": "当表格的排序条件发生变化的时候会触发该事件",
+          "parameters": "{ column, prop, order }"
+        },
+        {
+          "name": "filter-change",
+          "description": "当表格的筛选条件发生变化的时候会触发该事件",
+          "parameters": "filters"
+        },
+        {
+          "name": "current-change",
+          "description": "当表格的当前行发生变化的时候会触发该事件",
+          "parameters": "currentRow, oldCurrentRow"
+        },
+        {
+          "name": "header-dragend",
+          "description": "当拖动表头改变了列的宽度的时候会触发该事件",
+          "parameters": "newWidth, oldWidth, column, event"
+        },
+        {
+          "name": "expand-change",
+          "description": "当用户对某一行展开或者关闭的时候会触发该事件",
+          "parameters": "row, expandedRows"
+        }
+      ],
+      "slots": [
+        {
+          "name": "default",
+          "description": "表格内容"
+        },
+        {
+          "name": "append",
+          "description": "插入至表格最后一行之后的内容， 如果需要对表格的内容进行无限滚动操作，可能需要用到这个 slot。 若表格有合计行，该 slot 会位于合计行之上"
+        },
+        {
+          "name": "empty",
+          "description": "当数据为空时自定义的内容"
+        }
+      ]
+    },
+    {
+      "name": "el-form",
+      "description": "表单组件，用于数据录入和校验。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-form :model=\"form\" :rules=\"rules\"><el-form-item label=\"姓名\" prop=\"name\"><el-input v-model=\"form.name\"></el-input></el-form-item></el-form>",
+      "docUrl": "https://element-plus.org/zh-CN/component/form.html",
+      "props": [
+        {
+          "name": "model",
+          "type": "object",
+          "description": "表单数据对象",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "rules",
+          "type": "object",
+          "description": "表单验证规则",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "inline",
+          "type": "boolean",
+          "description": "行内表单模式",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "label-position",
+          "type": "string",
+          "description": "表单域标签的位置",
+          "defaultValue": "right",
+          "required": false,
+          "options": [
+            "left",
+            "right",
+            "top"
+          ]
+        },
+        {
+          "name": "label-width",
+          "type": "string",
+          "description": "表单域标签的宽度",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "label-suffix",
+          "type": "string",
+          "description": "表单域标签的后缀",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "hide-required-asterisk",
+          "type": "boolean",
+          "description": "是否显示必填字段的标签旁边的红色星号",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "show-message",
+          "type": "boolean",
+          "description": "是否显示校验错误信息",
+          "defaultValue": "true",
+          "required": false
+        },
+        {
+          "name": "inline-message",
+          "type": "boolean",
+          "description": "是否以行内形式展示校验信息",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "status-icon",
+          "type": "boolean",
+          "description": "是否在输入框中显示校验结果反馈图标",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "validate-on-rule-change",
+          "type": "boolean",
+          "description": "是否在 rules 属性改变后立即触发一次验证",
+          "defaultValue": "true",
+          "required": false
+        },
+        {
+          "name": "size",
+          "type": "string",
+          "description": "用于控制该表单内组件的尺寸",
+          "defaultValue": "default",
+          "required": false,
+          "options": [
+            "large",
+            "default",
+            "small"
+          ]
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "description": "是否禁用该表单内的所有组件",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "scroll-to-error",
+          "type": "boolean",
+          "description": "当校验失败时，滚动到第一个错误表单项",
+          "defaultValue": "false",
+          "required": false
+        }
+      ],
+      "events": [
+        {
+          "name": "validate",
+          "description": "任一表单项被校验后触发",
+          "parameters": "prop, isValid, message"
+        },
+        {
+          "name": "submit",
+          "description": "表单提交时触发",
+          "parameters": ""
+        }
+      ],
+      "slots": [
+        {
+          "name": "default",
+          "description": "表单内容"
+        }
+      ]
+    },
+    {
+      "name": "el-select",
+      "description": "选择器组件，支持单选和多选。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-select v-model=\"value\" placeholder=\"请选择\"><el-option label=\"选项1\" value=\"1\"></el-option></el-select>",
+      "docUrl": "https://element-plus.org/zh-CN/component/select.html",
+      "props": [
+        {
+          "name": "modelValue",
+          "type": "string|number|boolean|object",
+          "description": "绑定值",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "multiple",
+          "type": "boolean",
+          "description": "是否多选",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "description": "是否禁用",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "value-key",
+          "type": "string",
+          "description": "作为 value 唯一标识的键名，绑定值为对象类型时必填",
+          "defaultValue": "value",
+          "required": false
+        },
+        {
+          "name": "size",
+          "type": "string",
+          "description": "输入框尺寸",
+          "defaultValue": "default",
+          "required": false,
+          "options": [
+            "large",
+            "default",
+            "small"
+          ]
+        },
+        {
+          "name": "clearable",
+          "type": "boolean",
+          "description": "是否可以清空选项",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "collapse-tags",
+          "type": "boolean",
+          "description": "多选时是否将选中值按文字的形式展示",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "collapse-tags-tooltip",
+          "type": "boolean",
+          "description": "多选折叠时是否显示 tooltip",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "multiple-limit",
+          "type": "number",
+          "description": "多选时用户最多可以选择的项目数，为 0 则不限制",
+          "defaultValue": "0",
+          "required": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "description": "选择器原生 name 属性",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "effect",
+          "type": "string",
+          "description": "Tooltip 主题，内置了 dark / light 两种",
+          "defaultValue": "light",
+          "required": false,
+          "options": [
+            "dark",
+            "light"
+          ]
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "description": "占位符",
+          "defaultValue": "请选择",
+          "required": false
+        },
+        {
+          "name": "filterable",
+          "type": "boolean",
+          "description": "是否可搜索",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "allow-create",
+          "type": "boolean",
+          "description": "是否允许用户创建新条目， 只有当 filterable 设置为 true 时才会生效",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "filter-method",
+          "type": "function",
+          "description": "自定义搜索方法",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "reserve-keyword",
+          "type": "boolean",
+          "description": "多选且可搜索时，是否在选中一个选项后保留当前的搜索关键词",
+          "defaultValue": "true",
+          "required": false
+        },
+        {
+          "name": "no-match-text",
+          "type": "string",
+          "description": "搜索条件无匹配时显示的文字，也可以使用 empty slot",
+          "defaultValue": "无匹配数据",
+          "required": false
+        },
+        {
+          "name": "no-data-text",
+          "type": "string",
+          "description": "选项为空时显示的文字，也可以使用 empty slot",
+          "defaultValue": "无数据",
+          "required": false
+        },
+        {
+          "name": "popper-class",
+          "type": "string",
+          "description": "下拉框的类名",
+          "defaultValue": "",
+          "required": false
+        },
+        {
+          "name": "teleported",
+          "type": "boolean",
+          "description": "是否将下拉列表插入至 body 元素",
+          "defaultValue": "true",
+          "required": false
+        },
+        {
+          "name": "persistent",
+          "type": "boolean",
+          "description": "当下拉选择器未被激活并且persistent设置为false，选择器会被删除",
+          "defaultValue": "true",
+          "required": false
+        },
+        {
+          "name": "automatic-dropdown",
+          "type": "boolean",
+          "description": "对于不可搜索的 Select，是否在输入框获得焦点后自动弹出选项菜单",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "clear-icon",
+          "type": "string|Component",
+          "description": "自定义清除图标",
+          "defaultValue": "Close",
+          "required": false
+        },
+        {
+          "name": "fit-input-width",
+          "type": "boolean",
+          "description": "下拉框的宽度是否与输入框相同",
+          "defaultValue": "false",
+          "required": false
+        },
+        {
+          "name": "suffix-icon",
+          "type": "string|Component",
+          "description": "自定义后缀图标",
+          "defaultValue": "ArrowDown",
+          "required": false
+        },
+        {
+          "name": "tag-type",
+          "type": "string",
+          "description": "标签类型",
+          "defaultValue": "",
+          "required": false,
+          "options": [
+            "success",
+            "info",
+            "warning",
+            "danger"
+          ]
+        },
+        {
+          "name": "validate-event",
+          "type": "boolean",
+          "description": "输入时是否触发表单的校验",
+          "defaultValue": "true",
+          "required": false
+        }
+      ],
+      "events": [
+        {
+          "name": "change",
+          "description": "选中值发生变化时触发",
+          "parameters": "value"
+        },
+        {
+          "name": "visible-change",
+          "description": "下拉框出现/隐藏时触发",
+          "parameters": "visible"
+        },
+        {
+          "name": "remove-tag",
+          "description": "多选模式下移除tag时触发",
+          "parameters": "value"
+        },
+        {
+          "name": "clear",
+          "description": "可清空的单选模式下用户点击清空按钮时触发",
+          "parameters": ""
+        },
+        {
+          "name": "blur",
+          "description": "当 input 失去焦点时触发",
+          "parameters": "event"
+        },
+        {
+          "name": "focus",
+          "description": "当 input 获得焦点时触发",
+          "parameters": "event"
+        }
+      ],
+      "slots": [
+        {
+          "name": "default",
+          "description": "Option 组件列表"
+        },
+        {
+          "name": "prefix",
+          "description": "Select 组件头部内容"
+        },
+        {
+          "name": "empty",
+          "description": "无选项时的列表"
+        }
+      ]
+    },
+    {
+      "name": "el-tooltip",
+      "description": "文字提示组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-tooltip content=\"提示文字\"><el-button>按钮</el-button></el-tooltip>",
+      "docUrl": "https://element-plus.org/zh-CN/component/tooltip.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-popover",
+      "description": "弹出框组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-popover><el-button>触发按钮</el-button></el-popover>",
+      "docUrl": "https://element-plus.org/zh-CN/component/popover.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-drawer",
+      "description": "抽屉组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "<el-drawer v-model=\"drawerVisible\" title=\"抽屉\"></el-drawer>",
+      "docUrl": "https://element-plus.org/zh-CN/component/drawer.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-message",
+      "description": "消息提示组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "this.$message.success(\u0027成功消息\u0027)",
+      "docUrl": "https://element-plus.org/zh-CN/component/message.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    },
+    {
+      "name": "el-notification",
+      "description": "通知组件。",
+      "version": "Element Plus >=1.0.0",
+      "example": "this.$notify.success(\u0027通知消息\u0027)",
+      "docUrl": "https://element-plus.org/zh-CN/component/notification.html",
+      "props": [],
+      "events": [],
+      "slots": []
+    }
+  ]
+}

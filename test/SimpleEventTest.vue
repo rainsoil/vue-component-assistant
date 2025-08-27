@@ -2,17 +2,16 @@
     <div>
 
 
-
-      <el-table   data="" ></el-table>
-        <el-table  data="[]" select="当用户手动勾选数据行的 Checkbox 时触发的事件" >
-
-        </el-table>
-
-        <el-table data="[]" border="false"  >
+        <el-table data=""></el-table>
+        <el-table data="[]" @select="">
 
         </el-table>
 
-        <el-input placeholder="" @clear="">
+        <el-table data="[]" border="false">
+
+        </el-table>
+
+        <el-input placeholder="" @clear="" type="password">
 
         </el-input>
         <el-table data=""></el-table>

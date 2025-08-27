@@ -2,7 +2,7 @@
 <idea-plugin>
     <id>com.chu7.vuekit</id>
     <name>VueKit</name>
-    <version>1.0.2</version>
+    <version>1.0.1</version>
     <vendor email="luyanan0718@163.com" url="https://github.com/rainsoil/vuekit">luyanan</vendor>
 
     <description><![CDATA[
@@ -38,119 +38,91 @@
         </ul>
     ]]></description>
 
+
+    <idea-version since-build="231.0" until-build="251.*"/>
+    
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.xml</depends>
-    <depends>com.intellij.modules.vcs</depends>
     <depends>JavaScript</depends>
     <depends>org.jetbrains.plugins.vue</depends>
-    <!-- <depends>com.intellij.modules.ultimate</depends> -->
 
     <extensions defaultExtensionNs="com.intellij">
-        <!-- 暂时注释掉所有扩展点，只保留最基本的 -->
-        
-        <!-- 测试文档提供者 - 简单测试 -->
-        <lang.documentationProvider language="HTML"
-                                    implementationClass="com.chu7.vuecomponentassistant.documentation.ElementUIDocumentProvider"
-                                    order="first"/>
-        <lang.documentationProvider language="Vue"
-                                    implementationClass="com.chu7.vuecomponentassistant.documentation.ElementUIDocumentProvider"
-                                    order="first"/>
-        <lang.documentationProvider language="XML"
-                                    implementationClass="com.chu7.vuecomponentassistant.documentation.ElementUIDocumentProvider"
-                                    order="first"/>
-        
-        <!-- 核心服务 - 启用这些服务让插件正常工作 -->
-        <applicationService serviceImplementation="com.chu7.vuecomponentassistant.settings.PluginSettings"/>
-        <applicationService serviceImplementation="com.chu7.vuecomponentassistant.remote.ComponentLibraryManager"/>
-        <applicationService serviceImplementation="com.chu7.vuecomponentassistant.remote.OfficialLibraryManager"/>
-        <applicationService serviceImplementation="com.chu7.vuecomponentassistant.remote.cache.LocalCacheManager"/>
-        <projectService serviceImplementation="com.chu7.vuecomponentassistant.settings.ProjectSettingsManager"/>
-        <projectService serviceImplementation="com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager"/>
-        
         <!-- 启动活动 -->
-        <postStartupActivity implementation="com.chu7.vuecomponentassistant.startup.PluginStartupActivity"/>
-        <postStartupActivity implementation="com.chu7.vuecomponentassistant.startup.ComponentLibraryStartupActivity"/>
+        <postStartupActivity implementation="com.chu7.vuecomponentassistant.startup.UnifiedPluginStartupActivity"/>
         
-        <!-- 启用组件补全功能 - 参考 elementPlugin 实现 -->
-        <xml.tagNameProvider implementation="com.chu7.vuecomponentassistant.xml.VueKitTagNameProvider" order="first"/>
-        <xml.elementDescriptorProvider implementation="com.chu7.vuecomponentassistant.xml.VueKitTagNameProvider" order="first"/>
-        <xml.attributeDescriptorsProvider implementation="com.chu7.vuecomponentassistant.xml.VueKitXmlAttributeDescriptorsProvider" order="first"/>
+        <!-- B1: 组件标签补全扩展点 -->
+        <xml.tagNameProvider implementation="com.chu7.vuecomponentassistant.extension.UnifiedTagNameProvider" order="first"/>
+        <xml.elementDescriptorProvider implementation="com.chu7.vuecomponentassistant.extension.UnifiedTagNameProvider" order="first"/>
         
-        <!-- 暂时注释掉UI配置 -->
-        <!--
-        <applicationConfigurable
-                parentId="tools"
-                instance="com.chu7.vuecomponentassistant.settings.VueKitSettingsGroupConfigurable"
-                id="com.chu7.vuecomponentassistant.settings.VueKitSettingsGroupConfigurable"
-                displayName="Vue Kit"/>
+        <!-- B2: 属性名称补全扩展点 -->
+        <xml.tagNameProvider implementation="com.chu7.vuecomponentassistant.extension.UnifiedXmlAttributeNameProvider" order="first"/>
+        <!-- B2+: 属性名称 CompletionContributor（拦截并 stopHere） -->
+        <completion.contributor language="XML" implementationClass="com.chu7.vuecomponentassistant.extension.UnifiedAttributeNameCompletionContributor" order="first"/>
+        <completion.contributor language="HTML" implementationClass="com.chu7.vuecomponentassistant.extension.UnifiedAttributeNameCompletionContributor" order="first"/>
+        <completion.contributor language="Vue" implementationClass="com.chu7.vuecomponentassistant.extension.UnifiedAttributeNameCompletionContributor" order="first"/>
         
-        <group id="VueKit.Tools" text="Vue Kit" description="VueKit开发工具">
-            <add-to-group group-id="ToolsMenu" anchor="last"/>
-        </group>
-        -->
+        <!-- B2: 属性补全扩展点 -->
+        <xml.attributeDescriptorsProvider implementation="com.chu7.vuecomponentassistant.extension.UnifiedXmlAttributeDescriptorsProvider" order="first"/>
+        
+        <!-- B2: 属性值补全扩展点 -->
+        <completion.contributor language="XML" implementationClass="com.chu7.vuecomponentassistant.extension.UnifiedXmlAttributeValueProvider" order="first"/>
+        <completion.contributor language="HTML" implementationClass="com.chu7.vuecomponentassistant.extension.UnifiedXmlAttributeValueProvider" order="first"/>
+        <completion.contributor language="Vue" implementationClass="com.chu7.vuecomponentassistant.extension.UnifiedXmlAttributeValueProvider" order="first"/>
+        
+        <!-- B2: 文档提供者扩展点 -->
+        <lang.documentationProvider language="XML" implementationClass="com.chu7.vuecomponentassistant.extension.UnifiedXmlDocumentationProvider"/>
+        <lang.documentationProvider language="HTML" implementationClass="com.chu7.vuecomponentassistant.extension.UnifiedXmlDocumentationProvider"/>
+        <lang.documentationProvider language="Vue" implementationClass="com.chu7.vuecomponentassistant.extension.UnifiedXmlDocumentationProvider"/>
+
+		<!-- B4: 插槽补全扩展点 -->
+		<completion.contributor language="XML" implementationClass="com.chu7.vuecomponentassistant.extension.UnifiedSlotCompletionContributor" order="first"/>
+		<completion.contributor language="HTML" implementationClass="com.chu7.vuecomponentassistant.extension.UnifiedSlotCompletionContributor" order="first"/>
+		<completion.contributor language="Vue" implementationClass="com.chu7.vuecomponentassistant.extension.UnifiedSlotCompletionContributor" order="first"/>
+
+		<!-- Completion weigher to boost our items -->
+		<completion.weigher id="vuekit.weigher" implementationClass="com.chu7.vuecomponentassistant.extension.UnifiedCompletionWeigher" key="priority" order="first"/>
+
+        <applicationConfigurable instance="com.chu7.vuecomponentassistant.settings.VueKitSettingsConfigurable" id="VueKit" displayName="VueKit"/>
+        <notification.group id="VueKit" displayType="BALLOON" isLogByDefault="true"/>
     </extensions>
-
+    
     <actions>
-        <!-- 测试文档动作 -->
-        <action id="Test.Documentation"
-                class="com.chu7.vuecomponentassistant.action.TestDocumentationAction"
-                text="测试文档提供者"
-                description="手动测试文档提供者是否工作"
-                icon="AllIcons.Actions.Preview">
-            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
-        </action>
-
-        <!-- Vue Component文档动作 -->
-        <action id="Component.Documentation"
-                class="com.chu7.vuecomponentassistant.action.ComponentDocumentationAction"
-                text="查看组件文档"
-                description="查看当前组件的详细文档信息"
-                icon="AllIcons.Actions.Preview">
-            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
-        </action>
-
-        <!-- VueKit 工具分隔符 -->
-        <separator id="VueKit.Separator.Before" add-to-group="ToolsMenu" anchor="last"/>
-
-        <!-- 组件库管理动作 -->
-        <action id="ComponentLibrary.Management"
-                class="com.chu7.vuecomponentassistant.action.ComponentLibraryManagementAction"
-                text="组件库管理"
-                description="管理VueKit组件库"
-                icon="AllIcons.Nodes.Folder">
+        <!-- 调试Action -->
+        <action id="ComponentDebugAction" 
+                class="com.chu7.vuecomponentassistant.debug.ComponentDebugAction" 
+                text="Debug Component Provider" 
+                description="Debug component provider status">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
-
-        <!-- 官方组件库市场动作 -->
-        <action id="OfficialLibrary.Market"
-                class="com.chu7.vuecomponentassistant.action.OfficialLibraryMarketAction"
-                text="官方组件库市场"
-                description="浏览和下载官方组件库"
-                icon="AllIcons.Nodes.PpLib">
+        <action id="AttributeDebugAction" 
+                class="com.chu7.vuecomponentassistant.debug.AttributeDebugAction" 
+                text="Debug Attribute Completion" 
+                description="Debug attribute completion status">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
-
-        <!-- 组件库配置动作 -->
-        <action id="ComponentLibrary.Config"
-                class="com.chu7.vuecomponentassistant.action.ComponentLibraryConfigAction"
-                text="组件库配置"
-                description="配置组件库启用/禁用状态"
-                icon="AllIcons.General.Settings">
+        <action id="AttributeCompletionDebugAction" 
+                class="com.chu7.vuecomponentassistant.debug.AttributeCompletionDebugAction" 
+                text="Debug Attribute Completion Enhanced" 
+                description="Debug enhanced attribute completion status">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
-
-        <!-- 自定义组件库管理动作 -->
-        <action id="CustomLibrary.Management"
-                class="com.chu7.vuecomponentassistant.action.CustomLibraryManagementAction"
-                text="自定义组件库管理"
-                description="管理自定义组件库和组件"
-                icon="AllIcons.Nodes.Module">
+        <action id="AttributeValueDebugAction" 
+                class="com.chu7.vuecomponentassistant.debug.AttributeValueDebugAction" 
+                text="Debug Attribute Value Completion" 
+                description="Debug attribute value completion status">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
-
-        <!-- VueKit 工具分隔符 -->
-        <separator id="VueKit.Separator.After" add-to-group="ToolsMenu" anchor="last"/>
+        <action id="CompletionProviderDebugAction" 
+                class="com.chu7.vuecomponentassistant.debug.CompletionProviderDebugAction" 
+                text="Debug Completion Provider" 
+                description="Debug completion provider registration">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+        <action id="VueKit.ShowComponentDocumentationAction"
+                class="com.chu7.vuecomponentassistant.action.ShowComponentDocumentationAction"
+                text="显示组件文档"
+                description="显示当前组件的完整文档">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
     </actions>
-
-    <idea-version since-build="231.0" until-build="241.*"/>
 </idea-plugin>

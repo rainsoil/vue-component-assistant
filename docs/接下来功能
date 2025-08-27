@@ -1,0 +1,101 @@
+下一阶段功能细化与文档
+以下基于 B6.1-B6.5 的分批设计，细化成明确的交付项、接口、验收标准与里程碑，便于并行推进与回归验证。
+B6.1 远程官方库下载与校验
+目标
+从可配置远程源下载指定组件库与版本 JSON，完成结构校验与基础清洗。
+接口
+library/remote/RemoteLibraryManager.fetch(libraryId: String, version: String, baseUrl: String): ComponentLibrary?
+需求细化
+HTTP 下载：超时、重试（最多2次）、错误分级（网络/解析/语义）。
+JSON 校验：必填字段（id,name,componentPrefix,components[].name）；类型校验；组件前缀一致性。
+基础清洗：去除空白组件/属性/事件/插槽，去重（按 name）。
+失败回退：不影响当前 Provider，记录日志。
+验收标准
+正常网络下载成功；错误链接返回 null；坏 JSON 被拒绝并记录警告。
+兼容 element-plus 公开 JSON 的最新结构。
+产出
+完整实现 RemoteLibraryManager；单测用 mock server 或离线样本。
+B6.2 本地缓存与版本管理
+目标
+缓存远程获取的库；支持同库多版本共存；按 id@version 精确读取。
+接口
+library/cache/LocalCacheManager.load(libraryId: String, version: String): ComponentLibrary?
+library/cache/LocalCacheManager.save(library: ComponentLibrary)
+需求细化
+存储结构：$IDE_CACHE/vuekit/{libraryId}/{version}/library.json
+元数据：lastUpdated 校验；基本完整性检测。
+清理：预留手动清理入口（后续 UI 暴露）。
+验收标准
+首次远程后可离线命中；多版本可并存读取正确。
+产出
+Cache 读写实现；I/O 错误不影响 IDE 前台。
+B6.3 自定义库导入与合并
+目标
+支持导入本地 JSON，覆盖/扩展官方库定义；字段级合并。
+接口
+library/custom/CustomLibraryMerger.merge(base: ComponentLibrary, customs: List<ComponentLibrary>): ComponentLibrary
+需求细化
+合并策略：
+组件按 name 覆盖或新增；
+props/events/slots 按 name 合并去重；保留新描述与默认值；options 合并去重。
+自定义 JSON 加载：来自 PluginSettings.customLibraryJsonPaths。
+语义校验：前缀一致性、字段类型正确；坏数据隔离不影响其他组件。
+验收标准
+可对 el-button 覆盖/新增字段；新增自研组件不影响官方组件。
+产出
+合并器增强（字段级合并）；本地 JSON 解析器。
+B6.4 设置面板与配置持久化
+目标
+提供 UI 配置：库/版本、远程源/镜像、离线模式、自定义库路径；项目级与应用级持久化。
+接口与存储
+已有：settings/PluginSettings（应用级）。
+新增：ProjectSettingsManager（项目级首选项覆盖）。
+UI：Settings/Preferences → Tools → VueKit。
+需求细化
+字段校验：版本字符串有效、URL 可达（非阻塞）、本地路径存在。
+应用：变更后触发 ProviderManager.notifyReload(project) 原子替换 Provider。
+验收标准
+切换库/版本即时生效；重启 IDE 保持配置；非法输入给出错误提示。
+产出
+Settings UI、项目级设置、即时生效的 reload 钩子。
+B6.5 热更新与库/版本切换
+目标
+在设置变更或远程更新后，后台重建 Provider 并原子替换；前台无卡顿。
+接口
+已有：ProviderManager.notifyReload(project)、notifyReloadAll()
+需求细化
+线程模型：后台加载与校验；成功后替换；失败保留旧实例。
+事件广播：必要时为 UI/日志提供更新提示。
+验收标准
+切换 element-plus ↔ element-ui 补全/文档在 ≤1s 内更新；失败回退前一版本。
+产出
+后台任务与替换逻辑；用户可见的轻提示（可选）。
+现有补全行为对齐（已完成/微调）
+组件插入：<el-comp></el-comp>（光标在中间）；尾部展示 as Alias • Library@version。
+属性插入：name="defaultValue"；选中事件：@event=""。
+内置提示覆盖：Contributor 中 result.stopHere()；Weigher 提升优先级。
+微调项（可选）
+自闭合策略：支持无子内容组件插入 <el-input />。
+组件尾部追加域名短标识：基于 provider.getLibrarySourceUrl() 的域名。
+迭代里程碑
+里程碑 M1（2-3 天）
+实现 B6.1 下载与校验、B6.2 缓存读写；在设置中读取库/版本，能够命中缓存或远程。
+里程碑 M2（2 天）
+实现 B6.3 合并；从设置加载自定义 JSON 并合并生效。
+里程碑 M3（2 天）
+实现 B6.4 设置 UI（应用级+项目级）；表单校验；变更后热更新。
+里程碑 M4（1-2 天）
+实现 B6.5 后台重建与原子替换；用户轻提示（可选）；稳定性回归。
+回归用例
+切换库/版本；离线模式；坏 JSON；网络错误；多版本并存；合并冲突。
+风险与回退
+远程源不稳定：离线/缓存优先；失败回退至内置库。
+自定义 JSON 质量：严格校验与隔离；出错仅忽略当前文件。
+性能：后台加载，原子替换，前台零阻塞。
+任务拆分与代码落点
+RemoteLibraryManager: HTTP、Schema 校验、清洗
+LocalCacheManager: 路径与 I/O、元数据
+CustomLibraryMerger: 字段级合并策略
+PluginSettings/ProjectSettingsManager: 设置持久化与读取
+Settings UI: 新建设置页面、事件绑定
+ProviderManager: 整体加载顺序、notifyReload 原子替换
