@@ -21,7 +21,7 @@ public class UnifiedComponentProvider {
     private final String librarySourceUrl;
     
     public UnifiedComponentProvider(@NotNull ComponentLibrary library) {
-        this.componentPrefix = library.componentPrefix != null ? library.componentPrefix : "el-";
+        this.componentPrefix = library.componentPrefix != null ? library.componentPrefix : "";
         this.componentsList = library.components != null ? new ArrayList<>(library.components) : new ArrayList<>();
         this.libraryName = library.displayName != null && !library.displayName.isEmpty() ? library.displayName : (library.name != null ? library.name : "");
         this.libraryVersion = library.version != null ? library.version : "";
@@ -46,7 +46,7 @@ public class UnifiedComponentProvider {
         if (tagName == null || tagName.trim().isEmpty()) {
             return false;
         }
-        return tagName.startsWith(componentPrefix) && byName.containsKey(tagName);
+        return byName.containsKey(tagName);
     }
     
     /**

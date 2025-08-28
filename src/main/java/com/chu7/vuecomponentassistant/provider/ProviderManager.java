@@ -46,10 +46,77 @@ public class ProviderManager {
 	
 	@NotNull
 	private static UnifiedComponentProvider buildProvider(@NotNull Project project) {
+		// 1) 读取项目启用的组件库，若为空则返回空 Provider
+		java.util.Set<String> enabled = null;
+		try {
+			enabled = com.chu7.vuecomponentassistant.settings.ComponentLibraryConfigManager.getInstance(project).getEnabledLibraryNames(project);
+		} catch (Throwable ignored) {}
+		if (enabled == null || enabled.isEmpty()) {
+			return new UnifiedComponentProvider(createEmptyLibrary("data/element-plus-libraries.json"));
+		}
+		java.util.Set<String> enabledLower = new java.util.HashSet<>();
+		for (String s : enabled) if (s != null) enabledLower.add(s.toLowerCase());
+
+		// 2) 优先从“已安装的组件库”（remote cache）构建数据源
+		try {
+			com.chu7.vuecomponentassistant.remote.ComponentLibraryManager rManager = new com.chu7.vuecomponentassistant.remote.ComponentLibraryManager();
+			java.util.List<com.chu7.vuecomponentassistant.remote.model.ComponentLibrary> installed = rManager.getAllLibraries();
+			if (installed != null && !installed.isEmpty()) {
+				java.util.List<com.chu7.vuecomponentassistant.library.model.Component> mergedComponents = new java.util.ArrayList<>();
+				String chosenId = "";
+				String chosenName = "";
+				String chosenDisplay = "";
+				String chosenPrefix = "";
+				String chosenVersion = "";
+				String chosenSourceUrl = "";
+				for (com.chu7.vuecomponentassistant.remote.model.ComponentLibrary lib : installed) {
+					if (lib == null || lib.getName() == null) continue;
+					String libNameLower = lib.getName().toLowerCase();
+					if (!enabledLower.contains(libNameLower)) continue;
+					if (chosenId.isEmpty()) {
+						chosenId = lib.getId() != null ? lib.getId() : lib.getName();
+						chosenName = lib.getName();
+						chosenDisplay = lib.getDisplayName() != null ? lib.getDisplayName() : lib.getName();
+						chosenPrefix = lib.getComponentPrefix() != null ? lib.getComponentPrefix() : chosenPrefix;
+						chosenVersion = lib.getVersion() != null ? lib.getVersion() : "";
+						chosenSourceUrl = lib.getSourceUrl() != null ? lib.getSourceUrl() : "";
+					} else {
+						// 多库启用时，前缀若不同则不作为严格过滤条件，仅用于展示
+						if (chosenPrefix == null || chosenPrefix.isEmpty()) chosenPrefix = lib.getComponentPrefix();
+					}
+					if (lib.getComponents() != null) {
+						for (com.chu7.vuecomponentassistant.remote.model.ComponentInfo ci : lib.getComponents()) {
+							com.chu7.vuecomponentassistant.library.model.Component mapped = mapComponent(ci);
+							if (mapped != null) mergedComponents.add(mapped);
+						}
+					}
+				}
+				if (!mergedComponents.isEmpty()) {
+					com.chu7.vuecomponentassistant.library.model.ComponentLibrary base = new com.chu7.vuecomponentassistant.library.model.ComponentLibrary();
+					base.id = chosenId.isEmpty() ? String.join(",", enabledLower) : chosenId;
+					base.name = chosenName.isEmpty() ? String.join(",", enabledLower) : chosenName;
+					base.displayName = chosenDisplay.isEmpty() ? base.name : chosenDisplay;
+					base.componentPrefix = chosenPrefix;
+					base.version = chosenVersion;
+					base.sourceUrl = chosenSourceUrl;
+					base.components = mergedComponents;
+					return new UnifiedComponentProvider(base);
+				}
+			}
+		} catch (Throwable ignored) {}
+
+		// 3) 回退到原先逻辑（bundled + 自定义），但仍按启用集合校验
 		PluginSettings settings = PluginSettings.getInstance();
 		String desiredId = settings != null ? settings.getSelectedLibraryId() : null;
 		String desiredVersion = settings != null ? settings.getSelectedVersion() : null;
-		String resource = detectLibraryResource(project, desiredId);
+		String resource;
+		if (enabledLower.contains("element-ui")) {
+			resource = "data/element-ui-libraries.json";
+		} else if (enabledLower.contains("element-plus")) {
+			resource = "data/element-plus-libraries.json";
+		} else {
+			resource = detectLibraryResource(project, desiredId);
+		}
 		ComponentLibrary base = loadLibraryFromJson(resource);
 		if (base == null || base.components == null || base.components.isEmpty()) {
 			base = createEmptyLibrary(resource);
@@ -80,7 +147,65 @@ public class ProviderManager {
 		if (!customs.isEmpty()) {
 			base = CustomLibraryMerger.merge(base, customs);
 		}
+		String id = base.id != null ? base.id : "";
+		String name = base.name != null ? base.name : "";
+		String display = base.displayName != null ? base.displayName : "";
+		boolean allowed = enabledLower.contains(id.toLowerCase()) || enabledLower.contains(name.toLowerCase()) || enabledLower.contains(display.toLowerCase());
+		if (!allowed) {
+			return new UnifiedComponentProvider(createEmptyLibrary(resource));
+		}
 		return new UnifiedComponentProvider(base);
+	}
+
+	@org.jetbrains.annotations.Nullable
+	private static com.chu7.vuecomponentassistant.library.model.Component mapComponent(com.chu7.vuecomponentassistant.remote.model.ComponentInfo ci) {
+		if (ci == null || ci.getName() == null || ci.getName().isEmpty()) return null;
+		com.chu7.vuecomponentassistant.library.model.Component c = new com.chu7.vuecomponentassistant.library.model.Component();
+		c.name = ci.getName();
+		c.description = ci.getDescription();
+		c.version = ci.getVersion();
+		c.example = ci.getExample();
+		c.docUrl = ci.getDocUrl();
+		// props
+		if (ci.getProps() != null) {
+			java.util.List<com.chu7.vuecomponentassistant.library.model.Prop> props = new java.util.ArrayList<>();
+			for (com.chu7.vuecomponentassistant.remote.model.ComponentInfo.ComponentProp p : ci.getProps()) {
+				com.chu7.vuecomponentassistant.library.model.Prop mp = new com.chu7.vuecomponentassistant.library.model.Prop();
+				mp.name = p.getName();
+				mp.type = p.getType();
+				mp.description = p.getDescription();
+				mp.defaultValue = p.getDefaultValue();
+				mp.required = p.isRequired();
+				mp.options = p.getOptions();
+				props.add(mp);
+			}
+			c.props = props;
+		}
+		// events
+		if (ci.getEvents() != null) {
+			java.util.List<com.chu7.vuecomponentassistant.library.model.Event> events = new java.util.ArrayList<>();
+			for (com.chu7.vuecomponentassistant.remote.model.ComponentInfo.ComponentEvent e : ci.getEvents()) {
+				com.chu7.vuecomponentassistant.library.model.Event me = new com.chu7.vuecomponentassistant.library.model.Event();
+				me.name = e.getName();
+				me.description = e.getDescription();
+				me.parameters = e.getParameters();
+				events.add(me);
+			}
+			c.events = events;
+		}
+		// slots
+		if (ci.getSlots() != null) {
+			java.util.List<com.chu7.vuecomponentassistant.library.model.Slot> slots = new java.util.ArrayList<>();
+			for (com.chu7.vuecomponentassistant.remote.model.ComponentInfo.ComponentSlot s : ci.getSlots()) {
+				com.chu7.vuecomponentassistant.library.model.Slot ms = new com.chu7.vuecomponentassistant.library.model.Slot();
+				ms.name = s.getName();
+				ms.description = s.getDescription();
+				ms.scope = s.getScope();
+				slots.add(ms);
+			}
+			c.slots = slots;
+		}
+		return c;
 	}
 
 	@NotNull

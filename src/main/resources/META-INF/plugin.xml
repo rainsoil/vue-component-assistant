@@ -82,7 +82,7 @@
 		<!-- Completion weigher to boost our items -->
 		<completion.weigher id="vuekit.weigher" implementationClass="com.chu7.vuecomponentassistant.extension.UnifiedCompletionWeigher" key="priority" order="first"/>
 
-        <applicationConfigurable instance="com.chu7.vuecomponentassistant.settings.VueKitSettingsConfigurable" id="VueKit" displayName="VueKit"/>
+        <projectConfigurable instance="com.chu7.vuecomponentassistant.settings.VueKitProjectSettingsConfigurable" id="VueKitProject" displayName="Vue Kit" parentId="tools"/>
         <notification.group id="VueKit" displayType="BALLOON" isLogByDefault="true"/>
     </extensions>
     

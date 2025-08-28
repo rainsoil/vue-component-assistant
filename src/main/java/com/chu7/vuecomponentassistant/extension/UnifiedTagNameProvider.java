@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider;
@@ -33,9 +34,9 @@ public class UnifiedTagNameProvider implements XmlElementDescriptorProvider, Xml
 			}
 			String libName = provider.getLibraryName();
 			String libVersion = provider.getLibraryVersion();
+			String prefix = provider.getComponentPrefix();
 			for (Component c : provider.getAllComponents()) {
 				if (c.name == null || c.name.isEmpty()) continue;
-				if (!c.name.startsWith("el-")) continue;
 				if (!namePrefix.isEmpty() && !c.name.toLowerCase().startsWith(namePrefix.toLowerCase())) continue;
 				String alias = toPascalAlias(c.name);
 				LookupElementBuilder builder = LookupElementBuilder.create(c.name)
@@ -46,6 +47,8 @@ public class UnifiedTagNameProvider implements XmlElementDescriptorProvider, Xml
 				builder.putUserData(UnifiedCompletionWeigher.OURS_KEY, Boolean.TRUE);
 				elements.add(builder);
 			}
+		} catch (ProcessCanceledException pce) {
+			throw pce; // 控制流异常需直接抛出，不能记录日志
 		} catch (Exception e) {
 			LOG.warn("Error adding tag name variants", e);
 		}
@@ -55,7 +58,7 @@ public class UnifiedTagNameProvider implements XmlElementDescriptorProvider, Xml
 		PsiFile file = context.getFile();
 		int start = context.getStartOffset();
 		int end = context.getTailOffset();
-		String snippet = "<" + tagName + "></" + tagName + ">";
+		String snippet =  tagName + "></" + tagName + ">";
 		context.getDocument().replaceString(start, end, snippet);
 		int caret = start + tagName.length() + 2; // <tag|></tag>
 		context.getEditor().getCaretModel().moveToOffset(caret);
@@ -97,6 +100,8 @@ public class UnifiedTagNameProvider implements XmlElementDescriptorProvider, Xml
 				originalDescriptor = nsDescriptor.getElementDescriptor(tag);
 			}
 			return new UnifiedXmlElementDescriptor(component, originalDescriptor, nsDescriptor, tagName);
+		} catch (ProcessCanceledException pce) {
+			throw pce; // 控制流异常需直接抛出，不能记录日志
 		} catch (Exception e) {
 			LOG.warn("Error getting descriptor for tag: " + tag.getName(), e);
 			return null;
