@@ -1,5 +1,6 @@
 package com.chu7.vuecomponentassistant.settings;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +21,7 @@ public class PluginSettings implements PersistentStateComponent<PluginSettings.S
 	private State state = new State();
 	
 	public static PluginSettings getInstance() {
-		return ServiceManager.getService(PluginSettings.class);
+		return ApplicationManager.getApplication().getService(PluginSettings.class);
 	}
 	
 	@Override

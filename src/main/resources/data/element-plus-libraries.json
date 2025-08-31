@@ -1,0 +1,14 @@
+{
+  "id": "element-plus",
+  "name": "Element Plus",
+  "componentPrefix": "el-",
+  "displayName": "Element Plus",
+  "description": "Element Plus is a Vue 3 based component library for developers, designers and product managers",
+  "version": "latest",
+  "sourceUrl": "https://element-plus.org",
+  "lastUpdated": "2025-08-31 20:41:06",
+  "license": "MIT",
+  "author": "Element Team",
+  "components": [],
+  "componentCount": 0
+}

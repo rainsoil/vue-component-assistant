@@ -3,6 +3,7 @@ package com.chu7.vuecomponentassistant.remote;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
@@ -10,7 +11,7 @@ public final class SimpleHttpClient {
 	private SimpleHttpClient() {}
 
 	public static String downloadJson(String urlStr) throws Exception {
-		HttpURLConnection conn = (HttpURLConnection) new URL(urlStr).openConnection();
+		HttpURLConnection conn = (HttpURLConnection) URI.create(urlStr).toURL().openConnection();
 		conn.setRequestMethod("GET");
 		conn.setConnectTimeout(10000);
 		conn.setReadTimeout(15000);

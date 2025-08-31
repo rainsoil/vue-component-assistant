@@ -66,7 +66,7 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
 		if (project == null) {
 			throw new IllegalArgumentException("项目对象不能为null");
 		}
-		return project.getService(ComponentLibraryConfigManager.class);
+		return ApplicationManager.getApplication().getService(ComponentLibraryConfigManager.class);
 	}
 
 	public static ComponentLibraryConfigManager getGlobalInstance() {
@@ -90,9 +90,14 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
 				Set<String> sanitized = sanitizeAgainstInstalled(project, enabledLibraryNames);
 				if (!sanitized.equals(enabledLibraryNames)) {
 					projectConfig.setEnabledLibraryNames(sanitized);
-					saveProjectConfig(project, projectConfig);
+					// Create a final copy for lambda capture
+					final ProjectConfig finalConfig = projectConfig;
+					// Use invokeLater to ensure write action runs on EDT
+					ApplicationManager.getApplication().invokeLater(() -> {
+						saveProjectConfig(project, finalConfig);
 					// 同步通知组件提供者刷新，确保删除后的组件不再出现
 					notifyConfigChangedWithNames(project, sanitized);
+					});
 				}
 				return new HashSet<>(projectConfig.getEnabledLibraryNames());
 			}
@@ -119,9 +124,17 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
 			Set<String> sanitized = sanitizeAgainstInstalled(project, enabledLibraryNames != null ? enabledLibraryNames : new HashSet<String>());
 			projectConfig.setEnabledLibraryNames(sanitized);
 			projectConfigs.put(projectId, projectConfig);
-			saveProjectConfig(project, projectConfig);
-			notifyConfigChangedWithNames(project, sanitized);
-			VueKitLogger.info(LOG, "项目 " + project.getName() + " 的组件库配置已更新: " + (sanitized.isEmpty() ? "无" : String.join(", ", sanitized)));
+			
+			// Create final copies for lambda capture
+			final ProjectConfig finalConfig = projectConfig;
+			final Set<String> finalSanitized = sanitized;
+			
+			// Use invokeLater to ensure write action runs on EDT
+			ApplicationManager.getApplication().invokeLater(() -> {
+				saveProjectConfig(project, finalConfig);
+				notifyConfigChangedWithNames(project, finalSanitized);
+				VueKitLogger.info(LOG, "项目 " + project.getName() + " 的组件库配置已更新: " + (finalSanitized.isEmpty() ? "无" : String.join(", ", finalSanitized)));
+			});
 		} catch (Exception e) {
 			VueKitLogger.error(LOG, "设置项目启用的组件库失败", e);
 		}
@@ -161,9 +174,13 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
 		try {
 			String projectId = getProjectId(project);
 			projectConfigs.put(projectId, config);
+			
+			// Use invokeLater to ensure write action runs on EDT
+			ApplicationManager.getApplication().invokeLater(() -> {
 			saveProjectConfig(project, config);
 			notifyConfigChanged(project, config.getEnabledLibraryNames());
 			VueKitLogger.info(LOG, "项目 " + project.getName() + " 的配置已更新");
+			});
 		} catch (Exception e) {
 			VueKitLogger.error(LOG, "设置项目配置失败", e);
 		}
@@ -277,6 +294,9 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
 				return;
 			}
 			VirtualFile configFile = ideaDir.findChild(PROJECT_CONFIG_FILE);
+			
+			// Use invokeLater to ensure write action runs on EDT
+			ApplicationManager.getApplication().invokeLater(() -> {
 			ApplicationManager.getApplication().runWriteAction(() -> {
 				try {
 					VirtualFile targetFile = configFile;
@@ -292,6 +312,7 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
 				} catch (Exception e) {
 					VueKitLogger.error(LOG, "写入项目配置文件失败", e);
 				}
+				});
 			});
 		} catch (Exception e) {
 			VueKitLogger.error(LOG, "保存项目配置失败", e);
@@ -331,27 +352,27 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
 	private VirtualFile getIdeaDirectory(Project project) {
 		try {
 			VirtualFile projectDir = com.chu7.vuecomponentassistant.utils.ProjectPathHelper.getProjectRoot(project);
-			VirtualFile ideaDir = projectDir != null ? projectDir.findChild(".idea") : null;
+			if (projectDir == null) {
+				return null;
+			}
+			VirtualFile ideaDir = projectDir.findChild(".idea");
 			if (ideaDir != null && ideaDir.exists() && ideaDir.isDirectory()) {
 				return ideaDir;
 			}
-			ApplicationManager.getApplication().invokeLater(() -> {
-				ApplicationManager.getApplication().runWriteAction(() -> {
+			return com.intellij.openapi.application.WriteAction.computeAndWait(() -> {
 					try {
-						if (projectDir != null) {
-							VirtualFile createdIdeaDir = projectDir.createChildDirectory(this, ".idea");
-							VueKitLogger.info(LOG, ".idea 目录创建成功: " + createdIdeaDir.getPath());
-						}
+					VirtualFile created = com.intellij.openapi.vfs.VfsUtil.createDirectoryIfMissing(projectDir, ".idea");
+					VueKitLogger.info(LOG, ".idea 目录已准备: " + created.getPath());
+					return created;
 					} catch (Exception e) {
 						VueKitLogger.error(LOG, "创建 .idea 目录失败", e);
+					return null;
 					}
-				});
 			});
-			VueKitLogger.info(LOG, ".idea 目录创建请求已提交");
 		} catch (Exception e) {
 			VueKitLogger.error(LOG, "获取 .idea 目录失败", e);
+			return null;
 		}
-		return null;
 	}
 
 	private void initializeProjectListener() {
@@ -377,21 +398,14 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
 				VueKitLogger.warn(LOG, "无法获取项目根目录");
 				return;
 			}
-			VirtualFile ideaDir = projectDir.findChild(".idea");
-			if (ideaDir == null || !ideaDir.exists() || !ideaDir.isDirectory()) {
-				VueKitLogger.info(LOG, ".idea 目录不存在，尝试创建...");
-				ApplicationManager.getApplication().invokeLater(() -> {
-					ApplicationManager.getApplication().runWriteAction(() -> {
+			com.intellij.openapi.application.WriteAction.runAndWait(() -> {
 						try {
-							VirtualFile createdIdeaDir = projectDir.createChildDirectory(this, ".idea");
-							VueKitLogger.info(LOG, ".idea 目录创建成功: " + createdIdeaDir.getPath());
+					com.intellij.openapi.vfs.VfsUtil.createDirectoryIfMissing(projectDir, ".idea");
+					VueKitLogger.info(LOG, "✅ .idea 目录已存在或创建完成");
 						} catch (Exception e) {
 							VueKitLogger.error(LOG, "创建 .idea 目录失败", e);
 						}
 					});
-				});
-				VueKitLogger.info(LOG, "✅ .idea 目录创建请求已提交");
-			}
 		} catch (Exception e) {
 			VueKitLogger.error(LOG, "确保 .idea 目录存在时发生错误", e);
 		}
@@ -410,7 +424,10 @@ public final class ComponentLibraryConfigManager implements PersistentStateCompo
 				defaultConfig.setProjectName(project.getName());
 				Set<String> autoDetected = detectEnabledLibrariesFromProject(project);
 				defaultConfig.setEnabledLibraryNames(autoDetected);
+				// Use invokeLater to ensure write action runs on EDT
+				ApplicationManager.getApplication().invokeLater(() -> {
 				saveProjectConfig(project, defaultConfig);
+				});
 			}
 		} catch (Exception e) {
 			VueKitLogger.error(LOG, "确保项目配置文件存在时发生错误", e);

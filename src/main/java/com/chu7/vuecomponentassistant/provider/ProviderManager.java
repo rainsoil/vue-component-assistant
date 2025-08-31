@@ -237,9 +237,9 @@ public class ProviderManager {
 	private static boolean hasDependencyIndicativeFile(@NotNull Project project, @NotNull String libName) {
 		try {
 			var scope = com.intellij.psi.search.GlobalSearchScope.projectScope(project);
-			var files = com.intellij.psi.search.FilenameIndex.getVirtualFilesByName(project, libName + ".d.ts", scope);
+			var files = com.intellij.psi.search.FilenameIndex.getVirtualFilesByName(libName + ".d.ts", scope);
 			if (!files.isEmpty()) return true;
-			files = com.intellij.psi.search.FilenameIndex.getVirtualFilesByName(project, libName + ".js", scope);
+			files = com.intellij.psi.search.FilenameIndex.getVirtualFilesByName(libName + ".js", scope);
 			return !files.isEmpty();
 		} catch (Throwable e) {
 			return false;
@@ -249,10 +249,16 @@ public class ProviderManager {
 	private static boolean hasPackageJsonDependency(@NotNull Project project, @NotNull String libName) {
 		try {
 			var scope = com.intellij.psi.search.GlobalSearchScope.projectScope(project);
-			var vFiles = com.intellij.psi.search.FilenameIndex.getVirtualFilesByName(project, "package.json", scope);
+			var vFiles = com.intellij.psi.search.FilenameIndex.getVirtualFilesByName("package.json", scope);
 			for (var vf : vFiles) {
 				try (var is = vf.getInputStream(); var reader = new java.io.InputStreamReader(is, java.nio.charset.StandardCharsets.UTF_8)) {
-					var json = new com.google.gson.JsonParser().parse(reader).getAsJsonObject();
+					StringBuilder content = new StringBuilder();
+					char[] buffer = new char[1024];
+					int bytesRead;
+					while ((bytesRead = reader.read(buffer)) != -1) {
+						content.append(buffer, 0, bytesRead);
+					}
+					var json = com.google.gson.JsonParser.parseString(content.toString()).getAsJsonObject();
 					if (json.has("dependencies") && json.get("dependencies").getAsJsonObject().has(libName)) return true;
 					if (json.has("devDependencies") && json.get("devDependencies").getAsJsonObject().has(libName)) return true;
 				}

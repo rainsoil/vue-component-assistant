@@ -1,0 +1,14 @@
+{
+  "id": "element-ui",
+  "name": "Element UI",
+  "componentPrefix": "el-",
+  "displayName": "Element UI",
+  "description": "Element UI is a Vue 2.0 based component library for developers, designers and product managers",
+  "version": "latest",
+  "sourceUrl": "https://element.eleme.io",
+  "lastUpdated": "2025-08-31 20:41:19",
+  "license": "MIT",
+  "author": "Element Team",
+  "components": [],
+  "componentCount": 0
+}
