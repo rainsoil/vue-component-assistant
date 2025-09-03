@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'org.jetbrains.intellij' version '1.17.3'
+
 }
 
 group 'com.chu7'
@@ -23,6 +24,10 @@ patchPluginXml {
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
 }
+tasks.withType(ProcessResources) {
+    filteringCharset = 'UTF-8'
+}
+
 tasks.withType(JavaExec) {
     jvmArgs '-Dfile.encoding=UTF-8'
 }
@@ -48,4 +53,7 @@ tasks {
 dependencies {
     // Gson for JSON parsing
     implementation 'com.google.code.gson:gson:2.10.1'
+    // Hutool 工具类库，仅用于测试
+    testImplementation 'cn.hutool:hutool-all:5.8.21'
+    testImplementation 'org.jsoup:jsoup:1.21.1'
 }
